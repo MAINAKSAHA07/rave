@@ -30,6 +30,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.15.1",
     "@radix-ui/react-slot": "^1.2.4",
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.45",
@@ -37,7 +38,7 @@
     "autoprefixer": "^10.4.16",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "dotenv": "^16.3.1",
+    "dotenv": "^17.2.3",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.0.4",
     "postcss": "^8.4.32",
