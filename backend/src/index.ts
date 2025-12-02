@@ -52,6 +52,11 @@ const corsOptions = {
       allowedOrigins.push(process.env.BACKOFFICE_URL);
     }
 
+    // Allow Netlify domains (for production deployments)
+    if (origin && (origin.includes('.netlify.app') || origin.includes('.netlify.com'))) {
+      return callback(null, true);
+    }
+
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {

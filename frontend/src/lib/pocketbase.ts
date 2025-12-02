@@ -4,8 +4,12 @@ const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8092';
 
 export function getPocketBase(): PocketBase {
   if (typeof window === 'undefined') {
-    // Server-side: create new instance
-    return new PocketBase(pbUrl);
+    // Server-side: In Netlify Lambda/serverless, create instance with safe defaults
+    // Note: Server-side PocketBase calls should be avoided in Lambda functions
+    // This instance is created but should only be used for URL generation, not API calls
+    const pb = new PocketBase(pbUrl);
+    pb.autoCancellation(false);
+    return pb;
   }
 
   // Client-side: use singleton

@@ -77,7 +77,8 @@ export default function CheckInPage() {
             // But the requirements said "Backend validates...". 
             // I'll use a direct API call to my Node.js backend
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/checkin/scan`, {
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+            const response = await fetch(`${backendUrl}/api/checkin/scan`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

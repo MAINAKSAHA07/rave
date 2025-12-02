@@ -35,11 +35,13 @@ Rave/
 ### Setup
 
 1. Install dependencies:
+
 ```bash
-npm install
+npm ci
 ```
 
 2. Set up PocketBase:
+
 ```bash
 cd pocketbase
 ./pocketbase serve --http=127.0.0.1:8092
@@ -47,13 +49,14 @@ cd pocketbase
 ```
 
 3. Configure environment variables (see `.env` file in root)
-
 4. Run development servers:
+
 ```bash
 npm run dev
 ```
 
 This will start:
+
 - Backend API on http://localhost:3001
 - Customer frontend on http://localhost:3000
 - Backoffice on http://localhost:3002
@@ -81,6 +84,7 @@ This will start:
 ## Documentation
 
 See `/docs` for detailed documentation on:
+
 - PocketBase schema
 - API endpoints
 - Deployment guide
