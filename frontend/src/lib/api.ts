@@ -65,14 +65,3 @@ export const seatReservationsApi = {
 
 export default api;
 
-
-  release: (seatIds: string[]) =>
-    api.post('/seat-reservations/release', { seatIds }),
-  getReserved: (eventId: string, userId?: string) =>
-    api.get(`/seat-reservations/event/${eventId}`, { params: { userId } }),
-  check: (seatIds: string[], eventId: string, userId?: string) =>
-    api.post('/seat-reservations/check', { seatIds, eventId, userId }),
-};
-
-export default api;
-

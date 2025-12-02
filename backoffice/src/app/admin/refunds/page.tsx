@@ -272,9 +272,3 @@ export default function AdminRefundsPage() {
   );
 }
 
-
-      </div>
-    </div>
-  );
-}
-

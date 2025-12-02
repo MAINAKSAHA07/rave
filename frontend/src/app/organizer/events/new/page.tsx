@@ -9,6 +9,7 @@ import { getPocketBase } from '@/lib/pocketbase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
     Form,
     FormControl,
@@ -251,16 +252,15 @@ export default function CreateEventPage() {
                                 )}
                             />
 
-                            <FormItem>
-                                <FormLabel>Cover Image</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
-                                    />
-                                </FormControl>
-                            </FormItem>
+                            <div>
+                                <Label htmlFor="cover_image">Cover Image</Label>
+                                <Input
+                                    id="cover_image"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
+                                />
+                            </div>
 
                             <div className="flex justify-end gap-4">
                                 <Button type="button" variant="outline" onClick={() => router.back()}>

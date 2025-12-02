@@ -222,20 +222,3 @@ export default function OrganizerAnalyticsPage() {
   );
 }
 
-
-            <p className="text-sm text-gray-400 mt-2">
-              Future enhancements will include:
-            </p>
-            <ul className="list-disc list-inside text-sm text-gray-400 mt-2 space-y-1">
-              <li>Revenue trends over time</li>
-              <li>Event performance comparison</li>
-              <li>Ticket type sales breakdown</li>
-              <li>Geographic distribution of sales</li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-

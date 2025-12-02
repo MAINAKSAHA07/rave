@@ -119,11 +119,3 @@ export const refundsApi = {
 };
 
 export default api;
-
-  requestRefund: (orderId: string, amountMinor: number, reason: string, requestedBy: string) =>
-    api.post('/refunds', { orderId, amountMinor, reason, requestedBy }),
-  getRefunds: (params?: { organizerId?: string; status?: string }) =>
-    api.get('/refunds', { params }),
-};
-
-export default api;

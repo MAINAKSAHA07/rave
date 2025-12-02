@@ -480,32 +480,6 @@ export default function OrganizerStaffPage() {
     </div>
   );
 }
-
-
-                      onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      User must already have an account. They will be added as staff.
-                    </p>
-                  </div>
-                  <div>
-                    <Label htmlFor="role">Role *</Label>
-                    <Select
-                      value={inviteForm.role}
-                      onValueChange={(value) => setInviteForm({ ...inviteForm, role: value })}
-                    >
-                      <SelectTrigger id="role">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="organizer">Organizer - Manage events & venues</SelectItem>
-                        <SelectItem value="marketer">Marketer - Marketing & analytics</SelectItem>
-                        <SelectItem value="volunteer">Volunteer - Check-in only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Note: Owner role can only be assigned by admins.
-                    </p>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button

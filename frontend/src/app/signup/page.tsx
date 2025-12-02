@@ -63,14 +63,11 @@ export default function SignupPage() {
       const pb = getPocketBase();
       
       // PocketBase OAuth2 flow
-      const authData = await pb.collection('users').authWithOAuth2({
+      await pb.collection('users').authWithOAuth2({
         provider: 'google',
         urlCallback: (url) => {
-          // Store redirect URL and code verifier in sessionStorage
+          // Store redirect URL in sessionStorage
           sessionStorage.setItem('oauth_redirect', '/events');
-          if (authData.codeVerifier) {
-            sessionStorage.setItem('oauth_code_verifier', authData.codeVerifier);
-          }
           // Redirect to OAuth provider
           window.location.href = url;
         },
