@@ -1,10 +1,15 @@
 import axios from 'axios';
 import { getPocketBase } from './pocketbase';
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+// Use API proxy on client-side to avoid Mixed Content errors
+// Server-side can use direct connection
+const useApiProxy = typeof window !== 'undefined';
+const API_URL = useApiProxy 
+  ? '' // Use relative URLs for proxy
+  : (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001');
 
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: useApiProxy ? '/api/backend/api' : `${API_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },

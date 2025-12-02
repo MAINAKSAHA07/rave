@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import PocketBase from 'pocketbase';
 
-const pbUrl = process.env.POCKETBASE_URL || 'http://13.201.90.240:8092';
+const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://13.201.90.240:3001';
 
 /**
- * Generic PocketBase API proxy
- * Routes: /api/pocketbase/api/collections/events -> PocketBase /api/collections/events
+ * Backend API proxy to avoid Mixed Content errors
+ * Routes: /api/backend/api/admin/organizers -> Backend /api/admin/organizers
  */
 export async function GET(
   request: NextRequest,
@@ -16,27 +15,19 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
-    const pb = new PocketBase(pbUrl);
-    
-    // Set auth token if provided
-    if (token) {
-      pb.authStore.save(token, null);
-    }
-
     // Build the full URL
-    // The path already includes 'api/collections/...', so we just prepend '/api/'
-    // But if path doesn't start with 'api/', add it
     const apiPath = path.startsWith('api/') ? path : `api/${path}`;
-    const url = new URL(`/${apiPath}`, pbUrl);
+    const url = new URL(`/${apiPath}`, backendUrl);
     searchParams.forEach((value, key) => {
       url.searchParams.append(key, value);
     });
 
-    // Make request to PocketBase
+    // Make request to backend
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
 
@@ -48,7 +39,7 @@ export async function GET(
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('PocketBase proxy error:', error);
+    console.error('Backend proxy error:', error);
     return NextResponse.json(
       { error: error.message || 'Request failed' },
       { status: 500 }
@@ -65,20 +56,13 @@ export async function POST(
     const body = await request.json();
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
-    const pb = new PocketBase(pbUrl);
-    
-    if (token) {
-      pb.authStore.save(token, null);
-    }
-
-    // Build the full URL
     const apiPath = path.startsWith('api/') ? path : `api/${path}`;
-    const url = new URL(`/${apiPath}`, pbUrl);
+    const url = new URL(`/${apiPath}`, backendUrl);
     const response = await fetch(url.toString(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(body),
     });
@@ -91,7 +75,7 @@ export async function POST(
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('PocketBase proxy error:', error);
+    console.error('Backend proxy error:', error);
     return NextResponse.json(
       { error: error.message || 'Request failed' },
       { status: 500 }
@@ -108,20 +92,13 @@ export async function PUT(
     const body = await request.json();
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
-    const pb = new PocketBase(pbUrl);
-    
-    if (token) {
-      pb.authStore.save(token, null);
-    }
-
-    // Build the full URL
     const apiPath = path.startsWith('api/') ? path : `api/${path}`;
-    const url = new URL(`/${apiPath}`, pbUrl);
+    const url = new URL(`/${apiPath}`, backendUrl);
     const response = await fetch(url.toString(), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(body),
     });
@@ -134,7 +111,43 @@ export async function PUT(
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('PocketBase proxy error:', error);
+    console.error('Backend proxy error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Request failed' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { path: string[] } }
+) {
+  try {
+    const path = params.path.join('/');
+    const body = await request.json();
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+
+    const apiPath = path.startsWith('api/') ? path : `api/${path}`;
+    const url = new URL(`/${apiPath}`, backendUrl);
+    const response = await fetch(url.toString(), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error('Backend proxy error:', error);
     return NextResponse.json(
       { error: error.message || 'Request failed' },
       { status: 500 }
@@ -150,19 +163,13 @@ export async function DELETE(
     const path = params.path.join('/');
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
-    const pb = new PocketBase(pbUrl);
-    
-    if (token) {
-      pb.authStore.save(token, null);
-    }
-
-    // Build the full URL
     const apiPath = path.startsWith('api/') ? path : `api/${path}`;
-    const url = new URL(`/${apiPath}`, pbUrl);
+    const url = new URL(`/${apiPath}`, backendUrl);
     const response = await fetch(url.toString(), {
       method: 'DELETE',
       headers: {
-        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
 
@@ -178,10 +185,11 @@ export async function DELETE(
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('PocketBase proxy error:', error);
+    console.error('Backend proxy error:', error);
     return NextResponse.json(
       { error: error.message || 'Request failed' },
       { status: 500 }
     );
   }
 }
+

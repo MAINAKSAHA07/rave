@@ -7,6 +7,7 @@ const useApiProxy = typeof window !== 'undefined'; // Use API proxy on client-si
 class ProxyPocketBase {
   private token: string | null = null;
   private user: any = null;
+  private onChangeCallbacks: Set<(token: string, model: any) => void> = new Set();
 
   constructor() {
     // Load from localStorage if available
@@ -35,6 +36,14 @@ class ProxyPocketBase {
         if (typeof window !== 'undefined') {
           localStorage.setItem('pocketbase_auth', JSON.stringify({ token, user }));
         }
+        // Call all onChange callbacks
+        this.onChangeCallbacks.forEach(callback => {
+          try {
+            callback(token, user);
+          } catch (e) {
+            console.error('Error in authStore.onChange callback:', e);
+          }
+        });
       },
       clear: () => {
         this.token = null;
@@ -42,6 +51,22 @@ class ProxyPocketBase {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('pocketbase_auth');
         }
+        // Call all onChange callbacks
+        this.onChangeCallbacks.forEach(callback => {
+          try {
+            callback('', null);
+          } catch (e) {
+            console.error('Error in authStore.onChange callback:', e);
+          }
+        });
+      },
+      onChange: (callback: (token: string, model: any) => void) => {
+        // Add callback to set
+        this.onChangeCallbacks.add(callback);
+        // Return unsubscribe function
+        return () => {
+          this.onChangeCallbacks.delete(callback);
+        };
       },
     };
   }

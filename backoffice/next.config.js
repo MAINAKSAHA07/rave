@@ -48,6 +48,7 @@ const nextConfig = {
   env: {
     // Server-side only - not exposed to client
     POCKETBASE_URL: process.env.POCKETBASE_URL || process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://13.201.90.240:8092',
+    BACKEND_URL: process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://13.201.90.240:3001',
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
   },
   output: 'standalone',

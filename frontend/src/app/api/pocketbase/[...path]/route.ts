@@ -24,7 +24,10 @@ export async function GET(
     }
 
     // Build the full URL
-    const url = new URL(`/api/${path}`, pbUrl);
+    // The path already includes 'api/collections/...', so we just prepend '/api/'
+    // But if path doesn't start with 'api/', add it
+    const apiPath = path.startsWith('api/') ? path : `api/${path}`;
+    const url = new URL(`/${apiPath}`, pbUrl);
     searchParams.forEach((value, key) => {
       url.searchParams.append(key, value);
     });
