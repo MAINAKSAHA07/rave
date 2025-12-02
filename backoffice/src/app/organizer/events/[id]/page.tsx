@@ -158,6 +158,9 @@ export default function EventDetailPage() {
             <Link href={`/organizer/events/${eventId}/edit`}>
               <Button>Edit Event</Button>
             </Link>
+            <Link href={`/organizer/events/${eventId}/reminders`}>
+              <Button variant="outline">Reminders</Button>
+            </Link>
           </div>
         </div>
 

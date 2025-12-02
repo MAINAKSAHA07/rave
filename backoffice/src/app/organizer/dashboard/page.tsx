@@ -247,6 +247,30 @@ export default function OrganizerDashboard() {
             <h3 className="text-xl font-semibold mb-2">Analytics</h3>
             <p>View sales and revenue</p>
           </Link>
+
+          <Link
+            href="/organizer/staff"
+            className="p-6 border rounded-lg hover:bg-gray-100"
+          >
+            <h3 className="text-xl font-semibold mb-2">Staff</h3>
+            <p>Manage staff members</p>
+          </Link>
+
+          <Link
+            href="/organizer/refunds"
+            className="p-6 border rounded-lg hover:bg-gray-100"
+          >
+            <h3 className="text-xl font-semibold mb-2">Refunds</h3>
+            <p>Request and manage refunds</p>
+          </Link>
+
+          <Link
+            href="/organizer/email-templates"
+            className="p-6 border rounded-lg hover:bg-gray-100"
+          >
+            <h3 className="text-xl font-semibold mb-2">Email Templates</h3>
+            <p>Customize email templates</p>
+          </Link>
         </div>
 
         <div>

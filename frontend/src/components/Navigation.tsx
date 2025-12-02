@@ -55,14 +55,24 @@ export default function Navigation() {
                 Events
               </Link>
               {user && (
-                <Link
-                  href="/my-tickets"
-                  className={`text-sm font-medium transition-colors ${
-                    pathname === '/my-tickets' ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
-                  }`}
-                >
-                  My Tickets
-                </Link>
+                <>
+                  <Link
+                    href="/my-tickets"
+                    className={`text-sm font-medium transition-colors ${
+                      pathname === '/my-tickets' ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                  >
+                    My Tickets
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className={`text-sm font-medium transition-colors ${
+                      pathname === '/profile' ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                  >
+                    Profile
+                  </Link>
+                </>
               )}
             </div>
           </div>

@@ -103,4 +103,11 @@ export const checkinApi = {
   getStats: (eventId: string) => api.get(`/checkin/stats/${eventId}`),
 };
 
+export const refundsApi = {
+  requestRefund: (orderId: string, amountMinor: number, reason: string, requestedBy: string) =>
+    api.post('/refunds', { orderId, amountMinor, reason, requestedBy }),
+  getRefunds: (params?: { organizerId?: string; status?: string }) =>
+    api.get('/refunds', { params }),
+};
+
 export default api;

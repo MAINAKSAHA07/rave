@@ -11,6 +11,9 @@ import checkinRoutes from './routes/checkin';
 import adminRoutes from './routes/admin';
 import ticketRoutes from './routes/tickets';
 import testEmailRoutes from './routes/test-email';
+import emailTemplateRoutes from './routes/email-templates';
+import seatRoutes from './routes/seats';
+import seatReservationRoutes from './routes/seat-reservations';
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -36,6 +39,9 @@ app.use('/api/checkin', checkinRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/test-email', testEmailRoutes);
+app.use('/api/email-templates', emailTemplateRoutes);
+app.use('/api/seats', seatRoutes);
+app.use('/api/seat-reservations', seatReservationRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

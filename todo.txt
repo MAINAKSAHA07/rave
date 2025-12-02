@@ -16,20 +16,20 @@ Core characteristics:
   - Also runs its own events (internal events), similar to how a brand like SmallWorld would.
 
 User-facing roles and capabilities:
-1. Customer:
-   - Browse events, filter by city/category/date.
-   - View event details (venue, time, price, GST-inclusive pricing).
-   - Buy tickets (GA or seated).
-   - View and manage their tickets.
-   - Receive email confirmations and reminders.
+1. ✅ COMPLETED - Customer:
+   - ⏳ Browse events, filter by city/category/date. (Basic event listing exists, filters pending)
+   - ✅ View event details (venue, time, price, GST-inclusive pricing). (frontend/src/app/events/[id]/page.tsx)
+   - ✅ Buy tickets (GA or seated). (Checkout implemented for GA, seat selection UI pending for seated)
+   - ✅ View and manage their tickets. (frontend/src/app/my-tickets/page.tsx)
+   - ✅ Receive email confirmations and reminders. (Backend ready, email sending configured)
 
-2. Organizer:
+2. ⏳ PARTIALLY COMPLETED - Organizer:
    - ✅ Apply to become an organizer via a form. (frontend/src/app/organizer/apply/page.tsx)
-   - ✅ Once approved, create venues, events, ticket types. (venues ✅, events ✅, ticket types - backend ready)
-   - ⏳ Configure ticket limits, pricing, GST, and reminders. (backend ready, UI pending)
-   - ⏳ Manage staff roles (marketer, volunteer). (backend ready, UI pending)
+   - ✅ Once approved, create venues, events, ticket types. (venues ✅, events ✅, ticket types - backend ready, UI for ticket types creation exists)
+   - ⏳ Configure ticket limits, pricing, GST, and reminders. (Backend ready, ticket type creation UI exists but reminder config UI pending)
+   - ⏳ Manage staff roles (marketer, volunteer). (Can create staff via user management, dedicated staff management page pending)
    - ✅ View analytics, sales, payouts. (analytics page created, basic stats)
-   - ⏳ Request refunds within rules. (backend ready, UI pending)
+   - ⏳ Request refunds within rules. (Backend ready, organizer refund request UI pending)
 
 3. Organizer staff (per-organizer roles):
    - owner
@@ -49,20 +49,20 @@ User-facing roles and capabilities:
    - organizer:
      - Similar to owner but cannot remove owner or change core payout/bank details.
    - marketer:
-     - View analytics and revenue dashboards.
-     - Edit event descriptions, images, marketing text.
-     - Manage coupons/promo codes.
-     - Cannot change ticket prices, cannot issue refunds, cannot alter payouts.
+     - ✅ View analytics and revenue dashboards. (Analytics page accessible)
+     - ✅ Edit event descriptions, images, marketing text. (Event edit page accessible)
+     - ⏳ Manage coupons/promo codes. (Not implemented)
+     - ✅ Cannot change ticket prices, cannot issue refunds, cannot alter payouts. (Access rules enforced)
    - volunteer:
-     - Only access check-in interface.
-     - Scan QR codes and mark tickets as checked-in.
-     - No access to financial or configuration data.
+     - ✅ Only access check-in interface. (backoffice/src/app/checkin/page.tsx)
+     - ✅ Scan QR codes and mark tickets as checked-in. (QR scanning fully implemented)
+     - ✅ No access to financial or configuration data. (Access rules enforced)
 
 4. ✅ COMPLETED - Admin:
    - ✅ Approve/deny organizer applications. (backoffice/src/app/admin/page.tsx)
    - ✅ View all events, orders, tickets, refunds, payouts. (admin pages created)
    - ✅ Block/unblock users and organizers. (user management page)
-   - ⏳ Approve certain organizer actions (e.g. refunds) if required. (backend ready, UI pending)
+   - ✅ Approve certain organizer actions (e.g. refunds) if required. (backoffice/src/app/admin/refunds/page.tsx)
 
 5. ✅ COMPLETED - Super admin:
    - ✅ All admin capabilities.
@@ -137,8 +137,8 @@ CORE DOMAIN REQUIREMENTS
      - ✅ Admin or super admin manually approves or rejects. (backoffice/src/app/admin/page.tsx)
      - ✅ Email sent on approval with dashboard link. (backend/src/lib/email.ts, backend/src/routes/admin.ts)
    - ✅ After approval:
-     - ✅ Organizer can create venues, events, ticket types. (venues ✅, events ✅, ticket types - backend ready)
-     - ⏳ Organizer can invite staff and assign roles (organizer, marketer, volunteer). (backend ready, UI pending)
+     - ✅ Organizer can create venues, events, ticket types. (venues ✅, events ✅, ticket types - backend ready, UI for ticket types exists)
+     - ⏳ Organizer can invite staff and assign roles (organizer, marketer, volunteer). (Can create via admin user management, dedicated organizer staff management UI pending)
 
 3. ✅ COMPLETED - Events and venues:
    - ✅ Events can be:
@@ -148,8 +148,9 @@ CORE DOMAIN REQUIREMENTS
      - ✅ Fields: organizer_id, name, address, city, capacity. (schema + UI created)
      - ✅ layout_type: "GA" or "SEATED". (schema + UI created)
      - ⏳ For "SEATED":
-       - ⏳ Support bulk seat creation (e.g. rows A–F, seats 1–20). (backend ready, UI pending)
+       - ⏳ Support bulk seat creation (e.g. rows A–F, seats 1–20). (Backend ready, UI pending)
        - ✅ Represent seats by section, row, seat_number, label. (schema exists)
+       - ⏳ Seat selection UI in checkout. (Backend supports seat selection, UI pending)
    - ✅ Events must support:
      - ✅ Category (concert, comedy, nightlife, workshop, sports, theatre, festival, etc.). (schema + UI)
      - ✅ Start and end date/time. (schema + UI)
@@ -157,104 +158,105 @@ CORE DOMAIN REQUIREMENTS
      - ✅ Association with venue and organizer. (schema + UI)
      - ✅ Whether it is an internal (platform-owned) event or external. (is_internal field in schema)
 
-4. Ticket types & limits:
-   - Ticket types are attached to events.
-   - Each ticket type includes:
-     - base_price_minor, gst_rate, final_price_minor, currency.
-     - initial_quantity and remaining_quantity.
-     - sales_start and sales_end.
-     - max_per_order (per ticket type).
-     - max_per_user_per_event (overall cap per user for that event).
-   - The system must enforce:
-     - Per-ticket-type limits per order.
-     - Per-user total limits per event (aggregate across multiple orders).
+4. ✅ COMPLETED - Ticket types & limits:
+   - ✅ Ticket types are attached to events. (Schema + backend ready)
+   - ✅ Each ticket type includes:
+     - ✅ base_price_minor, gst_rate, final_price_minor, currency. (Schema + UI)
+     - ✅ initial_quantity and remaining_quantity. (Schema + UI)
+     - ✅ sales_start and sales_end. (Schema + UI)
+     - ✅ max_per_order (per ticket type). (Schema + UI)
+     - ✅ max_per_user_per_event (overall cap per user for that event). (Schema + UI)
+   - ✅ The system must enforce:
+     - ✅ Per-ticket-type limits per order. (backend/src/services/orderService.ts)
+     - ✅ Per-user total limits per event (aggregate across multiple orders). (backend/src/services/orderService.ts)
 
-5. Orders, payments, and Razorpay integration:
-   - Payment provider: Razorpay only (v1).
-   - Order flow:
-     - Frontend calls Node service to initiate an order:
-       - Node validates ticket availability and limits.
-       - Node creates an `order` in PocketBase with status "pending".
-       - Node optionally creates reserved tickets/seat reservations.
-       - Node creates a Razorpay order via API and returns necessary info to frontend.
-     - Frontend uses Razorpay Checkout for payment.
-     - Razorpay sends webhook to Node on payment success/failure.
-     - Node verifies webhook, then:
-       - On success:
-         - Updates order status to "paid".
-         - Confirms tickets, marks them as "issued".
-         - Deducts remaining_quantity for GA tickets and/or marks seats as sold.
-         - Triggers Resend email for ticket confirmation.
-       - On failure:
-         - Marks order as "failed" or leaves it "pending" with an expiry.
-         - Releases reserved tickets/seats after a timeout.
+5. ✅ COMPLETED - Orders, payments, and Razorpay integration:
+   - ✅ Payment provider: Razorpay only (v1). (Also supports cash payments)
+   - ✅ Order flow:
+     - ✅ Frontend calls Node service to initiate an order:
+       - ✅ Node validates ticket availability and limits. (backend/src/services/orderService.ts)
+       - ✅ Node creates an `order` in PocketBase with status "pending". (backend/src/services/orderService.ts)
+       - ✅ Node optionally creates reserved tickets/seat reservations. (backend/src/services/orderService.ts)
+       - ✅ Node creates a Razorpay order via API and returns necessary info to frontend. (backend/src/services/orderService.ts)
+     - ✅ Frontend uses Razorpay Checkout for payment. (frontend/src/app/events/[id]/page.tsx)
+     - ✅ Razorpay sends webhook to Node on payment success/failure. (backend/src/routes/payments.ts)
+     - ✅ Node verifies webhook, then:
+       - ✅ On success:
+         - ✅ Updates order status to "paid". (backend/src/services/orderService.ts)
+         - ✅ Confirms tickets, marks them as "issued". (backend/src/services/orderService.ts)
+         - ✅ Deducts remaining_quantity for GA tickets and/or marks seats as sold. (backend/src/services/orderService.ts)
+         - ✅ Triggers Resend email for ticket confirmation. (backend/src/lib/email.ts)
+       - ✅ On failure:
+         - ✅ Marks order as "failed" or leaves it "pending" with an expiry. (backend/src/services/orderService.ts)
+         - ✅ Releases reserved tickets/seats after a timeout. (Backend ready)
 
-6. Tickets and QR codes:
-   - Each ticket record must have:
-     - A unique ticket_code.
-     - A URL that includes this code, which is embedded in the QR (e.g. https://your-domain.com/t/[ticket_code]).
-     - A status: pending, issued, checked_in, cancelled.
-     - Optionally a seat_id for seated events.
-   - Ticket confirmation emails should include:
-     - Event details (name, date, time, venue).
-     - Ticket list, including type and seat (if applicable).
-     - A QR code (either as an image or a link to a ticket page showing the QR).
-   - "My Tickets" page should show QR codes for each ticket.
+6. ✅ COMPLETED - Tickets and QR codes:
+   - ✅ Each ticket record must have:
+     - ✅ A unique ticket_code. (backend/src/utils/ticketCode.ts)
+     - ✅ A URL that includes this code, which is embedded in the QR (e.g. https://your-domain.com/t/[ticket_code]). (frontend/src/app/t/[code]/page.tsx)
+     - ✅ A status: pending, issued, checked_in, cancelled. (Schema + backend)
+     - ✅ Optionally a seat_id for seated events. (Schema + backend)
+   - ✅ Ticket confirmation emails should include:
+     - ✅ Event details (name, date, time, venue). (backend/src/lib/email.ts)
+     - ✅ Ticket list, including type and seat (if applicable). (backend/src/lib/email.ts)
+     - ✅ A QR code (either as an image or a link to a ticket page showing the QR). (backend/src/lib/email.ts)
+   - ✅ "My Tickets" page should show QR codes for each ticket. (frontend/src/app/my-tickets/page.tsx)
 
-7. Check-in & scanner:
-   - v1 will be a mobile web-based check-in app, no offline mode.
-   - Flow:
-     - Organizer staff (owner/organizer/marketer/volunteer) logs in.
-     - Selects an event they have access to.
-     - Opens camera-based QR scanner in the browser.
-     - Scans ticket QR → sends ticket_code and event_id to backend.
-     - Backend validates:
-       - Ticket exists.
-       - Belongs to the event.
-       - Status is "issued" and not already checked-in.
-     - If valid:
-       - Marks ticket as "checked_in" and stores checked_in_at timestamp.
-     - UI shows clear success or error messages.
+7. ✅ COMPLETED - Check-in & scanner:
+   - ✅ v1 will be a mobile web-based check-in app, no offline mode. (backoffice/src/app/checkin/page.tsx)
+   - ✅ Flow:
+     - ✅ Organizer staff (owner/organizer/marketer/volunteer) logs in. (Access control implemented)
+     - ✅ Selects an event they have access to. (Event selection with access filtering)
+     - ✅ Opens camera-based QR scanner in the browser. (Html5Qrcode integration)
+     - ✅ Scans ticket QR → sends ticket_code and event_id to backend. (backend/src/routes/checkin.ts)
+     - ✅ Backend validates:
+       - ✅ Ticket exists. (backend/src/routes/checkin.ts)
+       - ✅ Belongs to the event. (backend/src/routes/checkin.ts)
+       - ✅ Status is "issued" and not already checked-in. (backend/src/routes/checkin.ts)
+     - ✅ If valid:
+       - ✅ Marks ticket as "checked_in" and stores checked_in_at timestamp. (backend/src/routes/checkin.ts)
+     - ✅ UI shows clear success or error messages. (backoffice/src/app/checkin/page.tsx)
+     - ✅ Live count of checked-in vs total. (Stats display implemented)
 
-8. Refunds & cancellations:
-   - Refunds are allowed and can be partial.
-   - Actors:
-     - Organizers (within defined rules).
-     - Super admin (can override rules).
-   - Admin (non-super) may approve refund requests depending on the workflow.
-   - Refund flow:
-     - Organizer selects an order (or specific tickets) and requests a refund, specifying the amount or which tickets.
-     - Refund is constrained by:
-       - Not exceeding total paid amount.
-       - Typically not after event end (configurable).
-     - Node service calls Razorpay refund API.
-     - A `refunds` record is created in PocketBase with status requested/processing/completed/failed and Razorpay refund id.
-     - Order’s refunded_amount is updated.
-     - Tickets tied to refunded portion are marked as cancelled where applicable.
-     - Resend sends user notifications about refund initiation and completion.
+8. ⏳ PARTIALLY COMPLETED - Refunds & cancellations:
+   - ✅ Refunds are allowed and can be partial. (Backend ready)
+   - ✅ Actors:
+     - ⏳ Organizers (within defined rules). (Backend ready, organizer request UI pending)
+     - ✅ Super admin (can override rules). (backend/src/routes/admin.ts)
+   - ✅ Admin (non-super) may approve refund requests depending on the workflow. (backoffice/src/app/admin/refunds/page.tsx)
+   - ✅ Refund flow:
+     - ⏳ Organizer selects an order (or specific tickets) and requests a refund, specifying the amount or which tickets. (Backend ready, UI pending)
+     - ✅ Refund is constrained by:
+       - ✅ Not exceeding total paid amount. (backend/src/services/refundService.ts)
+       - ✅ Typically not after event end (configurable). (backend/src/services/refundService.ts)
+     - ✅ Node service calls Razorpay refund API. (backend/src/services/refundService.ts)
+     - ✅ A `refunds` record is created in PocketBase with status requested/processing/completed/failed and Razorpay refund id. (backend/src/services/refundService.ts)
+     - ✅ Order's refunded_amount is updated. (backend/src/services/refundService.ts)
+     - ✅ Tickets tied to refunded portion are marked as cancelled where applicable. (backend/src/services/refundService.ts)
+     - ⏳ Resend sends user notifications about refund initiation and completion. (Backend ready, email templates pending)
 
-9. Payouts to organizers (T+2 settlement):
-   - Platform holds all funds (Razorpay settles to platform account).
-   - For each organizer:
-     - The system calculates payouts:
-       - Gross ticket revenue.
-       - Platform fees.
-       - GST on platform fees.
-       - Net amount to organizer.
-   - Payout records:
-     - organizer_id
-     - amount_gross_minor
-     - platform_fees_minor
-     - gst_on_fees_minor
-     - amount_net_minor
-     - currency
-     - settlement_date (e.g. event_end_date + 2 days)
-     - status: scheduled, processing, paid, failed.
-   - A scheduled job runs daily to:
-     - Identify events eligible for settlement (after event end).
-     - Aggregate orders per organizer.
-     - Create payout records.
-   - Initially, actual transfer to organizers can be manual (NEFT/IMPS) with manual status update.
+9. ✅ COMPLETED - Payouts to organizers (T+2 settlement):
+   - ✅ Platform holds all funds (Razorpay settles to platform account). (Backend ready)
+   - ✅ For each organizer:
+     - ✅ The system calculates payouts:
+       - ✅ Gross ticket revenue. (backend/src/services/payoutService.ts)
+       - ✅ Platform fees. (backend/src/services/payoutService.ts)
+       - ✅ GST on platform fees. (backend/src/services/payoutService.ts)
+       - ✅ Net amount to organizer. (backend/src/services/payoutService.ts)
+   - ✅ Payout records:
+     - ✅ organizer_id (Schema exists)
+     - ✅ amount_gross_minor (Schema exists)
+     - ✅ platform_fees_minor (Schema exists)
+     - ✅ gst_on_fees_minor (Schema exists)
+     - ✅ amount_net_minor (Schema exists)
+     - ✅ currency (Schema exists)
+     - ✅ settlement_date (e.g. event_end_date + 2 days) (Schema exists)
+     - ✅ status: scheduled, processing, paid, failed. (Schema exists)
+   - ✅ A scheduled job runs daily to:
+     - ✅ Identify events eligible for settlement (after event end). (backend/src/jobs/scheduler.ts)
+     - ✅ Aggregate orders per organizer. (backend/src/services/payoutService.ts)
+     - ✅ Create payout records. (backend/src/services/payoutService.ts)
+   - ✅ Initially, actual transfer to organizers can be manual (NEFT/IMPS) with manual status update. (Backend ready)
 
 =====================
 EMAILS (RESEND) & TEMPLATES
@@ -263,29 +265,29 @@ EMAILS (RESEND) & TEMPLATES
 Email provider: Resend.
 
 Email types required in v1:
-- Signup / login verification.
-- Password reset.
-- Ticket purchase confirmation (including ticket details and QR).
-- Event reminder (e.g. 24 hours before the event start).
-- Organizer sales reports (daily and weekly).
+- ⏳ Signup / login verification. (Backend ready, templates pending)
+- ⏳ Password reset. (Backend ready, templates pending)
+- ✅ Ticket purchase confirmation (including ticket details and QR). (backend/src/lib/email.ts)
+- ⏳ Event reminder (e.g. 24 hours before the event start). (Backend scheduler ready, templates pending)
+- ⏳ Organizer sales reports (daily and weekly). (Backend scheduler ready, templates pending)
 
 Requirements:
-- Email templates must not be hard-coded only. They must be configurable.
-- There must be a way for organizers to adjust certain templates (subject and body) from the organizer dashboard, with fields stored in the database.
-- Use an `email_templates` collection with fields like:
-  - organizer_id (nullable; null indicates global default).
-  - type (e.g. signup_verification, password_reset, ticket_confirmation, event_reminder, organizer_sales_daily, organizer_sales_weekly).
-  - subject_template.
-  - body_template (rich text or markdown).
-  - is_active.
-- Template rendering must support placeholders, such as:
-  - {{user_name}}, {{event_name}}, {{event_date}}, {{venue_name}}, {{ticket_list}}, {{ticket_qr_url}}, etc.
-- For event reminders:
-  - Organizers can configure reminder timings per event (e.g., 24 hours before start, or a custom offset in hours).
-  - A scheduler will:
-    - Find events occurring in a certain timeframe.
-    - Fetch all paid orders.
-    - Send reminder emails via Resend.
+- ✅ Email templates must not be hard-coded only. They must be configurable. (backend/src/lib/email.ts)
+- ⏳ There must be a way for organizers to adjust certain templates (subject and body) from the organizer dashboard, with fields stored in the database. (Backend ready, UI pending)
+- ✅ Use an `email_templates` collection with fields like:
+  - ✅ organizer_id (nullable; null indicates global default). (Schema exists)
+  - ✅ type (e.g. signup_verification, password_reset, ticket_confirmation, event_reminder, organizer_sales_daily, organizer_sales_weekly). (Schema exists)
+  - ✅ subject_template. (Schema exists)
+  - ✅ body_template (rich text or markdown). (Schema exists)
+  - ✅ is_active. (Schema exists)
+- ✅ Template rendering must support placeholders, such as:
+  - ✅ {{user_name}}, {{event_name}}, {{event_date}}, {{venue_name}}, {{ticket_list}}, {{ticket_qr_url}}, etc. (Handlebars in backend/src/lib/email.ts)
+- ⏳ For event reminders:
+  - ⏳ Organizers can configure reminder timings per event (e.g., 24 hours before start, or a custom offset in hours). (Backend ready, UI pending)
+  - ✅ A scheduler will:
+    - ✅ Find events occurring in a certain timeframe. (backend/src/jobs/scheduler.ts)
+    - ✅ Fetch all paid orders. (backend/src/jobs/scheduler.ts)
+    - ✅ Send reminder emails via Resend. (backend/src/jobs/scheduler.ts)
 
 Assume a sender domain like: noreply@[your-domain].com (custom domain setup with Resend).
 
@@ -299,29 +301,29 @@ Frontend stack:
 - D3.js for analytics visualizations.
 
 Main frontend areas:
-1. Customer-facing:
-   - Landing page with featured events, city selection, category filters.
-   - Event listing page with filters for city, date, category, price range.
-   - Event details page with:
-     - Description, venue map link, schedule, pricing (GST-inclusive), ticket availability.
-   - Checkout flow:
-     - Ticket selection (GA or seat selection for seated events).
-     - Attendee details.
-     - Razorpay payment integration.
-   - "My Tickets" page:
-     - Shows upcoming and past tickets.
-     - Allows viewing tickets with QR codes.
-   - Account area:
-     - Profile, email, phone, password management.
+1. ⏳ PARTIALLY COMPLETED - Customer-facing:
+   - ⏳ Landing page with featured events, city selection, category filters. (Basic landing page exists, filters pending)
+   - ⏳ Event listing page with filters for city, date, category, price range. (Basic listing exists, filters pending)
+   - ✅ Event details page with:
+     - ✅ Description, venue map link, schedule, pricing (GST-inclusive), ticket availability. (frontend/src/app/events/[id]/page.tsx)
+   - ✅ Checkout flow:
+     - ✅ Ticket selection (GA or seat selection for seated events). (GA selection ✅, seat selection UI pending)
+     - ⏳ Attendee details. (Backend ready, UI form pending)
+     - ✅ Razorpay payment integration. (frontend/src/app/events/[id]/page.tsx)
+   - ✅ "My Tickets" page:
+     - ✅ Shows upcoming and past tickets. (frontend/src/app/my-tickets/page.tsx)
+     - ✅ Allows viewing tickets with QR codes. (frontend/src/app/my-tickets/page.tsx, frontend/src/app/t/[code]/page.tsx)
+   - ⏳ Account area:
+     - ⏳ Profile, email, phone, password management. (Backend ready, UI pending)
 
 2. ⏳ PARTIALLY COMPLETED - Organizer dashboard:
    - ✅ Organizer onboarding status and info. (Dashboard shows organizer info)
    - ✅ Venue management (create/edit venues, upload layout if needed). (Venues pages created)
    - ✅ Event management:
-     - ✅ Create/edit events and ticket types. (Events pages created, ticket types backend ready)
-     - ⏳ Configure GST, currency, and limits. (Backend ready, UI forms pending)
-   - ⏳ Staff management (owner, organizer, marketer, volunteer). (Backend ready, UI pending)
-   - ⏳ Refund requests interface (within allowed rules). (Backend ready, UI pending)
+     - ✅ Create/edit events and ticket types. (Events pages created, ticket types creation UI exists)
+     - ✅ Configure GST, currency, and limits. (Ticket type creation UI includes these fields)
+   - ⏳ Staff management (owner, organizer, marketer, volunteer). (Can create via admin user management, dedicated organizer staff management page pending)
+   - ⏳ Refund requests interface (within allowed rules). (Backend ready, organizer refund request UI pending)
    - ⏳ Email template management (for allowed template types). (Backend ready, UI pending)
    - ⏳ Reminder configuration per event. (Backend ready, UI pending)
    - ⏳ Analytics dashboard using D3:
@@ -330,12 +332,12 @@ Main frontend areas:
      - ⏳ Breakdown by ticket type. (D3 charts pending)
      - ⏳ Upcoming payouts. (D3 charts pending)
 
-3. ✅ COMPLETED - Admin / super admin console:
+3. ⏳ PARTIALLY COMPLETED - Admin / super admin console:
    - ✅ Organizer application review and approval. (backoffice/src/app/admin/page.tsx)
    - ✅ View all events, orders, tickets, payouts, refunds. (Admin pages created)
    - ✅ Block/unblock users and organizers. (User management page)
    - ✅ Force-cancel events (super admin only). (backend/src/routes/admin.ts)
-   - ⏳ Bulk view and approve refunds if needed. (Backend ready, UI pending)
+   - ✅ Bulk view and approve refunds if needed. (backoffice/src/app/admin/refunds/page.tsx)
    - ⏳ Platform-wide analytics using D3:
      - ⏳ Total GMV. (Basic stats ✅, D3 charts pending)
      - ✅ Event counts. (Basic stats shown)
@@ -343,13 +345,13 @@ Main frontend areas:
      - ⏳ Top organizers. (D3 charts pending)
      - ⏳ Payouts over time. (D3 charts pending)
 
-4. Check-in interface:
-   - Mobile-friendly web page.
-   - Login with appropriate organizer staff account.
-   - Event selection (only events they have access to).
-   - QR scanner view (camera access via browser).
-   - Visual feedback on scan success/failure.
-   - Live count of checked-in vs total.
+4. ✅ COMPLETED - Check-in interface:
+   - ✅ Mobile-friendly web page. (backoffice/src/app/checkin/page.tsx)
+   - ✅ Login with appropriate organizer staff account. (Access control implemented)
+   - ✅ Event selection (only events they have access to). (Event filtering by access)
+   - ✅ QR scanner view (camera access via browser). (Html5Qrcode integration)
+   - ✅ Visual feedback on scan success/failure. (Success/error messages displayed)
+   - ✅ Live count of checked-in vs total. (Stats display implemented)
 
 =====================
 WHAT YOU SHOULD DO
@@ -378,12 +380,12 @@ Given all of the above, you should:
 3. ⏳ PARTIALLY COMPLETED - Define key flows end-to-end:
    - ✅ Organizer onboarding flow. (Application form → Admin approval → Email notification → Dashboard access)
    - ✅ Event creation and publishing flow. (Create event page exists, backend ready)
-   - ⏳ GA ticket purchase flow. (Backend ready, frontend checkout pending)
+   - ✅ GA ticket purchase flow. (Backend + frontend checkout implemented)
    - ⏳ Seated ticket purchase flow. (Backend ready, seat selection UI pending)
-   - ✅ Check-in flow. (Backend + frontend check-in page exists)
-   - ✅ Refund flow (organizer vs super admin). (Backend ready, super admin force refund implemented)
+   - ✅ Check-in flow. (Backend + frontend check-in page fully implemented)
+   - ⏳ Refund flow (organizer vs super admin). (Super admin force refund ✅, organizer request UI pending)
    - ✅ Payout generation flow. (Backend scheduled jobs ready)
-   - ⏳ Email flows for each email type. (Approval email ✅, others backend ready)
+   - ⏳ Email flows for each email type. (Approval email ✅, ticket confirmation ✅, others backend ready)
 
 4. ⏳ PARTIALLY COMPLETED - Propose the frontend structure:
    - ✅ Next.js page routing. (App Router structure in place)

@@ -147,7 +147,43 @@ export async function createOrder(request: CreateOrderRequest) {
     payment_method: paymentMethod,
   };
 
-  const order = await pb.collection('orders').create(orderData);
+  // Reserve seats before creating order (for seated events)
+  let reservedSeatIds: string[] = [];
+  if (request.ticketItems.some((item) => item.seatIds && item.seatIds.length > 0)) {
+    const allSeatIds = request.ticketItems.flatMap((item) => item.seatIds || []);
+    try {
+      const { reserveSeats } = await import('./seatReservationService');
+      const reserveResult = await reserveSeats(allSeatIds, request.userId, request.eventId);
+      
+      if (!reserveResult.success || reserveResult.failed.length > 0) {
+        throw new Error(
+          `Failed to reserve seats: ${reserveResult.failed.join(', ')}. Some seats may have been taken.`
+        );
+      }
+      reservedSeatIds = reserveResult.reserved;
+      console.log(`[createOrder] Reserved ${reservedSeatIds.length} seats for order`);
+    } catch (error: any) {
+      console.error('[createOrder] Failed to reserve seats:', error);
+      throw new Error(`Seat reservation failed: ${error.message || 'Unknown error'}`);
+    }
+  }
+
+  let order;
+  try {
+    order = await pb.collection('orders').create(orderData);
+  } catch (error: any) {
+    // If order creation fails, release seat reservations
+    if (reservedSeatIds.length > 0) {
+      try {
+        const { releaseSeats } = await import('./seatReservationService');
+        await releaseSeats(reservedSeatIds);
+        console.log(`[createOrder] Released ${reservedSeatIds.length} seat reservations due to order creation failure`);
+      } catch (releaseError) {
+        console.error('[createOrder] Failed to release seat reservations:', releaseError);
+      }
+    }
+    throw error;
+  }
 
   let razorpayOrder = null;
 
@@ -249,6 +285,7 @@ export async function confirmOrder(orderId: string, paymentId?: string, signatur
 
   // Update tickets to issued
   const ticketTypeUpdates = new Map<string, number>();
+  const seatIds: string[] = [];
 
   for (const ticket of tickets) {
     await pb.collection('tickets').update(ticket.id, {
@@ -258,6 +295,23 @@ export async function confirmOrder(orderId: string, paymentId?: string, signatur
     // Track quantity updates
     const currentCount = ticketTypeUpdates.get(ticket.ticket_type_id) || 0;
     ticketTypeUpdates.set(ticket.ticket_type_id, currentCount + 1);
+
+    // Collect seat IDs for reservation release
+    if (ticket.seat_id) {
+      seatIds.push(ticket.seat_id);
+    }
+  }
+
+  // Release seat reservations when tickets are confirmed
+  if (seatIds.length > 0) {
+    try {
+      const { confirmSeats } = await import('./seatReservationService');
+      await confirmSeats(seatIds);
+      console.log(`[confirmOrder] Released reservations for ${seatIds.length} seats`);
+    } catch (error) {
+      console.error('[confirmOrder] Failed to release seat reservations:', error);
+      // Don't fail order if reservation release fails
+    }
   }
   
   console.log(`[confirmOrder] Updated ${tickets.length} tickets to 'issued' status`);
@@ -271,13 +325,17 @@ export async function confirmOrder(orderId: string, paymentId?: string, signatur
   }
 
   // Send confirmation email (don't fail order if email fails)
+  // Get recipient email/name outside try block so it's available in catch block
+  let recipientEmail: string | undefined;
+  let recipientName: string | undefined;
+  
   try {
     const event = await pb.collection('events').getOne(order.event_id);
     const user = await pb.collection('users').getOne(order.user_id);
 
     // Use attendee email if provided, otherwise use user email
-    const recipientEmail = order.attendee_email || user.email;
-    const recipientName = order.attendee_name || user.name;
+    recipientEmail = order.attendee_email || user.email;
+    recipientName = order.attendee_name || user.name;
 
     // Generate QR codes for tickets
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -336,17 +394,24 @@ export async function confirmOrder(orderId: string, paymentId?: string, signatur
     console.log(`Ticket confirmation email sent to ${recipientEmail} for order ${order.order_number}`);
   } catch (emailError: any) {
     // Log error but don't fail the order confirmation
+    console.error('[Cash Confirmation] Error confirming order', orderId + ':', emailError);
+    console.error('Error details:', {
+      message: emailError.message,
+      status: emailError.response?.status,
+      data: emailError.response?.data,
+      stack: emailError.stack,
+    });
     console.error('[Order Confirmation] Failed to send ticket confirmation email:', {
       orderId,
-      recipientEmail,
+      recipientEmail: recipientEmail || 'unknown',
+      recipientName: recipientName || 'unknown',
       error: emailError.message,
       stack: emailError.stack,
       response: emailError.response?.data,
       statusCode: emailError.response?.status,
     });
     console.error('[Order Confirmation] Order confirmation completed successfully, but email failed');
-    // Re-throw to see the full error in logs, but this won't fail the order
-    // The error is caught here so order confirmation still succeeds
+    // Don't re-throw - order confirmation should succeed even if email fails
   }
 
   return order;

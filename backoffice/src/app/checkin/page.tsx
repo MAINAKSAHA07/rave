@@ -79,37 +79,54 @@ export default function CheckInPage() {
   // Handle scanner lifecycle
   useEffect(() => {
     if (scanning && !scannerRef.current) {
-      // Small delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        const scanner = new Html5Qrcode('reader');
-        scannerRef.current = scanner;
+      // Wait for DOM element to be available
+      const initScanner = () => {
+        const readerElement = document.getElementById('reader');
+        if (!readerElement) {
+          // Retry after a short delay if element not found
+          setTimeout(initScanner, 100);
+          return;
+        }
 
-        scanner
-          .start(
-            { facingMode: 'environment' },
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-            },
-            async (decodedText) => {
+        try {
+          const scanner = new Html5Qrcode('reader');
+          scannerRef.current = scanner;
+
+          scanner
+            .start(
+              { facingMode: 'environment' },
+              {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+              },
+              async (decodedText) => {
               // Pause scanning to prevent multiple scans
-              scanner.pause();
-              await handleScan(decodedText);
-              // Resume after processing
-              scanner.resume();
-            },
-            (errorMessage) => {
-              // Ignore scanning errors
-            }
-          )
-          .catch((err) => {
-            console.error('Failed to start scanner:', err);
-            alert('Failed to start camera. Please check permissions.');
-            setScanning(false);
-          });
-      }, 100);
+                if (scannerRef.current) {
+                  scannerRef.current.pause();
+                }
+                await handleScan(decodedText);
+                // Resume after processing
+                if (scannerRef.current) {
+                  scannerRef.current.resume();
+                }
+              },
+              (errorMessage) => {
+                // Ignore scanning errors (these are normal during scanning)
+              }
+            )
+            .catch((err) => {
+              console.error('Failed to start scanner:', err);
+              alert('Failed to start camera. Please check permissions.');
+              setScanning(false);
+            });
+        } catch (err) {
+          console.error('Error initializing scanner:', err);
+          setScanning(false);
+        }
+      };
 
-      return () => clearTimeout(timer);
+      // Start initialization
+      initScanner();
     } else if (!scanning && scannerRef.current) {
       scannerRef.current
         .stop()
@@ -118,6 +135,7 @@ export default function CheckInPage() {
         })
         .catch((err) => {
           console.error('Failed to stop scanner:', err);
+          scannerRef.current = null;
         });
     }
 
@@ -127,7 +145,7 @@ export default function CheckInPage() {
         scannerRef.current = null;
       }
     };
-  }, [scanning]);
+  }, [scanning, selectedEventId]);
 
   function startScanning() {
     if (!selectedEventId) {
@@ -146,14 +164,31 @@ export default function CheckInPage() {
       const user = getCurrentUser();
       if (!user) return;
 
-      const response = await checkinApi.scan(ticketCode, selectedEventId, user.id);
+      // Extract ticket code from URL if needed (format: /t/TICKET_CODE)
+      let code = ticketCode.trim();
+      if (code.includes('/t/')) {
+        code = code.split('/t/')[1].split('?')[0].split('#')[0];
+      }
+
+      const response = await checkinApi.scan(code, selectedEventId, user.id);
       setLastScanResult({ success: true, data: response.data });
+      
+      // Clear result after 3 seconds
+      setTimeout(() => {
+        setLastScanResult(null);
+      }, 3000);
+      
       await loadStats();
     } catch (error: any) {
       setLastScanResult({
         success: false,
         error: error.response?.data?.error || 'Check-in failed',
       });
+      
+      // Clear error after 3 seconds
+      setTimeout(() => {
+        setLastScanResult(null);
+      }, 3000);
     }
   }
 

@@ -48,5 +48,20 @@ export const refundsApi = {
     api.post(`/refunds/${refundId}/approve`, { approvedBy }),
 };
 
+export const seatsApi = {
+  getAvailableSeats: (eventId: string) => api.get(`/seats/event/${eventId}/available`),
+};
+
+export const seatReservationsApi = {
+  reserve: (seatIds: string[], userId: string, eventId: string) =>
+    api.post('/seat-reservations/reserve', { seatIds, userId, eventId }),
+  release: (seatIds: string[]) =>
+    api.post('/seat-reservations/release', { seatIds }),
+  getReserved: (eventId: string, userId?: string) =>
+    api.get(`/seat-reservations/event/${eventId}`, { params: { userId } }),
+  check: (seatIds: string[], eventId: string, userId?: string) =>
+    api.post('/seat-reservations/check', { seatIds, eventId, userId }),
+};
+
 export default api;
 

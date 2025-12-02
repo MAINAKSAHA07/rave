@@ -716,8 +716,11 @@ router.post('/tickets/:ticketId/cancel', requireAdmin, async (req, res, next) =>
     const { ticketId } = req.params;
     const { reason } = req.body;
     const pb = getPocketBase();
+    const user = (req as any).user;
 
-    const ticket = await pb.collection('tickets').getOne(ticketId);
+    const ticket = await pb.collection('tickets').getOne(ticketId, {
+      expand: 'order_id,ticket_type_id',
+    });
 
     if (ticket.status === 'checked_in') {
       return res.status(400).json({
@@ -731,15 +734,94 @@ router.post('/tickets/:ticketId/cancel', requireAdmin, async (req, res, next) =>
       });
     }
 
+    // Get order to check if it was paid
+    const order = ticket.expand?.order_id || await pb.collection('orders').getOne(ticket.order_id);
+    
+    // Get ticket type to get the price
+    const ticketType = ticket.expand?.ticket_type_id || await pb.collection('ticket_types').getOne(ticket.ticket_type_id);
+    
+    // If ticket was issued and order was paid, process refund
+    let refundProcessed = false;
+    let refundError: string | null = null;
+    
+    if (ticket.status === 'issued' && order.status === 'paid') {
+      try {
+        // Calculate refund amount (ticket's final price)
+        const refundAmount = ticketType.final_price_minor;
+        
+        // Check if there's enough available to refund
+        const availableRefund = order.total_amount_minor - (order.refunded_amount_minor || 0);
+        if (refundAmount > 0 && refundAmount <= availableRefund) {
+          // Check payment method
+          const paymentMethod = (order as any).payment_method || (order.razorpay_payment_id ? 'razorpay' : 'cash');
+          
+          if (paymentMethod === 'cash' || !order.razorpay_payment_id) {
+            // Cash payment - create refund record directly (no Razorpay processing needed)
+            const refundData: any = {
+              order_id: order.id,
+              requested_by: user.id,
+              amount_minor: refundAmount,
+              currency: order.currency,
+              reason: reason || `Ticket cancelled: ${ticket.ticket_code}`,
+              status: 'completed', // Cash refunds are immediate
+              processed_at: new Date().toISOString(),
+            };
+            
+            const refund = await pb.collection('refunds').create(refundData);
+            
+            // Update order
+            const newRefundedAmount = (order.refunded_amount_minor || 0) + refundAmount;
+            const newStatus = newRefundedAmount >= order.total_amount_minor ? 'refunded' : 'partial_refunded';
+            
+            await pb.collection('orders').update(order.id, {
+              refunded_amount_minor: newRefundedAmount,
+              status: newStatus,
+            });
+            
+            refundProcessed = true;
+          } else {
+            // Razorpay payment - use refund service
+            const { processRefund } = await import('../services/refundService');
+            await processRefund({
+              orderId: order.id,
+              refundedBy: user.id,
+              reason: reason || `Ticket cancelled: ${ticket.ticket_code}`,
+              amount: refundAmount, // Refund only this ticket's amount
+            });
+            refundProcessed = true;
+          }
+        } else {
+          refundError = 'No available amount to refund';
+        }
+      } catch (error: any) {
+        console.error('Failed to process refund for cancelled ticket:', error);
+        refundError = error.message || 'Refund processing failed';
+        // Continue with cancellation even if refund fails
+        // The refund can be processed manually later
+      }
+    }
+
+    // Mark ticket as cancelled
     await pb.collection('tickets').update(ticketId, {
       status: 'cancelled',
     });
 
-    // If ticket was issued, we might want to refund or restore inventory
-    // For now, just mark as cancelled
-    // TODO: Handle refund logic if needed
-
-    res.json({ success: true, message: 'Ticket cancelled successfully' });
+    let message = 'Ticket cancelled successfully';
+    if (ticket.status === 'issued' && order.status === 'paid') {
+      if (refundProcessed) {
+        message = 'Ticket cancelled and refund processed successfully';
+      } else if (refundError) {
+        message = `Ticket cancelled. Refund could not be processed: ${refundError}. Please process manually.`;
+      } else {
+        message = 'Ticket cancelled. No refund was processed (order may already be fully refunded).';
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      message,
+      refundProcessed 
+    });
   } catch (error: any) {
     next(error);
   }

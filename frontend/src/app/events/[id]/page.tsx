@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { getPocketBase } from '@/lib/pocketbase';
-import { ordersApi } from '@/lib/api';
+import { ordersApi, seatsApi, seatReservationsApi } from '@/lib/api';
 import Script from 'next/script';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface Event {
   id: string;
@@ -17,6 +19,13 @@ interface Event {
   cover_image?: string;
   venue_id: string;
   organizer_id: string;
+  expand?: {
+    venue_id?: {
+      id: string;
+      name: string;
+      layout_type: 'GA' | 'SEATED';
+    };
+  };
 }
 
 interface TicketType {
@@ -29,14 +38,39 @@ interface TicketType {
   max_per_order: number;
 }
 
+interface Seat {
+  id: string;
+  section: string;
+  row: string;
+  seat_number: string;
+  label: string;
+  available: boolean;
+  reserved?: boolean;
+  sold?: boolean;
+  position_x?: number;
+  position_y?: number;
+}
+
 export default function EventDetailsPage() {
   const params = useParams();
   const eventId = params.id as string;
   const [event, setEvent] = useState<Event | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
+  const [selectedSeats, setSelectedSeats] = useState<Record<string, string[]>>({}); // ticketTypeId -> seatIds[]
+  const [availableSeats, setAvailableSeats] = useState<Seat[]>([]);
+  const [isSeated, setIsSeated] = useState(false);
+  const [showSeatSelection, setShowSeatSelection] = useState<Record<string, boolean>>({});
+  const [reservedSeats, setReservedSeats] = useState<Set<string>>(new Set());
+  const [reservationTimer, setReservationTimer] = useState<NodeJS.Timeout | null>(null);
+  const [attendeeDetails, setAttendeeDetails] = useState({
+    name: '',
+    email: '',
+    phone: '',
+  });
   const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cash'>('razorpay');
   const [loading, setLoading] = useState(true);
+  const reservationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadEvent();
@@ -54,6 +88,23 @@ export default function EventDetailsPage() {
         filter: `event_id="${eventId}"`,
       });
       setTicketTypes(ticketTypesData as any);
+
+      // Check if venue is SEATED and load available seats
+      const venue = eventData.expand?.venue_id || await pb.collection('venues').getOne(eventData.venue_id);
+      if (venue.layout_type === 'SEATED') {
+        setIsSeated(true);
+        await loadSeats();
+      }
+
+      // Load user details for attendee form
+      const user = pb.authStore.model;
+      if (user) {
+        setAttendeeDetails({
+          name: user.name || '',
+          email: user.email || '',
+          phone: user.phone || '',
+        });
+      }
     } catch (error) {
       console.error('Failed to load event:', error);
     } finally {
@@ -63,7 +114,143 @@ export default function EventDetailsPage() {
 
   function handleTicketChange(ticketTypeId: string, quantity: number) {
     setSelectedTickets({ ...selectedTickets, [ticketTypeId]: quantity });
+    
+    // For seated events, clear seat selection if quantity is reduced
+    if (isSeated && selectedSeats[ticketTypeId]) {
+      const currentSeats = selectedSeats[ticketTypeId] || [];
+      if (quantity < currentSeats.length) {
+        setSelectedSeats({
+          ...selectedSeats,
+          [ticketTypeId]: currentSeats.slice(0, quantity),
+        });
+      }
+    }
   }
+
+  async function loadSeats() {
+    try {
+      const seatsResponse = await seatsApi.getAvailableSeats(eventId);
+      setAvailableSeats(seatsResponse.data.seats || []);
+      
+      // Load reserved seats
+      const user = getPocketBase().authStore.model;
+      if (user) {
+        const reservedResponse = await seatReservationsApi.getReserved(eventId, user.id);
+        setReservedSeats(new Set(reservedResponse.data.reserved || []));
+      }
+    } catch (error) {
+      console.error('Failed to load seats:', error);
+    }
+  }
+
+  async function handleSeatToggle(ticketTypeId: string, seatId: string) {
+    const currentSeats = selectedSeats[ticketTypeId] || [];
+    const quantity = selectedTickets[ticketTypeId] || 0;
+    const user = getPocketBase().authStore.model;
+
+    if (!user) {
+      alert('Please login to select seats');
+      return;
+    }
+
+    if (currentSeats.includes(seatId)) {
+      // Deselect seat - release reservation
+      const newSeats = currentSeats.filter((id) => id !== seatId);
+      setSelectedSeats({
+        ...selectedSeats,
+        [ticketTypeId]: newSeats,
+      });
+
+      // Release reservation
+      try {
+        await seatReservationsApi.release([seatId]);
+        setReservedSeats((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(seatId);
+          return newSet;
+        });
+      } catch (error) {
+        console.error('Failed to release seat reservation:', error);
+      }
+    } else {
+      // Select seat (if not at limit)
+      if (currentSeats.length < quantity) {
+        // Reserve the seat
+        try {
+          const reserveResponse = await seatReservationsApi.reserve([seatId], user.id, eventId);
+          
+          if (reserveResponse.data.reserved.includes(seatId)) {
+            setSelectedSeats({
+              ...selectedSeats,
+              [ticketTypeId]: [...currentSeats, seatId],
+            });
+            setReservedSeats((prev) => new Set([...prev, seatId]));
+
+            // Set timeout to release reservation after 10 minutes
+            if (reservationTimeoutRef.current) {
+              clearTimeout(reservationTimeoutRef.current);
+            }
+            reservationTimeoutRef.current = setTimeout(() => {
+              seatReservationsApi.release([seatId]).catch(console.error);
+              setReservedSeats((prev) => {
+                const newSet = new Set(prev);
+                newSet.delete(seatId);
+                return newSet;
+              });
+              setSelectedSeats((prev) => ({
+                ...prev,
+                [ticketTypeId]: (prev[ticketTypeId] || []).filter((id) => id !== seatId),
+              }));
+              alert('Your seat reservation has expired. Please select seats again.');
+            }, 10 * 60 * 1000); // 10 minutes
+          } else {
+            alert('This seat is no longer available. Please select another seat.');
+            await loadSeats(); // Refresh seat availability
+          }
+        } catch (error: any) {
+          console.error('Failed to reserve seat:', error);
+          alert(`Failed to reserve seat: ${error.response?.data?.error || error.message || 'Unknown error'}`);
+          await loadSeats(); // Refresh seat availability
+        }
+      } else {
+        alert(`You can only select ${quantity} seat(s) for this ticket type`);
+      }
+    }
+  }
+
+  // Poll for reserved seats updates
+  useEffect(() => {
+    if (!isSeated) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const user = getPocketBase().authStore.model;
+        if (user) {
+          const reservedResponse = await seatReservationsApi.getReserved(eventId, user.id);
+          setReservedSeats(new Set(reservedResponse.data.reserved || []));
+        }
+      } catch (error) {
+        console.error('Failed to check reserved seats:', error);
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isSeated, eventId]);
+
+  // Cleanup reservations on unmount or page navigation
+  useEffect(() => {
+    return () => {
+      if (reservationTimeoutRef.current) {
+        clearTimeout(reservationTimeoutRef.current);
+      }
+      
+      // Release all reservations when component unmounts
+      const allSelectedSeatIds = Object.values(selectedSeats).flat();
+      if (allSelectedSeatIds.length > 0) {
+        seatReservationsApi.release(allSelectedSeatIds).catch(console.error);
+      }
+    };
+  }, [selectedSeats]);
 
   async function handleCheckout() {
     const pb = getPocketBase();
@@ -76,11 +263,46 @@ export default function EventDetailsPage() {
       return;
     }
 
+    // Validate seat selection for seated events
+    if (isSeated) {
+      for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
+        if (quantity > 0) {
+          const selectedSeatIds = selectedSeats[ticketTypeId] || [];
+          if (selectedSeatIds.length !== quantity) {
+            alert(`Please select exactly ${quantity} seat(s) for ${ticketTypes.find(tt => tt.id === ticketTypeId)?.name || 'this ticket type'}`);
+            return;
+          }
+        }
+      }
+
+      // Ensure all selected seats are still reserved
+      const allSelectedSeatIds = Object.values(selectedSeats).flat();
+      if (allSelectedSeatIds.length > 0) {
+        try {
+          const checkResponse = await seatReservationsApi.check(allSelectedSeatIds, eventId, user.id);
+          const unavailableSeats: string[] = [];
+          for (const [seatId, isReserved] of Object.entries(checkResponse.data.status)) {
+            if (!isReserved && !reservedSeats.has(seatId)) {
+              unavailableSeats.push(seatId);
+            }
+          }
+          if (unavailableSeats.length > 0) {
+            alert('Some of your selected seats are no longer available. Please select different seats.');
+            await loadSeats();
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to check seat availability:', error);
+        }
+      }
+    }
+
     const ticketItems = Object.entries(selectedTickets)
       .filter(([_, qty]) => qty > 0)
       .map(([ticketTypeId, quantity]) => ({
         ticketTypeId,
         quantity,
+        seatIds: isSeated ? (selectedSeats[ticketTypeId] || []) : undefined,
       }));
 
     if (ticketItems.length === 0) {
@@ -94,9 +316,21 @@ export default function EventDetailsPage() {
         eventId,
         ticketItems,
         paymentMethod,
+        attendeeName: attendeeDetails.name || undefined,
+        attendeeEmail: attendeeDetails.email || undefined,
+        attendeePhone: attendeeDetails.phone || undefined,
       });
 
       const { razorpayOrder, order } = response.data;
+
+      // Release seat reservations on successful order creation (they'll be confirmed when payment completes)
+      if (isSeated) {
+        const allSelectedSeatIds = Object.values(selectedSeats).flat();
+        if (allSelectedSeatIds.length > 0) {
+          // Don't release yet - wait for payment confirmation
+          // Reservations will be released when order is confirmed
+        }
+      }
 
       // Handle cash payments
       if (paymentMethod === 'cash') {
@@ -128,6 +362,18 @@ export default function EventDetailsPage() {
               response.razorpay_signature
             );
             
+            // Release seat reservations (they're now confirmed as tickets)
+            if (isSeated) {
+              const allSelectedSeatIds = Object.values(selectedSeats).flat();
+              if (allSelectedSeatIds.length > 0) {
+                try {
+                  await seatReservationsApi.release(allSelectedSeatIds);
+                } catch (error) {
+                  console.error('Failed to release reservations:', error);
+                }
+              }
+            }
+
             alert('Payment successful! Check your email for tickets with QR codes.');
             window.location.href = '/my-tickets';
           } catch (error: any) {
@@ -150,6 +396,25 @@ export default function EventDetailsPage() {
       razorpay.open();
     } catch (error: any) {
       console.error('Checkout failed:', error);
+      
+      // Release seat reservations on checkout failure
+      if (isSeated) {
+        const allSelectedSeatIds = Object.values(selectedSeats).flat();
+        if (allSelectedSeatIds.length > 0) {
+          try {
+            await seatReservationsApi.release(allSelectedSeatIds);
+            setReservedSeats((prev) => {
+              const newSet = new Set(prev);
+              allSelectedSeatIds.forEach((id) => newSet.delete(id));
+              return newSet;
+            });
+            setSelectedSeats({});
+          } catch (releaseError) {
+            console.error('Failed to release seat reservations:', releaseError);
+          }
+        }
+      }
+      
       alert(error.response?.data?.error || error.message || 'Checkout failed');
     }
   }
@@ -245,10 +510,109 @@ export default function EventDetailsPage() {
                       +
                     </button>
                   </div>
+                  
+                  {/* Seat Selection for Seated Events */}
+                  {isSeated && (selectedTickets[tt.id] || 0) > 0 && (
+                    <div className="mt-4 border-t pt-4">
+                      <button
+                        onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
+                        className="text-sm text-blue-600 hover:underline mb-2"
+                      >
+                        {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
+                      </button>
+                      {showSeatSelection[tt.id] && (
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-600 mb-2">
+                            Select {selectedTickets[tt.id]} seat(s). Selected: {(selectedSeats[tt.id] || []).length}
+                          </p>
+                          <div className="max-h-64 overflow-y-auto border rounded p-3">
+                            {availableSeats.length === 0 ? (
+                              <p className="text-sm text-gray-500">Loading seats...</p>
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {availableSeats.map((seat) => {
+                                  const isSelected = (selectedSeats[tt.id] || []).includes(seat.id);
+                                  const isReserved = reservedSeats.has(seat.id) && !isSelected;
+                                  const isUnavailable = !seat.available || seat.sold || isReserved;
+                                  
+                                  return (
+                                    <button
+                                      key={seat.id}
+                                      onClick={() => handleSeatToggle(tt.id, seat.id)}
+                                      disabled={isUnavailable}
+                                      className={`px-2 py-1 text-xs rounded ${
+                                        isSelected
+                                          ? 'bg-blue-600 text-white'
+                                          : isReserved
+                                          ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                                          : seat.available && !seat.sold
+                                          ? 'bg-gray-100 hover:bg-gray-200'
+                                          : 'bg-red-100 text-gray-400 cursor-not-allowed'
+                                      }`}
+                                      title={
+                                        isSelected
+                                          ? `Selected: ${seat.section} - Row ${seat.row} - ${seat.label}`
+                                          : isReserved
+                                          ? `Reserved: ${seat.section} - Row ${seat.row} - ${seat.label}`
+                                          : seat.sold
+                                          ? 'Sold'
+                                          : `${seat.section} - Row ${seat.row} - ${seat.label}`
+                                      }
+                                    >
+                                      💺 {seat.label}
+                                      {isReserved && <span className="ml-1 text-xs">⏱️</span>}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Attendee Details Form */}
+          {totalAmount > 0 && (
+            <div className="mb-8 border rounded-lg p-4">
+              <h2 className="text-xl font-semibold mb-4">Attendee Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="attendeeName">Name *</Label>
+                  <Input
+                    id="attendeeName"
+                    value={attendeeDetails.name}
+                    onChange={(e) => setAttendeeDetails({ ...attendeeDetails, name: e.target.value })}
+                    placeholder="Full name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="attendeeEmail">Email *</Label>
+                  <Input
+                    id="attendeeEmail"
+                    type="email"
+                    value={attendeeDetails.email}
+                    onChange={(e) => setAttendeeDetails({ ...attendeeDetails, email: e.target.value })}
+                    placeholder="email@example.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="attendeePhone">Phone *</Label>
+                  <Input
+                    id="attendeePhone"
+                    type="tel"
+                    value={attendeeDetails.phone}
+                    onChange={(e) => setAttendeeDetails({ ...attendeeDetails, phone: e.target.value })}
+                    placeholder="+91 1234567890"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {totalAmount > 0 && (
             <div className="sticky bottom-0 bg-white border-t p-4 rounded-lg shadow-lg">
@@ -286,9 +650,13 @@ export default function EventDetailsPage() {
                 </div>
               </div>
 
+              {(!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone) && (
+                <p className="text-sm text-red-600 mb-2">Please fill in all attendee details</p>
+              )}
               <button
                 onClick={handleCheckout}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+                disabled={!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {paymentMethod === 'cash' ? 'Create Order (Pay at Venue)' : 'Proceed to Checkout'}
               </button>

@@ -92,6 +92,23 @@ export default function OrganizerVenuesPage() {
   }
 
   if (!organizer) {
+    const currentUser = getCurrentUser();
+    // Allow admin/super_admin to access even without organizer association
+    if (currentUser?.role === 'super_admin' || currentUser?.role === 'admin') {
+      // This shouldn't happen as we set a dummy organizer above, but just in case
+      return (
+        <div className="p-8">
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-gray-600">
+                Loading venues...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
     return (
       <div className="p-8">
         <p className="text-red-600">You are not associated with an organizer account.</p>

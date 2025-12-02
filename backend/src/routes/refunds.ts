@@ -69,6 +69,39 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// Get refunds (with optional filters)
+router.get('/', async (req, res, next) => {
+  try {
+    const pb = getPocketBase();
+    const { organizerId, status } = req.query;
+    
+    let filter = '';
+    if (organizerId) {
+      filter += `organizer_id="${organizerId}"`;
+    }
+    if (status) {
+      if (filter) filter += ' && ';
+      filter += `status="${status}"`;
+    }
+
+    const queryOptions: any = {
+      expand: 'order_id,requested_by',
+      sort: '-created',
+    };
+
+    // Only include filter if it's not empty
+    if (filter) {
+      queryOptions.filter = filter;
+    }
+
+    const refunds = await pb.collection('refunds').getFullList(queryOptions);
+
+    res.json(refunds);
+  } catch (error: any) {
+    next(error);
+  }
+});
+
 // Approve refund (admin only)
 router.post('/:refundId/approve', async (req, res, next) => {
   try {

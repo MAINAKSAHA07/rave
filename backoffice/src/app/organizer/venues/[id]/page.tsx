@@ -108,6 +108,16 @@ export default function VenueDetailPage() {
             <Link href={`/organizer/venues/${venueId}/edit`}>
               <Button>Edit Venue</Button>
             </Link>
+            {venue.layout_type === 'SEATED' && (
+              <>
+                <Link href={`/organizer/venues/${venueId}/seats`}>
+                  <Button variant="outline">Manage Seats</Button>
+                </Link>
+                <Link href={`/organizer/venues/${venueId}/seats-map`}>
+                  <Button variant="outline">💺 Seat Map Editor</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
