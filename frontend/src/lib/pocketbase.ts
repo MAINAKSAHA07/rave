@@ -73,6 +73,19 @@ class ProxyPocketBase {
 
   collection(name: string) {
     return {
+      // Get auth methods (used by PocketBase internally for OAuth)
+      listAuthMethods: async () => {
+        const response = await fetch(`/api/pocketbase/api/collections/${name}/auth-methods`, {
+          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Request failed');
+        }
+        
+        return response.json();
+      },
       getList: async (page = 1, perPage = 20, options: any = {}) => {
         const params = new URLSearchParams({
           page: page.toString(),
@@ -194,11 +207,76 @@ class ProxyPocketBase {
         return { token: data.token, record: data.record };
       },
       authWithOAuth2: async (options: any) => {
-        // For OAuth, we need to use direct PocketBase connection
-        // This is a special case that requires redirect - bypass proxy for OAuth
-        // Note: This will still have Mixed Content issues, but OAuth redirects away
-        const pb = new PocketBase(pbUrl);
-        return pb.collection(name).authWithOAuth2(options);
+        // Custom OAuth implementation using proxy to avoid Mixed Content
+        // PocketBase SDK internally calls auth-methods directly, causing Mixed Content errors
+        // So we implement OAuth ourselves using the proxy
+        
+        // Get auth methods through proxy
+        const authMethodsResponse = await fetch(`/api/pocketbase/api/collections/${name}/auth-methods`, {
+          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+        });
+        
+        if (!authMethodsResponse.ok) {
+          throw new Error('Failed to get auth methods');
+        }
+        
+        const authMethods = await authMethodsResponse.json();
+        const provider = authMethods.authProviders?.find((p: any) => p.name === options.provider);
+        
+        if (!provider) {
+          throw new Error(`Provider ${options.provider} not found`);
+        }
+        
+        // If we have a code (OAuth callback), complete the auth
+        if (options.code) {
+          const response = await fetch(`/api/pocketbase/api/collections/${name}/auth-with-oauth2`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+            },
+            body: JSON.stringify({
+              provider: options.provider,
+              code: options.code,
+              codeVerifier: options.codeVerifier,
+              redirectUrl: options.redirectUrl,
+            }),
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'OAuth failed');
+          }
+          
+          const data = await response.json();
+          if (data.token && data.record) {
+            this.authStore.save(data.token, data.record);
+          }
+          return data;
+        }
+        
+        // Otherwise, initiate OAuth flow
+        if (options.urlCallback) {
+          // Use PocketBase's OAuth URL generation
+          // We need to get the OAuth URL from PocketBase, but through proxy
+          // For now, construct it manually based on provider config
+          const redirectUrl = options.redirectUrl || `${window.location.origin}/auth/callback`;
+          const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+          
+          // Store state for verification
+          sessionStorage.setItem('oauth_state', state);
+          
+          // Build OAuth URL from provider
+          const authUrl = new URL(provider.authUrl);
+          authUrl.searchParams.set('redirect_uri', redirectUrl);
+          authUrl.searchParams.set('state', state);
+          authUrl.searchParams.set('client_id', provider.clientId);
+          
+          // Call the callback with the URL
+          options.urlCallback(authUrl.toString());
+        }
+        
+        return null;
       },
     };
   }
