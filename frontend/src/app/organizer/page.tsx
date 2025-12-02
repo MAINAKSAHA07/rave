@@ -33,7 +33,7 @@ export default function OrganizerDashboard() {
                 });
 
                 const totalEvents = events.length;
-                const upcomingEvents = events.filter(e => new Date(e.start_date) > new Date()).length;
+                const upcomingEvents = events.filter((e: any) => new Date(e.start_date) > new Date()).length;
 
                 // Fetch orders (simplified - ideally use an aggregation query or backend endpoint)
                 // For now, we'll just fetch recent orders or rely on a separate stats collection if it existed
@@ -43,7 +43,7 @@ export default function OrganizerDashboard() {
                 });
 
                 const totalTicketsSold = orders.length; // Simplified, should sum quantities
-                const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount_minor, 0);
+                const totalRevenue = orders.reduce((sum: number, order: any) => sum + order.total_amount_minor, 0);
 
                 setStats({
                     totalEvents,

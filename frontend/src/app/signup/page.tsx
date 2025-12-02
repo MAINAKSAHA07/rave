@@ -65,7 +65,7 @@ export default function SignupPage() {
       // PocketBase OAuth2 flow
       await pb.collection('users').authWithOAuth2({
         provider: 'google',
-        urlCallback: (url) => {
+        urlCallback: (url: string) => {
           // Store redirect URL in sessionStorage
           sessionStorage.setItem('oauth_redirect', '/events');
           // Redirect to OAuth provider

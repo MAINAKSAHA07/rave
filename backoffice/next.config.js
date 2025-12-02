@@ -46,7 +46,8 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'production', // Disable image optimization for static export if needed
   },
   env: {
-    NEXT_PUBLIC_POCKETBASE_URL: process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8092',
+    // Server-side only - not exposed to client
+    POCKETBASE_URL: process.env.POCKETBASE_URL || process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://13.201.90.240:8092',
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
   },
   output: 'standalone',

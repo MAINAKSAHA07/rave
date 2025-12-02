@@ -55,15 +55,15 @@ export default function MyTicketsPage() {
 
       const ordersMap: Record<string, Order> = {};
       for (const orderId of orderIds) {
-        const order = await pb.collection('orders').getOne(orderId);
-        ordersMap[orderId] = order as any;
+        const order = await pb.collection('orders').getOne(String(orderId));
+        ordersMap[String(orderId)] = order as any;
       }
       setOrders(ordersMap);
 
       const eventsMap: Record<string, any> = {};
       for (const eventId of eventIds) {
-        const event = await pb.collection('events').getOne(eventId);
-        eventsMap[eventId] = event;
+        const event = await pb.collection('events').getOne(String(eventId));
+        eventsMap[String(eventId)] = event;
       }
       setEvents(eventsMap);
     } catch (error) {

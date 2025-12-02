@@ -140,6 +140,57 @@ Vercel automatically deploys on every push to your connected Git branch:
 - Redeploy after adding new environment variables
 - Check variable names match exactly (case-sensitive)
 
+### Mixed Content Errors (HTTPS/HTTP)
+
+If you see errors like:
+- `Mixed Content: The page was loaded over HTTPS, but requested an insecure resource 'http://...'`
+- `This request has been blocked; the content must be served over HTTPS`
+
+**This means your backend services (PocketBase/Backend API) are using HTTP, but Vercel serves over HTTPS.** Browsers block HTTP requests from HTTPS pages.
+
+**Solution:** Set up HTTPS for your backend services. See **[Vercel HTTPS Setup Guide](./vercel-https-setup.md)** for detailed instructions.
+
+**Quick Fix:** You need to:
+1. Set up Nginx reverse proxy with Let's Encrypt SSL on your server (`13.201.90.240`)
+2. Get domain names (e.g., `api.yourdomain.com` for PocketBase, `backend.yourdomain.com` for Backend)
+3. Update Vercel environment variables to use `https://` URLs
+4. Redeploy
+
+### ERR_CONNECTION_REFUSED or localhost errors
+
+If you see errors like:
+- `Failed to load resource: net::ERR_CONNECTION_REFUSED`
+- `127.0.0.1:8092` connection errors
+- `localhost:3001` connection errors
+
+**This means environment variables are not set in Vercel.** The app is falling back to localhost URLs.
+
+**Fix:**
+1. Go to your Vercel project dashboard
+2. Navigate to **Settings** → **Environment Variables**
+3. Add the following variables (for **Production**, **Preview**, and **Development**):
+
+   For **Frontend**:
+   ```
+   NEXT_PUBLIC_POCKETBASE_URL = http://13.201.90.240:8092
+   NEXT_PUBLIC_BACKEND_URL = http://13.201.90.240:3001
+   NEXT_PUBLIC_RAZORPAY_KEY_ID = (your Razorpay key if needed)
+   ```
+
+   For **Backoffice**:
+   ```
+   NEXT_PUBLIC_POCKETBASE_URL = http://13.201.90.240:8092
+   NEXT_PUBLIC_BACKEND_URL = http://13.201.90.240:3001
+   ```
+
+4. After adding variables, **redeploy** your project:
+   - Go to **Deployments** tab
+   - Click the **⋯** menu on the latest deployment
+   - Select **Redeploy**
+   - Or push a new commit to trigger automatic redeploy
+
+**Important:** Environment variables are only available after redeployment. Simply adding them won't update the running deployment.
+
 ### Monorepo Issues
 
 - Ensure root directory is set correctly in project settings

@@ -1,61 +1,250 @@
 import PocketBase from 'pocketbase';
 
 const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8092';
+const useApiProxy = typeof window !== 'undefined'; // Use API proxy on client-side
 
-export function getPocketBase(): PocketBase {
+// Client-side PocketBase instance that uses API proxy
+class ProxyPocketBase {
+  private token: string | null = null;
+  private user: any = null;
+
+  constructor() {
+    // Load from localStorage if available
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('pocketbase_auth');
+      if (stored) {
+        try {
+          const { token, user } = JSON.parse(stored);
+          this.token = token;
+          this.user = user;
+        } catch (e) {
+          // Invalid stored data
+        }
+      }
+    }
+  }
+
+  get authStore() {
+    return {
+      token: this.token,
+      model: this.user,
+      isValid: !!this.token && !!this.user,
+      save: (token: string, user: any) => {
+        this.token = token;
+        this.user = user;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('pocketbase_auth', JSON.stringify({ token, user }));
+        }
+      },
+      clear: () => {
+        this.token = null;
+        this.user = null;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('pocketbase_auth');
+        }
+      },
+    };
+  }
+
+  collection(name: string) {
+    return {
+      getList: async (page = 1, perPage = 20, options: any = {}) => {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          perPage: perPage.toString(),
+          ...(options.filter && { filter: options.filter }),
+          ...(options.sort && { sort: options.sort }),
+          ...(options.expand && { expand: options.expand }),
+        });
+        
+        const response = await fetch(`/api/pocketbase/api/collections/${name}?${params}`, {
+          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Request failed');
+        }
+        
+        return response.json();
+      },
+      getFullList: async (options: any = {}) => {
+        // Get all items by making multiple requests if needed
+        const params = new URLSearchParams({
+          perPage: '500',
+          ...(options.filter && { filter: options.filter }),
+          ...(options.sort && { sort: options.sort }),
+          ...(options.expand && { expand: options.expand }),
+        });
+        
+        const response = await fetch(`/api/pocketbase/api/collections/${name}?${params}`, {
+          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Request failed');
+        }
+        
+        const data = await response.json();
+        return data.items || [];
+      },
+      getOne: async (id: string | number, options: any = {}) => {
+        const params = new URLSearchParams(
+          options.expand ? { expand: options.expand } : {}
+        );
+        
+        const response = await fetch(`/api/pocketbase/api/collections/${name}/records/${String(id)}?${params}`, {
+          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Request failed');
+        }
+        
+        return response.json();
+      },
+      create: async (data: any) => {
+        const response = await fetch(`/api/pocketbase/api/collections/${name}/records`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+          },
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Request failed');
+        }
+        
+        return response.json();
+      },
+      update: async (id: string, data: any) => {
+        const response = await fetch(`/api/pocketbase/api/collections/${name}/records/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+          },
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Request failed');
+        }
+        
+        return response.json();
+      },
+      delete: async (id: string) => {
+        const response = await fetch(`/api/pocketbase/api/collections/${name}/records/${id}`, {
+          method: 'DELETE',
+          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Request failed');
+        }
+        
+        return response.ok;
+      },
+      authWithPassword: async (email: string, password: string) => {
+        const response = await fetch('/api/pocketbase/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Login failed');
+        }
+        
+        const data = await response.json();
+        this.authStore.save(data.token, data.record);
+        return { token: data.token, record: data.record };
+      },
+      authWithOAuth2: async (options: any) => {
+        // For OAuth, we need to use direct PocketBase connection
+        // This is a special case that requires redirect - bypass proxy for OAuth
+        // Note: This will still have Mixed Content issues, but OAuth redirects away
+        const pb = new PocketBase(pbUrl);
+        return pb.collection(name).authWithOAuth2(options);
+      },
+    };
+  }
+}
+
+export function getPocketBase(): any {
   if (typeof window === 'undefined') {
-    // Server-side: In Netlify Lambda/serverless, create instance with safe defaults
-    // Note: Server-side PocketBase calls should be avoided in Lambda functions
-    // This instance is created but should only be used for URL generation, not API calls
+    // Server-side: Use direct PocketBase connection
     const pb = new PocketBase(pbUrl);
     pb.autoCancellation(false);
     return pb;
   }
 
-  // Client-side: use singleton
+  // Client-side: Use API proxy to avoid Mixed Content issues
   if (!(window as any).__pocketbase) {
-    const pb = new PocketBase(pbUrl);
-    // Disable auto-cancellation globally to prevent autocancelled errors
-    // This is safer for React apps where useEffect might trigger multiple times
-    pb.autoCancellation(false);
-    (window as any).__pocketbase = pb;
+    (window as any).__pocketbase = new ProxyPocketBase();
   }
   return (window as any).__pocketbase;
 }
 
 export async function login(email: string, password: string) {
-  const pb = getPocketBase();
-  const authData = await pb.collection('users').authWithPassword(email, password);
-  return authData;
+  if (useApiProxy) {
+    const pb = getPocketBase();
+    return await pb.collection('users').authWithPassword(email, password);
+  } else {
+    const pb = getPocketBase();
+    const authData = await pb.collection('users').authWithPassword(email, password);
+    return authData;
+  }
 }
 
 export async function register(email: string, password: string, name: string, phone: string) {
-  const pb = getPocketBase();
-  const data: any = {
-    email,
-    password,
-    passwordConfirm: password,
-    name,
-    phone,
-    emailVisibility: true,
-  };
-  
-  // Note: role field might be protected during public signup
-  // PocketBase should use the default value ('customer') from the schema
-  // If role needs to be set, it can be updated after creation by an admin
-  // or we can try to include it and let PocketBase handle validation
-  
-  const record = await pb.collection('users').create(data);
-  
-  // Auto-login after registration
-  try {
-    await login(email, password);
-  } catch (loginError) {
-    // If auto-login fails, user can login manually
-    console.warn('Auto-login after registration failed:', loginError);
+  if (useApiProxy) {
+    const response = await fetch('/api/pocketbase/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name, phone }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Registration failed');
+    }
+    
+    const data = await response.json();
+    const pb = getPocketBase();
+    if (data.token) {
+      pb.authStore.save(data.token, data.record);
+    }
+    return data.record;
+  } else {
+    const pb = getPocketBase();
+    const data: any = {
+      email,
+      password,
+      passwordConfirm: password,
+      name,
+      phone,
+      emailVisibility: true,
+    };
+    
+    const record = await pb.collection('users').create(data);
+    
+    try {
+      await login(email, password);
+    } catch (loginError) {
+      console.warn('Auto-login after registration failed:', loginError);
+    }
+    
+    return record;
   }
-  
-  return record;
 }
 
 export function logout() {
