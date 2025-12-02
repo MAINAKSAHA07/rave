@@ -9,6 +9,3 @@
   NEXT_PUBLIC_POCKETBASE_URL = "http://13.201.90.240:8092"
   NEXT_PUBLIC_BACKEND_URL = "http://13.201.90.240:3001"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
