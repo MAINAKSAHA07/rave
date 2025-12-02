@@ -47,19 +47,19 @@ export default function OrganizerStaffPage() {
           sort: '-created',
         });
         setStaff(allStaff as any);
-        
+
         // Load all users for invite dropdown
         const allUsers = await pb.collection('users').getFullList();
         setUsers(allUsers as any);
-        
+
         // Load all organizers for selection
         const allOrganizers = await pb.collection('organizers').getFullList({
           filter: 'status="approved"',
           sort: 'name',
         });
         setOrganizers(allOrganizers as any);
-        
-        setOrganizer({ 
+
+        setOrganizer({
           name: currentUser.role === 'super_admin' ? 'Super Admin View' : 'Admin View',
           description: 'Viewing all staff across all organizers'
         });
@@ -96,7 +96,7 @@ export default function OrganizerStaffPage() {
         // Get users who are not already staff
         const existingUserIds = allStaff.map((s: any) => s.user_id);
         const allUsers = await pb.collection('users').getFullList({
-          filter: existingUserIds.length > 0 
+          filter: existingUserIds.length > 0
             ? `id!~"${existingUserIds.join('" && id!~"')}"`
             : undefined,
         });
@@ -118,10 +118,10 @@ export default function OrganizerStaffPage() {
     setInviteLoading(true);
     try {
       const pb = getPocketBase();
-      
+
       // Determine which organizer to use
       let targetOrganizerId: string;
-      
+
       if (user?.role === 'super_admin' || user?.role === 'admin') {
         // For admin/super_admin, use the selected organizer from the form
         if (!inviteForm.organizerId) {
@@ -139,7 +139,7 @@ export default function OrganizerStaffPage() {
         }
         targetOrganizerId = organizer.id;
       }
-      
+
       // Find user by email
       let userToInvite;
       try {
@@ -152,7 +152,7 @@ export default function OrganizerStaffPage() {
         }
         throw error;
       }
-      
+
       // Check if user is already staff
       const existingStaff = await pb.collection('organizer_staff').getFullList({
         filter: `organizer_id="${targetOrganizerId}" && user_id="${userToInvite.id}"`,
@@ -212,7 +212,7 @@ export default function OrganizerStaffPage() {
     try {
       const pb = getPocketBase();
       const staffRecord = await pb.collection('organizer_staff').getOne(staffId);
-      
+
       // Prevent removing owner role
       if (staffRecord.role === 'owner' && newRole !== 'owner') {
         alert('Cannot change owner role');
@@ -239,7 +239,7 @@ export default function OrganizerStaffPage() {
     try {
       const pb = getPocketBase();
       const staffRecord = await pb.collection('organizer_staff').getOne(staffId);
-      
+
       // Prevent removing owner
       if (staffRecord.role === 'owner') {
         alert('Cannot remove owner');
@@ -279,7 +279,7 @@ export default function OrganizerStaffPage() {
         </div>
       );
     }
-    
+
     return (
       <div className="p-8">
         <Card>
@@ -295,7 +295,7 @@ export default function OrganizerStaffPage() {
 
   const currentStaffRecord = staff.find((s: any) => s.user_id === user.id);
   // Super admin and admin can always manage staff
-  const canManageStaff = user?.role === 'super_admin' || user?.role === 'admin' || 
+  const canManageStaff = user?.role === 'super_admin' || user?.role === 'admin' ||
     currentStaffRecord?.role === 'owner' || currentStaffRecord?.role === 'organizer';
 
   const roleColors: Record<string, string> = {
@@ -318,8 +318,8 @@ export default function OrganizerStaffPage() {
           <div>
             <h1 className="text-4xl font-bold">Staff Management</h1>
             <p className="text-gray-600 mt-2">
-              {user?.role === 'super_admin' || user?.role === 'admin' 
-                ? 'Manage staff members across all organizers' 
+              {user?.role === 'super_admin' || user?.role === 'admin'
+                ? 'Manage staff members across all organizers'
                 : `Manage staff members for ${organizer.name}`}
             </p>
           </div>
@@ -417,100 +417,7 @@ export default function OrganizerStaffPage() {
                 {staff.map((member: any) => {
                   const memberUser = member.expand?.user_id || {};
                   const inviter = member.expand?.invited_by || {};
-                  
-                  return (
-                    <div
-                      key={member.id}
-                      className="border rounded-lg p-4 flex items-center justify-between"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold">{memberUser.name || memberUser.email || 'Unknown'}</h3>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${roleColors[member.role] || 'bg-gray-100'}`}>
-                            {member.role}
-                          </span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[member.status] || 'bg-gray-100'}`}>
-                            {member.status}
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <p>Email: {memberUser.email || 'N/A'}</p>
-                          {inviter.email && (
-                            <p>Invited by: {inviter.name || inviter.email}</p>
-                          )}
-                          <p>Added: {new Date(member.created).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      {canManageStaff && member.role !== 'owner' && (
-                        <div className="flex gap-2">
-                          {member.status === 'active' && (
-                            <Select
-                              value={member.role}
-                              onValueChange={(newRole) => handleUpdateRole(member.id, newRole)}
-                            >
-                              <SelectTrigger className="w-40">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="organizer">Organizer</SelectItem>
-                                <SelectItem value="marketer">Marketer</SelectItem>
-                                <SelectItem value="volunteer">Volunteer</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                          {member.status === 'active' && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleRemoveStaff(member.id)}
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowInviteDialog(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleInviteStaff} disabled={inviteLoading}>
-                      {inviteLoading ? 'Adding...' : 'Add Staff'}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Staff Members ({staff.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {staff.length === 0 ? (
-              <p className="text-gray-500">No staff members yet.</p>
-            ) : (
-              <div className="space-y-4">
-                {staff.map((member: any) => {
-                  const memberUser = member.expand?.user_id || {};
-                  const inviter = member.expand?.invited_by || {};
-                  
                   return (
                     <div
                       key={member.id}
@@ -573,4 +480,6 @@ export default function OrganizerStaffPage() {
     </div>
   );
 }
+
+
 

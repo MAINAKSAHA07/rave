@@ -296,10 +296,10 @@ export default function VenueSeatsPage() {
                   </div>
                   <div className="p-3 bg-blue-50 rounded">
                     <p className="text-sm text-blue-800">
-                      This will create seats for rows {bulkForm.startRow} to {bulkForm.endRow}, 
+                      This will create seats for rows {bulkForm.startRow} to {bulkForm.endRow},
                       seats {bulkForm.startSeat} to {bulkForm.endSeat} in section "{bulkForm.section}".
                       <br />
-                      Total: {getRowSequence(bulkForm.startRow, bulkForm.endRow, bulkForm.rowType as 'letter' | 'number').length * 
+                      Total: {getRowSequence(bulkForm.startRow, bulkForm.endRow, bulkForm.rowType as 'letter' | 'number').length *
                         (bulkForm.endSeat - bulkForm.startSeat + 1)} seats
                     </p>
                   </div>
@@ -367,13 +367,4 @@ export default function VenueSeatsPage() {
 }
 
 
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
 

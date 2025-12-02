@@ -29,7 +29,7 @@ export default function VenueDetailPage() {
       }
 
       const pb = getPocketBase();
-      
+
       // For admin/super_admin, they can access any venue
       // For organizer staff, they can only access venues for their organizer
       let venueData;
@@ -57,7 +57,7 @@ export default function VenueDetailPage() {
           throw error;
         }
       }
-      
+
       setVenue(venueData);
 
       // Load events using this venue
@@ -197,13 +197,12 @@ export default function VenueDetailPage() {
                               {new Date(event.start_date).toLocaleDateString()}
                             </p>
                           </div>
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            event.status === 'published'
+                          <span className={`px-2 py-1 rounded text-xs ${event.status === 'published'
                               ? 'bg-green-100 text-green-800'
                               : event.status === 'draft'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                                ? 'bg-gray-100 text-gray-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
                             {event.status}
                           </span>
                         </div>
@@ -221,7 +220,5 @@ export default function VenueDetailPage() {
 }
 
 
-    </div>
-  );
-}
+
 

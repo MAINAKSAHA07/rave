@@ -47,7 +47,7 @@ export default function OrganizerVenuesPage() {
           expand: 'organizer_id',
         });
         setVenues(venuesData as any);
-        setOrganizer({ 
+        setOrganizer({
           name: user.role === 'super_admin' ? 'Super Admin View' : 'Admin View',
         });
         setLoading(false);
@@ -108,7 +108,7 @@ export default function OrganizerVenuesPage() {
         </div>
       );
     }
-    
+
     return (
       <div className="p-8">
         <p className="text-red-600">You are not associated with an organizer account.</p>
@@ -141,8 +141,8 @@ export default function OrganizerVenuesPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>All Venues ({venues.length})</CardTitle>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={loadVenues}
               >
@@ -200,19 +200,4 @@ export default function OrganizerVenuesPage() {
 }
 
 
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
 
