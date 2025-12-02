@@ -7,7 +7,6 @@ config({ path: path.resolve(__dirname, '../.env') });
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone', // For better deployment compatibility
   images: {
     // Support both local and AWS environments
     domains: (() => {
