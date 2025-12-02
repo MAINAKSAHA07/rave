@@ -1,0 +1,25 @@
+{
+  "name": "rave-ticketing-platform",
+  "version": "1.0.0",
+  "description": "Modern event ticketing platform for India with multi-currency support",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "backoffice"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:backoffice\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backoffice": "cd backoffice && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend && npm run build:backoffice",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backoffice": "cd backoffice && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
