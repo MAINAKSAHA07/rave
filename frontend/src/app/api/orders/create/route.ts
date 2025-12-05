@@ -18,11 +18,44 @@ export async function POST(request: NextRequest) {
 
         const pb = getPocketBase();
 
+        // Validate admin credentials are configured
+        const adminEmail = process.env.POCKETBASE_ADMIN_EMAIL;
+        const adminPassword = process.env.POCKETBASE_ADMIN_PASSWORD;
+
+        if (!adminEmail || !adminPassword) {
+            console.error('❌ PocketBase admin credentials not configured');
+            console.error('   Required: POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD');
+            return NextResponse.json({ 
+                error: 'Server configuration error. Please contact support.' 
+            }, { status: 500 });
+        }
+
         // Authenticate as admin to create order (orders collection has createRule = null)
-        await pb.admins.authWithPassword(
-            process.env.POCKETBASE_ADMIN_EMAIL!,
-            process.env.POCKETBASE_ADMIN_PASSWORD!
-        );
+        try {
+            await pb.admins.authWithPassword(adminEmail, adminPassword);
+        } catch (authError: any) {
+            console.error('❌ PocketBase admin authentication failed:', authError);
+            console.error('   URL:', authError.url);
+            console.error('   Status:', authError.status);
+            console.error('   Response:', JSON.stringify(authError.response, null, 2));
+            
+            // Provide helpful error message
+            if (authError.status === 400) {
+                return NextResponse.json({ 
+                    error: 'Invalid admin credentials. Please check POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD configuration.',
+                    details: process.env.NODE_ENV === 'development' ? authError.response : undefined
+                }, { status: 500 });
+            } else if (authError.status === 404) {
+                return NextResponse.json({ 
+                    error: 'PocketBase admin endpoint not found. Please check POCKETBASE_URL configuration.'
+                }, { status: 500 });
+            } else {
+                return NextResponse.json({ 
+                    error: 'Failed to authenticate with PocketBase admin.',
+                    details: process.env.NODE_ENV === 'development' ? authError.message : undefined
+                }, { status: 500 });
+            }
+        }
 
         // 1. Validate Event
         const event = await pb.collection('events').getOne(eventId);

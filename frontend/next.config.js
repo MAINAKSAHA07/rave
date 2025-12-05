@@ -53,6 +53,13 @@ const nextConfig = {
       if (process.env.NEXT_PUBLIC_POCKETBASE_URL) return process.env.NEXT_PUBLIC_POCKETBASE_URL;
       return 'http://localhost:8090';
     })(),
+    // PocketBase admin credentials (server-side only)
+    POCKETBASE_ADMIN_EMAIL: process.env.POCKETBASE_ADMIN_EMAIL || '',
+    POCKETBASE_ADMIN_PASSWORD: process.env.POCKETBASE_ADMIN_PASSWORD || '',
+    // Razorpay credentials (server-side only)
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || '',
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || '',
+    // Public environment variables
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
     NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
   },
