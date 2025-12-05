@@ -185,13 +185,20 @@ class ProxyPocketBase {
         return response.json();
       },
       create: async (data: any) => {
+        const isFormData = data instanceof FormData;
+        const headers: Record<string, string> = {
+          ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+        };
+        
+        // Don't set Content-Type for FormData - let the browser set it with boundary
+        if (!isFormData) {
+          headers['Content-Type'] = 'application/json';
+        }
+
         const response = await fetch(`/api/pocketbase/api/collections/${name}/records`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-          },
-          body: JSON.stringify(data),
+          headers,
+          body: isFormData ? data : JSON.stringify(data),
         });
 
         if (!response.ok) {
@@ -202,13 +209,20 @@ class ProxyPocketBase {
         return response.json();
       },
       update: async (id: string, data: any) => {
+        const isFormData = data instanceof FormData;
+        const headers: Record<string, string> = {
+          ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+        };
+        
+        // Don't set Content-Type for FormData - let the browser set it with boundary
+        if (!isFormData) {
+          headers['Content-Type'] = 'application/json';
+        }
+
         const response = await fetch(`/api/pocketbase/api/collections/${name}/records/${id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-          },
-          body: JSON.stringify(data),
+          headers,
+          body: isFormData ? data : JSON.stringify(data),
         });
 
         if (!response.ok) {

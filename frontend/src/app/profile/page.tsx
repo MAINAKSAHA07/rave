@@ -135,29 +135,29 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="min-h-screen p-4">
+      <div className="w-full space-y-6">
+        <div className="flex flex-col justify-between items-start gap-4">
           <div>
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
+            <h1 className="text-2xl font-bold text-gray-900">
               My Profile
             </h1>
-            <p className="text-muted-foreground mt-2">Manage your account settings and preferences</p>
+            <p className="text-gray-600 mt-1 text-sm">Manage your account settings</p>
           </div>
           <Button
             variant="destructive"
             onClick={handleLogout}
-            className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20"
+            className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
           >
             Sign Out
           </Button>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          <Card className="bg-card/50 backdrop-blur-md border-white/10 shadow-xl">
+        <div className="grid gap-4">
+          <Card className="bg-white border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl">Personal Information</CardTitle>
-              <CardDescription>Update your contact details</CardDescription>
+            <CardTitle className="text-lg">Personal Information</CardTitle>
+            <CardDescription className="text-gray-600">Update your contact details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -166,7 +166,7 @@ export default function ProfilePage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
               <div className="space-y-2">
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
               <div className="space-y-2">
@@ -186,49 +186,49 @@ export default function ProfilePage() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-md border-white/10 shadow-xl">
+          <Card className="bg-white border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl">Security</CardTitle>
-              <CardDescription>Change your password</CardDescription>
+              <CardTitle className="text-lg">Security</CardTitle>
+              <CardDescription className="text-gray-600">Change your password</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
+                <Label htmlFor="currentPassword" className="text-gray-700">Current Password</Label>
                 <Input
                   id="currentPassword"
                   type="password"
                   value={formData.currentPassword}
                   onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                   placeholder="••••••••"
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword" className="text-gray-700">New Password</Label>
                 <Input
                   id="newPassword"
                   type="password"
                   value={formData.newPassword}
                   onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                   placeholder="••••••••"
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword" className="text-gray-700">Confirm New Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   placeholder="••••••••"
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
             </CardContent>
@@ -239,8 +239,8 @@ export default function ProfilePage() {
           <Button
             onClick={handleSaveProfile}
             disabled={saving}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 min-w-[150px]"
+            size="default"
+            className="bg-purple-600 hover:bg-purple-700 text-white min-w-[120px]"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>

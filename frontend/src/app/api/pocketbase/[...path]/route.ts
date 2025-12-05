@@ -131,9 +131,21 @@ export async function GET(
         if (expand) {
           options.expand = expand;
         }
-        const result = await pb.collection(collectionName).getOne(recordId, options);
-
-        return NextResponse.json(result);
+        
+        try {
+          const result = await pb.collection(collectionName).getOne(recordId, options);
+          return NextResponse.json(result);
+        } catch (error: any) {
+          // If record not found, return proper 404
+          if (error.status === 404) {
+            return NextResponse.json(
+              { code: 404, message: "The requested resource wasn't found.", data: {} },
+              { status: 404 }
+            );
+          }
+          // Re-throw other errors to be handled by outer catch
+          throw error;
+        }
       } else if (pathParts.length === 4 && pathParts[3] === 'auth-methods') {
         // Get auth methods: api/collections/{collection}/auth-methods
         const result = await pb.collection(collectionName).listAuthMethods();

@@ -83,11 +83,11 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 py-24">
-      <Card className="w-full max-w-md bg-card/50 backdrop-blur-md border-white/10 shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full bg-white border border-gray-200 shadow-md">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Create Account</CardTitle>
-          <CardDescription className="text-muted-foreground">Sign up to start buying tickets</CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
+          <CardDescription className="text-gray-600">Sign up to start buying tickets</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Button
@@ -119,22 +119,22 @@ export default function SignupPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/10" />
+              <span className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-transparent px-2 text-muted-foreground">Or sign up with email</span>
+              <span className="bg-white px-2 text-gray-500">Or sign up with email</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-muted-foreground">Full Name</Label>
+              <Label htmlFor="name" className="text-gray-700">Full Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -142,12 +142,12 @@ export default function SignupPage() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="John Doe"
                 required
-                className="bg-background/50 border-white/10 focus:border-primary/50"
+                className="bg-white border-gray-300 focus:border-purple-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-muted-foreground">Email</Label>
+              <Label htmlFor="email" className="text-gray-700">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -155,12 +155,12 @@ export default function SignupPage() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="you@example.com"
                 required
-                className="bg-background/50 border-white/10 focus:border-primary/50"
+                className="bg-white border-gray-300 focus:border-purple-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-muted-foreground">Phone Number</Label>
+              <Label htmlFor="phone" className="text-gray-700">Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -168,12 +168,12 @@ export default function SignupPage() {
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+91 9876543210"
                 required
-                className="bg-background/50 border-white/10 focus:border-primary/50"
+                className="bg-white border-gray-300 focus:border-purple-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-muted-foreground">Password</Label>
+              <Label htmlFor="password" className="text-gray-700">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -182,13 +182,13 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 required
                 minLength={8}
-                className="bg-background/50 border-white/10 focus:border-primary/50"
+                className="bg-white border-gray-300 focus:border-purple-500"
               />
-              <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
+              <p className="text-xs text-gray-500">Must be at least 8 characters</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="passwordConfirm" className="text-muted-foreground">Confirm Password</Label>
+              <Label htmlFor="passwordConfirm" className="text-gray-700">Confirm Password</Label>
               <Input
                 id="passwordConfirm"
                 type="password"
@@ -196,18 +196,18 @@ export default function SignupPage() {
                 onChange={(e) => setFormData({ ...formData, passwordConfirm: e.target.value })}
                 placeholder="••••••••"
                 required
-                className="bg-background/50 border-white/10 focus:border-primary/50"
+                className="bg-white border-gray-300 focus:border-purple-500"
               />
             </div>
 
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20" disabled={loading}>
+            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={loading}>
               {loading ? 'Creating account...' : 'Sign Up'}
             </Button>
           </form>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/login" className="text-primary hover:text-primary/80 hover:underline font-medium">
+            <span className="text-gray-600">Already have an account? </span>
+            <Link href="/login" className="text-purple-600 hover:text-purple-700 hover:underline font-medium">
               Sign in
             </Link>
           </div>

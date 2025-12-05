@@ -97,8 +97,16 @@ export default function EventDetailsPage() {
       }
 
       // Check if venue is SEATED and load available seats
-      const venue = eventData.expand?.venue_id || await pb.collection('venues').getOne(eventData.venue_id);
-      if (venue.layout_type === 'SEATED') {
+      let venue = eventData.expand?.venue_id;
+      if (!venue && eventData.venue_id) {
+        try {
+          venue = await pb.collection('venues').getOne(eventData.venue_id);
+        } catch (venueError: any) {
+          console.warn('Failed to load venue:', venueError);
+          // Venue might not exist or user might not have access - continue without venue data
+        }
+      }
+      if (venue && venue.layout_type === 'SEATED') {
         setIsSeated(true);
         await loadSeats();
       }
@@ -443,19 +451,19 @@ export default function EventDetailsPage() {
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
-      <div className="min-h-screen p-8 pb-40">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen p-4 pb-20">
+        <div className="w-full">
           {event.cover_image && (
             <img
               src={getPocketBase().files.getUrl(event as any, event.cover_image)}
               alt={event.name}
-              className="w-full h-64 object-cover rounded-lg mb-6"
+              className="w-full h-48 object-cover rounded-xl mb-4"
             />
           )}
 
-          <h1 className="text-4xl font-bold mb-4">{event.name}</h1>
-          <p className="text-gray-600 mb-4">{event.category} • {event.city}</p>
-          <p className="mb-6">
+          <h1 className="text-2xl font-bold mb-2 text-gray-900">{event.name}</h1>
+          <p className="text-gray-600 mb-2 text-sm">{event.category} • {event.city}</p>
+          <p className="mb-4 text-gray-700 text-sm">
             {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
               weekday: 'long',
               year: 'numeric',
@@ -466,22 +474,22 @@ export default function EventDetailsPage() {
             })}
           </p>
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Description</h2>
-            <p className="whitespace-pre-wrap">{event.description}</p>
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-900">Description</h2>
+            <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.description}</p>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Tickets</h2>
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-3 text-gray-900">Tickets</h2>
             {ticketTypes.length === 0 ? (
-              <div className="border rounded-lg p-8 text-center">
+              <div className="border border-gray-200 rounded-xl p-6 text-center bg-gray-50">
                 <p className="text-gray-600 mb-2">No tickets available for this event yet.</p>
-                <p className="text-sm text-gray-500">Please check back later or contact the organizer.</p>
+                <p className="text-xs text-gray-500">Please check back later or contact the organizer.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {ticketTypes.map((tt) => (
-                  <div key={tt.id} className="border rounded-lg p-4">
+                  <div key={tt.id} className="border border-gray-200 rounded-xl p-4 bg-white">
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h3 className="font-semibold">{tt.name}</h3>
@@ -591,39 +599,39 @@ export default function EventDetailsPage() {
 
           {/* Attendee Details Form */}
           {totalAmount > 0 && (
-            <div className="mb-8 border border-white/10 rounded-lg p-6 bg-card/50 backdrop-blur-sm">
-              <h2 className="text-xl font-semibold mb-4">Attendee Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-6 border border-gray-200 rounded-xl p-4 bg-white">
+              <h2 className="text-lg font-semibold mb-3 text-gray-900">Attendee Details</h2>
+              <div className="grid grid-cols-1 gap-3">
                 <div>
-                  <Label htmlFor="attendeeName">Name *</Label>
+                  <Label htmlFor="attendeeName" className="text-gray-700">Name *</Label>
                   <Input
                     id="attendeeName"
                     value={attendeeDetails.name}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, name: e.target.value })}
                     placeholder="Full name"
-                    className="bg-background/50 border-white/10 focus:border-primary/50"
+                    className="bg-white border-gray-300 focus:border-purple-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="attendeeEmail">Email *</Label>
+                  <Label htmlFor="attendeeEmail" className="text-gray-700">Email *</Label>
                   <Input
                     id="attendeeEmail"
                     type="email"
                     value={attendeeDetails.email}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, email: e.target.value })}
                     placeholder="email@example.com"
-                    className="bg-background/50 border-white/10 focus:border-primary/50"
+                    className="bg-white border-gray-300 focus:border-purple-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="attendeePhone">Phone *</Label>
+                  <Label htmlFor="attendeePhone" className="text-gray-700">Phone *</Label>
                   <Input
                     id="attendeePhone"
                     type="tel"
                     value={attendeeDetails.phone}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, phone: e.target.value })}
                     placeholder="+91 1234567890"
-                    className="bg-background/50 border-white/10 focus:border-primary/50"
+                    className="bg-white border-gray-300 focus:border-purple-500"
                   />
                 </div>
               </div>
@@ -631,51 +639,51 @@ export default function EventDetailsPage() {
           )}
 
           {totalAmount > 0 && (
-            <div className="sticky bottom-0 bg-card/90 backdrop-blur-md border-t border-white/10 p-6 rounded-t-2xl shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.5)]">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-lg font-semibold text-muted-foreground">Total Amount</span>
-                <span className="text-3xl font-bold text-white">₹{(totalAmount / 100).toFixed(2)}</span>
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 rounded-t-xl shadow-lg">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-base font-semibold text-gray-700">Total Amount</span>
+                <span className="text-2xl font-bold text-gray-900">₹{(totalAmount / 100).toFixed(2)}</span>
               </div>
 
               {/* Payment Method Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-3 text-muted-foreground">Payment Method</label>
-                <div className="flex gap-4">
-                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${paymentMethod === 'razorpay' ? 'bg-primary/20 border-primary/50' : 'bg-background/50 border-white/10 hover:bg-white/5'}`}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2 text-gray-700">Payment Method</label>
+                <div className="flex flex-col gap-2">
+                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${paymentMethod === 'razorpay' ? 'bg-purple-50 border-purple-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="razorpay"
                       checked={paymentMethod === 'razorpay'}
                       onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                      className="w-4 h-4 accent-primary"
+                      className="w-4 h-4 accent-purple-600"
                     />
-                    <span>Razorpay (Online)</span>
+                    <span className="text-gray-700">Razorpay (Online)</span>
                   </label>
-                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${paymentMethod === 'cash' ? 'bg-primary/20 border-primary/50' : 'bg-background/50 border-white/10 hover:bg-white/5'}`}>
+                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${paymentMethod === 'cash' ? 'bg-purple-50 border-purple-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="cash"
                       checked={paymentMethod === 'cash'}
                       onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                      className="w-4 h-4 accent-primary"
+                      className="w-4 h-4 accent-purple-600"
                     />
-                    <span>Cash (At Venue)</span>
+                    <span className="text-gray-700">Cash (At Venue)</span>
                   </label>
                 </div>
               </div>
 
               {(!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone) && (
-                <p className="text-sm text-red-400 mb-3 flex items-center gap-2">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                <p className="text-sm text-red-600 mb-3 flex items-center gap-2">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-600"></span>
                   Please fill in all attendee details above
                 </p>
               )}
               <button
                 onClick={handleCheckout}
                 disabled={!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone}
-                className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-bold text-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-primary/25"
+                className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-base hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
               >
                 {paymentMethod === 'cash' ? 'Create Order (Pay at Venue)' : 'Proceed to Checkout'}
               </button>

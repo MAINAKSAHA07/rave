@@ -109,28 +109,28 @@ export default function EventsPage() {
   const cities = Array.from(new Set(events.map((e) => e.city).filter(Boolean))).sort();
 
   return (
-    <div className="min-h-screen p-8 pt-24">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-5xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">All Events</h1>
+    <div className="min-h-screen p-4 pt-4">
+      <div className="w-full">
+        <h1 className="text-2xl font-bold mb-4 text-gray-900">All Events</h1>
 
         {/* Filters */}
-        <Card className="mb-8 bg-card/50 backdrop-blur-md border-white/10 shadow-xl">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <Card className="mb-6 bg-white border border-gray-200 shadow-md">
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="search" className="text-muted-foreground">Search</Label>
+                <Label htmlFor="search" className="text-gray-700">Search</Label>
                 <Input
                   id="search"
                   placeholder="Event name..."
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="city" className="text-muted-foreground">City</Label>
+                <Label htmlFor="city" className="text-gray-700">City</Label>
                 <Select value={filters.city || 'all'} onValueChange={(value) => setFilters({ ...filters, city: value === 'all' ? '' : value })}>
-                  <SelectTrigger id="city" className="bg-background/50 border-white/10 focus:border-primary/50">
+                  <SelectTrigger id="city" className="bg-white border-gray-300 focus:border-purple-500">
                     <SelectValue placeholder="All Cities" />
                   </SelectTrigger>
                   <SelectContent>
@@ -144,12 +144,12 @@ export default function EventsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-muted-foreground">Category</Label>
+                <Label htmlFor="category" className="text-gray-700">Category</Label>
                 <Select
                   value={filters.category}
                   onValueChange={(value) => setFilters({ ...filters, category: value })}
                 >
-                  <SelectTrigger id="category" className="bg-background/50 border-white/10 focus:border-primary/50">
+                  <SelectTrigger id="category" className="bg-white border-gray-300 focus:border-purple-500">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -162,25 +162,25 @@ export default function EventsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="minPrice" className="text-muted-foreground">Min Price (₹)</Label>
+                <Label htmlFor="minPrice" className="text-gray-700">Min Price (₹)</Label>
                 <Input
                   id="minPrice"
                   type="number"
                   placeholder="0"
                   value={filters.minPrice}
                   onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxPrice" className="text-muted-foreground">Max Price (₹)</Label>
+                <Label htmlFor="maxPrice" className="text-gray-700">Max Price (₹)</Label>
                 <Input
                   id="maxPrice"
                   type="number"
                   placeholder="No limit"
                   value={filters.maxPrice}
                   onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                  className="bg-background/50 border-white/10 focus:border-primary/50"
+                  className="bg-white border-gray-300 focus:border-purple-500"
                 />
               </div>
             </div>
@@ -196,7 +196,7 @@ export default function EventsPage() {
                     maxPrice: '',
                   })
                 }
-                className="border-white/10 hover:bg-white/5 text-muted-foreground hover:text-white"
+                className="border-gray-300 hover:bg-gray-50 text-gray-700 hover:text-gray-900"
               >
                 Clear Filters
               </Button>
@@ -206,25 +206,25 @@ export default function EventsPage() {
 
         {/* Events Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-96 rounded-2xl bg-muted/20 animate-pulse" />
+              <div key={i} className="h-64 rounded-xl bg-gray-100 animate-pulse" />
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center py-20 bg-card/30 rounded-3xl border border-white/5">
-            <p className="text-muted-foreground mb-6 text-lg">No events found matching your filters.</p>
-            <Button variant="outline" onClick={() => setFilters({ city: '', category: 'All', search: '', minPrice: '', maxPrice: '' })} className="border-primary/50 text-primary hover:bg-primary/10">
+          <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+            <p className="text-gray-600 mb-4">No events found matching your filters.</p>
+            <Button variant="outline" onClick={() => setFilters({ city: '', category: 'All', search: '', minPrice: '', maxPrice: '' })} className="border-gray-300 text-gray-700 hover:bg-gray-100">
               Clear Filters
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-4">
             {events.map((event) => (
               <Link
                 key={event.id}
                 href={`/events/${event.id}`}
-                className="group relative bg-card/50 backdrop-blur-sm border border-white/5 rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1"
+                className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   {event.cover_image ? (
@@ -238,16 +238,15 @@ export default function EventsPage() {
                       <span className="text-muted-foreground">No image</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="p-4">
                   <div className="mb-2">
-                    <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary-foreground backdrop-blur-md border border-primary/20 capitalize">
+                    <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 capitalize">
                       {event.category}
                     </span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-2 text-white group-hover:text-primary transition-colors">{event.name}</h3>
-                  <div className="flex items-center justify-between text-sm text-gray-300 mb-2">
+                  <h3 className="text-lg font-bold mb-2 text-gray-900">{event.name}</h3>
+                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                     <span className="capitalize">{event.city}</span>
                     <span>
                       {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
@@ -260,7 +259,7 @@ export default function EventsPage() {
                     </span>
                   </div>
                   {event.expand?.venue_id && (
-                    <p className="text-xs text-gray-400">{event.expand.venue_id.name}</p>
+                    <p className="text-xs text-gray-500">{event.expand.venue_id.name}</p>
                   )}
                 </div>
               </Link>

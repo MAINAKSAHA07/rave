@@ -93,6 +93,14 @@ export async function POST(request: NextRequest) {
         let razorpayOrder = null;
         if (paymentMethod === 'razorpay') {
             try {
+                // Validate Razorpay is configured
+                if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+                    console.error('❌ Razorpay is not configured. Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET');
+                    return NextResponse.json({ 
+                        error: 'Payment gateway is not configured. Please contact support.' 
+                    }, { status: 500 });
+                }
+
                 razorpayOrder = await createRazorpayOrder({
                     amount: totalAmount,
                     currency: currency,
@@ -108,10 +116,21 @@ export async function POST(request: NextRequest) {
                     razorpay_order_id: razorpayOrder.id,
                 });
             } catch (e: any) {
-                console.error('Razorpay creation failed:', e);
-                // If Razorpay fails, we should probably fail the order or return an error
-                // For now, let's return error so frontend knows
-                return NextResponse.json({ error: 'Failed to initiate payment gateway' }, { status: 500 });
+                console.error('❌ Razorpay order creation failed:', e);
+                
+                // Delete the order since payment gateway failed
+                try {
+                    await pb.collection('orders').delete(order.id);
+                } catch (deleteError) {
+                    console.error('Failed to delete order after Razorpay error:', deleteError);
+                }
+
+                // Return detailed error message
+                const errorMessage = e.message || 'Failed to initiate payment gateway';
+                return NextResponse.json({ 
+                    error: errorMessage,
+                    details: process.env.NODE_ENV === 'development' ? e.stack : undefined
+                }, { status: 500 });
             }
         }
 

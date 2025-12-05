@@ -4,7 +4,13 @@
   "description": "PocketBase migration scripts for Rave",
   "main": "run-migration.js",
   "scripts": {
-    "migrate": "node run-migration.js"
+    "migrate": "node run-migration.js",
+    "sync-aws": "node sync-aws-db.js",
+    "test-aws": "node test-aws-connection.js",
+    "debug-auth": "node debug-auth.js",
+    "fix-events": "node fix-events-collection.js",
+    "setup-aws-users": "node setup-aws-users.js",
+    "fix-aws-rules": "node fix-aws-access-rules.js"
   },
   "dependencies": {
     "pocketbase": "^0.20.0",

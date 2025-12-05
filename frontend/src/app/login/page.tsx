@@ -81,10 +81,10 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-card/50 backdrop-blur-md border-white/10 shadow-2xl">
+      <Card className="w-full bg-white border border-gray-200 shadow-md">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Welcome Back</CardTitle>
-          <CardDescription className="text-muted-foreground">Sign in to your account to continue</CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
+          <CardDescription className="text-gray-600">Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Button
@@ -116,22 +116,22 @@ function LoginForm() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/10" />
+              <span className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-transparent px-2 text-muted-foreground">Or continue with email</span>
+              <span className="bg-white px-2 text-gray-500">Or continue with email</span>
             </div>
           </div>
 
           <form onSubmit={handleEmailLogin} className="space-y-4">
             {error && (
-              <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-muted-foreground">Email</Label>
+              <Label htmlFor="email" className="text-gray-700">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -139,14 +139,14 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="bg-background/50 border-white/10 focus:border-primary/50"
+                className="bg-white border-gray-300 focus:border-purple-500"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-muted-foreground">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:text-primary/80 hover:underline">
+                <Label htmlFor="password" className="text-gray-700">Password</Label>
+                <Link href="/forgot-password" className="text-sm text-purple-600 hover:text-purple-700 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -157,18 +157,18 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="bg-background/50 border-white/10 focus:border-primary/50"
+                className="bg-white border-gray-300 focus:border-purple-500"
               />
             </div>
 
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20" disabled={loading}>
+            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account? </span>
-            <Link href="/signup" className="text-primary hover:text-primary/80 hover:underline font-medium">
+            <span className="text-gray-600">Don't have an account? </span>
+            <Link href="/signup" className="text-purple-600 hover:text-purple-700 hover:underline font-medium">
               Sign up
             </Link>
           </div>

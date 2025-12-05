@@ -86,44 +86,44 @@ export default function MyTicketsPage() {
   const frontendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:3000';
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen p-4">
+      <div className="w-full space-y-6">
         <div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
+          <h1 className="text-2xl font-bold text-gray-900">
             My Tickets
           </h1>
-          <p className="text-muted-foreground mt-2">View and manage your event tickets</p>
+          <p className="text-gray-600 mt-1 text-sm">View and manage your event tickets</p>
         </div>
 
         {tickets.length === 0 ? (
-          <Card className="bg-card/50 backdrop-blur-md border-white/10 shadow-xl p-12 text-center">
+          <Card className="bg-white border border-gray-200 shadow-sm p-8 text-center">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-3xl">
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-3xl">
                 🎟️
               </div>
-              <h3 className="text-xl font-semibold">No tickets yet</h3>
-              <p className="text-muted-foreground max-w-sm">
+              <h3 className="text-lg font-semibold text-gray-900">No tickets yet</h3>
+              <p className="text-gray-600 max-w-sm text-sm">
                 You haven't purchased any tickets yet. Browse our events to find your next experience.
               </p>
               <Link href="/events">
-                <Button className="mt-4 bg-primary hover:bg-primary/90 text-white">
+                <Button className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
                   Browse Events
                 </Button>
               </Link>
             </div>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {tickets.map((ticket) => {
               const order = orders[ticket.order_id];
               const event = events[ticket.event_id];
               const qrUrl = `${frontendUrl}/t/${ticket.ticket_code}`;
 
               return (
-                <Card key={ticket.id} className="bg-card/50 backdrop-blur-md border-white/10 shadow-xl overflow-hidden group hover:border-primary/50 transition-colors">
-                  <div className="flex flex-col md:flex-row">
-                    {/* Event Image (Left) */}
-                    <div className="md:w-1/3 relative h-48 md:h-auto">
+                <Card key={ticket.id} className="bg-white border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="flex flex-col">
+                    {/* Event Image */}
+                    <div className="relative h-48">
                       {event?.cover_image ? (
                         <img
                           src={getPocketBase().files.getUrl(event, event.cover_image)}
@@ -131,19 +131,18 @@ export default function MyTicketsPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <span className="text-muted-foreground">No image</span>
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                          <span className="text-gray-400">No image</span>
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/50" />
                     </div>
 
-                    {/* Ticket Details (Right) */}
-                    <div className="flex-1 p-6 flex flex-col justify-between">
+                    {/* Ticket Details */}
+                    <div className="p-4 flex flex-col gap-4">
                       <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <h2 className="text-2xl font-bold mb-1">{event?.name}</h2>
-                          <p className="text-primary font-medium">
+                        <div className="flex-1">
+                          <h2 className="text-lg font-bold mb-1 text-gray-900">{event?.name}</h2>
+                          <p className="text-purple-600 font-medium text-sm">
                             {event && new Date(event.start_date).toLocaleDateString('en-IN', {
                               weekday: 'long',
                               year: 'numeric',
@@ -153,31 +152,31 @@ export default function MyTicketsPage() {
                               minute: '2-digit',
                             })}
                           </p>
-                          <p className="text-sm text-muted-foreground mt-2">
+                          <p className="text-xs text-gray-600 mt-1">
                             {event?.venue_id?.name || 'Venue TBD'} • {event?.city}
                           </p>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium border ${ticket.status === 'issued'
-                              ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                          className={`px-2 py-1 rounded-full text-xs font-medium border ${ticket.status === 'issued'
+                              ? 'bg-green-50 text-green-700 border-green-200'
                               : ticket.status === 'checked_in'
-                                ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                                : 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : 'bg-gray-50 text-gray-700 border-gray-200'
                             }`}
                         >
                           {ticket.status.toUpperCase().replace('_', ' ')}
                         </span>
                       </div>
 
-                      <div className="mt-6 flex flex-col md:flex-row justify-between items-end gap-6">
+                      <div className="flex flex-col justify-between items-start gap-4 pt-2 border-t border-gray-100">
                         <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">Order #{order?.order_number}</p>
-                          <p className="text-sm font-mono text-white/70">Code: {ticket.ticket_code}</p>
+                          <p className="text-xs text-gray-600">Order #{order?.order_number}</p>
+                          <p className="text-xs font-mono text-gray-700">Code: {ticket.ticket_code}</p>
                         </div>
 
                         {ticket.status === 'issued' && (
-                          <div className="bg-white p-2 rounded-lg shadow-lg">
-                            <QRCodeSVG value={qrUrl} size={100} />
+                          <div className="bg-white p-2 rounded-lg border border-gray-200">
+                            <QRCodeSVG value={qrUrl} size={80} />
                           </div>
                         )}
                       </div>

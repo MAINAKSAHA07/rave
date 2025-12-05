@@ -18,12 +18,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-background text-foreground`} suppressHydrationWarning>
-        <Sparkles />
-        <Navigation />
-        <main className="relative z-10 pt-20">
-          {children}
-        </main>
+      <body className={`${inter.className} min-h-screen`} suppressHydrationWarning>
+        <div className="min-h-screen py-4 px-4">
+          <div className="mobile-container bg-white text-gray-900 relative">
+            <Sparkles />
+            <Navigation />
+            <main className="relative z-10">
+              {children}
+            </main>
+          </div>
+        </div>
       </body>
     </html>
   )

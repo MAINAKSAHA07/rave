@@ -73,11 +73,40 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    background-image:
-      radial-gradient(at 0% 0%, hsla(253, 30%, 15%, 0.4) 0, transparent 50%),
-      radial-gradient(at 50% 0%, hsla(225, 40%, 20%, 0.4) 0, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(339, 50%, 20%, 0.4) 0, transparent 50%);
+    /* Mobile-first gradient background - purple to pink */
+    background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
     background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* Mobile-constrained container for all content */
+  .mobile-container {
+    max-width: 428px; /* Standard mobile width */
+    width: 100%;
+    margin: 0 auto;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    min-height: calc(100vh - 40px);
+    overflow-y: auto;
+    position: relative;
+  }
+
+  /* Ensure content fits within mobile container */
+  @media (min-width: 428px) {
+    .mobile-container {
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+  }
+
+  /* Ensure navigation is inside the container */
+  .mobile-container nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
   }
 }
 

@@ -26,8 +26,15 @@ export default function Sparkles() {
         if (!ctx) return;
 
         const resizeCanvas = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            // Constrain to mobile container size
+            const container = canvas.parentElement?.closest('.mobile-container');
+            if (container) {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            } else {
+                canvas.width = Math.min(window.innerWidth, 428);
+                canvas.height = window.innerHeight;
+            }
         };
 
         const handleMouseMove = (e: MouseEvent) => {
@@ -97,7 +104,7 @@ export default function Sparkles() {
     return (
         <canvas
             ref={canvasRef}
-            className="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999]"
+            className="absolute top-0 left-0 w-full h-full pointer-events-none z-[1]"
             style={{ mixBlendMode: 'screen' }}
         />
     );

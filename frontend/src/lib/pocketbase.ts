@@ -343,11 +343,48 @@ class ProxyPocketBase {
   get files() {
     return {
       getUrl: (record: any, filename: string, queryParams: any = {}) => {
-        // Build file URL - for now, use direct PocketBase URL since files are served directly
-        // Files don't have Mixed Content issues if they're images/media
-        // If needed, we can proxy files too, but it's usually not necessary
-        const pb = new PocketBase(pbUrl);
-        return pb.files.getUrl(record, filename, queryParams);
+        // Check if we're on HTTPS (production) - if so, use proxy to avoid Mixed Content errors
+        const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+        
+        if (isHttps) {
+          // Use proxy route for HTTPS environments
+          const pb = new PocketBase(pbUrl);
+          const directUrl = pb.files.getUrl(record, filename, queryParams);
+          
+          // Extract the path from the direct URL (e.g., /api/files/collectionId/recordId/filename)
+          try {
+            const url = new URL(directUrl);
+            const path = url.pathname; // This will be like /api/files/collectionId/recordId/filename
+            
+            // Extract the file path part (everything after /api/files/)
+            const filePath = path.replace(/^\/api\/files\//, '');
+            
+            // Build proxy URL
+            const proxyUrl = new URL(`/api/pocketbase/files/${filePath}`, window.location.origin);
+            
+            // Add query parameters if any (from both queryParams and original URL)
+            if (url.search) {
+              url.searchParams.forEach((value, key) => {
+                proxyUrl.searchParams.append(key, value);
+              });
+            }
+            if (queryParams && Object.keys(queryParams).length > 0) {
+              Object.entries(queryParams).forEach(([key, value]) => {
+                proxyUrl.searchParams.set(key, String(value));
+              });
+            }
+            
+            return proxyUrl.toString();
+          } catch (e) {
+            // Fallback to direct URL if parsing fails
+            console.warn('Failed to parse PocketBase file URL, using direct URL:', e);
+            return directUrl;
+          }
+        } else {
+          // Use direct PocketBase URL for HTTP (local development)
+          const pb = new PocketBase(pbUrl);
+          return pb.files.getUrl(record, filename, queryParams);
+        }
       },
     };
   }

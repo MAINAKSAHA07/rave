@@ -188,8 +188,17 @@ export async function POST(
       }
     }
 
-    const bodyText = await request.text();
-    const body = bodyText ? JSON.parse(bodyText) : {};
+    // Check if request is FormData (multipart/form-data)
+    const contentType = request.headers.get('content-type') || '';
+    const isFormData = contentType.includes('multipart/form-data');
+
+    let body: any;
+    if (isFormData) {
+      body = await request.formData();
+    } else {
+      const bodyText = await request.text();
+      body = bodyText ? JSON.parse(bodyText) : {};
+    }
 
     const pathParts = path.split('/');
 
@@ -210,9 +219,12 @@ export async function POST(
     // Fallback to direct fetch
     const apiPath = path.startsWith('api/') ? path : `api/${path}`;
     const url = new URL(`/${apiPath}`, pbUrl);
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+    const headers: Record<string, string> = {};
+    
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
@@ -220,7 +232,7 @@ export async function POST(
     const response = await fetch(url.toString(), {
       method: 'POST',
       headers,
-      body: JSON.stringify(body),
+      body: isFormData ? body : JSON.stringify(body),
     });
 
     const data = await response.json();
@@ -259,8 +271,17 @@ export async function PUT(
       }
     }
 
-    const bodyText = await request.text();
-    const body = bodyText ? JSON.parse(bodyText) : {};
+    // Check if request is FormData (multipart/form-data)
+    const contentType = request.headers.get('content-type') || '';
+    const isFormData = contentType.includes('multipart/form-data');
+
+    let body: any;
+    if (isFormData) {
+      body = await request.formData();
+    } else {
+      const bodyText = await request.text();
+      body = bodyText ? JSON.parse(bodyText) : {};
+    }
 
     const pathParts = path.split('/');
 
@@ -278,9 +299,12 @@ export async function PUT(
     // Fallback to direct fetch
     const apiPath = path.startsWith('api/') ? path : `api/${path}`;
     const url = new URL(`/${apiPath}`, pbUrl);
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+    const headers: Record<string, string> = {};
+    
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
@@ -288,7 +312,7 @@ export async function PUT(
     const response = await fetch(url.toString(), {
       method: 'PUT',
       headers,
-      body: JSON.stringify(body),
+      body: isFormData ? body : JSON.stringify(body),
     });
 
     const data = await response.json();
