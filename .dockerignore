@@ -1,0 +1,11 @@
+node_modules
+.next
+.env
+.env.local
+.git
+.gitignore
+*.log
+.DS_Store
+backups
+pocketbase/pb_data
+pocketbase/pb_migrations

@@ -7,7 +7,7 @@ A modern event ticketing platform for India with multi-currency support, built w
 - **Backend Database & Auth**: PocketBase (Port 8092)
 - **Business Logic Service**: Node.js (Port 3001)
 - **Customer Frontend**: Next.js (Port 3000)
-- **Backoffice Frontend**: Next.js (Port 3002) - Organizer & Admin Dashboard
+- **Backoffice Frontend**: Next.js (Port 3001) - Organizer & Admin Dashboard
 - **Payments**: Razorpay
 - **Emails**: Resend
 - **Analytics**: D3.js
@@ -18,7 +18,7 @@ A modern event ticketing platform for India with multi-currency support, built w
 Rave/
 ├── backend/          # Node.js service (Port 3001)
 ├── frontend/         # Customer-facing Next.js app (Port 3000)
-├── backoffice/       # Organizer/Admin Next.js app (Port 3002)
+├── backoffice/       # Organizer/Admin Next.js app (Port 3001)
 ├── pocketbase/       # PocketBase schema and migrations
 └── docs/            # Documentation
 ```
@@ -59,14 +59,14 @@ This will start:
 
 - Backend API on http://localhost:3001
 - Customer frontend on http://localhost:3000
-- Backoffice on http://localhost:3002
+- Backoffice on http://localhost:3001
 
 ## Port Configuration
 
-- **PocketBase**: 127.0.0.1:8092
+- **PocketBase**: 127.0.0.1:8090 (Docker) or 8092 (legacy)
 - **Backend API**: localhost:3001
 - **Customer Frontend**: localhost:3000
-- **Backoffice**: localhost:3002
+- **Backoffice**: localhost:3001
 
 ## Features
 

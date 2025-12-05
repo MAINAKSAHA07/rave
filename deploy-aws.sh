@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # AWS Deployment Script for Rave Platform
-# Usage: ./deploy-aws.sh [--force]
+# Usage: ./deploy-aws.sh [--force] [--clean]
 #   --force: Force upload even if files exist on server
+#   --clean: Delete all files from AWS server before uploading (fresh deployment)
 
 set -e
 
@@ -11,12 +12,20 @@ SSH_KEY="./ravem.pem"
 REMOTE_USER="ec2-user"
 REMOTE_DIR="/home/ec2-user/rave"
 
-# Check for --force flag
+# Check for flags
 FORCE_OVERWRITE=false
-if [[ "$1" == "--force" ]] || [[ "$1" == "-f" ]]; then
-    FORCE_OVERWRITE=true
-    echo "⚠️  Force mode enabled - will overwrite existing files"
-fi
+CLEAN_DEPLOYMENT=false
+for arg in "$@"; do
+    if [[ "$arg" == "--force" ]] || [[ "$arg" == "-f" ]]; then
+        FORCE_OVERWRITE=true
+        echo "⚠️  Force mode enabled - will overwrite existing files"
+    fi
+    if [[ "$arg" == "--clean" ]] || [[ "$arg" == "-c" ]]; then
+        CLEAN_DEPLOYMENT=true
+        FORCE_OVERWRITE=true  # Force mode is automatically enabled with clean mode
+        echo "🧹 Clean deployment mode enabled - will delete all files from server first"
+    fi
+done
 
 echo "🚀 Starting AWS Deployment..."
 
@@ -28,6 +37,33 @@ fi
 
 # Set correct permissions for SSH key
 chmod 400 "$SSH_KEY"
+
+# Clean deployment: Delete all files from server first
+if [ "$CLEAN_DEPLOYMENT" = true ]; then
+    echo "🗑️  Cleaning up existing files on server..."
+    ssh -i "$SSH_KEY" "$REMOTE_USER@$SERVER_IP" << 'CLEANUP'
+        set -e
+        echo "  ⏹️  Stopping PM2 processes..."
+        pm2 stop all 2>/dev/null || true
+        pm2 delete all 2>/dev/null || true
+        
+        echo "  🐳 Stopping Docker containers..."
+        cd /home/ec2-user/rave 2>/dev/null || true
+        sudo docker-compose down 2>/dev/null || sudo docker compose down 2>/dev/null || true
+        
+        echo "  🗑️  Removing all files from /home/ec2-user/rave..."
+        if [ -d "/home/ec2-user/rave" ]; then
+            rm -rf /home/ec2-user/rave/*
+            rm -rf /home/ec2-user/rave/.* 2>/dev/null || true
+            echo "  ✅ Cleanup complete"
+        else
+            echo "  ℹ️  Directory doesn't exist, creating it..."
+            mkdir -p /home/ec2-user/rave
+        fi
+CLEANUP
+    echo "✅ Server cleanup complete"
+    echo ""
+fi
 
 echo "📦 Preparing deployment package..."
 
@@ -41,10 +77,6 @@ echo "📋 Copying files..."
 
 # Use rsync to copy directories excluding problematic folders (avoids symlink cycles)
 if command -v rsync &> /dev/null; then
-    echo "  - Backend..."
-    mkdir -p "$DEPLOY_DIR/backend"
-    rsync -av --exclude='node_modules' --exclude='dist' --exclude='.git' --exclude='*.log' backend/ "$DEPLOY_DIR/backend/" 2>/dev/null || true
-    
     echo "  - Frontend..."
     mkdir -p "$DEPLOY_DIR/frontend"
     rsync -av --exclude='node_modules' --exclude='.next' --exclude='.netlify' --exclude='.git' --exclude='*.log' frontend/ "$DEPLOY_DIR/frontend/" 2>/dev/null || true
@@ -54,10 +86,6 @@ if command -v rsync &> /dev/null; then
     rsync -av --exclude='node_modules' --exclude='.next' --exclude='.netlify' --exclude='.git' --exclude='*.log' backoffice/ "$DEPLOY_DIR/backoffice/" 2>/dev/null || true
 else
     # Fallback to tar if rsync not available
-    echo "  - Backend..."
-    mkdir -p "$DEPLOY_DIR/backend"
-    (cd backend && tar --exclude='node_modules' --exclude='dist' --exclude='.git' --exclude='*.log' -cf - . 2>/dev/null) | (cd "$DEPLOY_DIR/backend" && tar -xf - 2>/dev/null) || true
-    
     echo "  - Frontend..."
     mkdir -p "$DEPLOY_DIR/frontend"
     (cd frontend && tar --exclude='node_modules' --exclude='.next' --exclude='.netlify' --exclude='.git' --exclude='*.log' -cf - . 2>/dev/null) | (cd "$DEPLOY_DIR/frontend" && tar -xf - 2>/dev/null) || true
@@ -74,6 +102,9 @@ cp -r pocketbase "$DEPLOY_DIR/" 2>/dev/null || true
 # Copy root files
 cp package.json "$DEPLOY_DIR/" 2>/dev/null || true
 cp package-lock.json "$DEPLOY_DIR/" 2>/dev/null || true
+cp docker-compose.yml "$DEPLOY_DIR/" 2>/dev/null || true
+cp Dockerfile.pocketbase "$DEPLOY_DIR/" 2>/dev/null || true
+cp Makefile "$DEPLOY_DIR/" 2>/dev/null || true
 cp .env "$DEPLOY_DIR/" 2>/dev/null || echo "⚠️  Warning: .env file not found. Make sure to create it on the server."
 
 # Cleanup: Remove any node_modules that might have been copied (safety check)
@@ -143,22 +174,18 @@ else
     echo "⏭️  Skipping root npm install (node_modules exists)"
 fi
 
-echo "🏗️  Building projects..."
+echo "🐳 Ensuring PocketBase Docker is running..."
+# Start PocketBase in Docker if not already running
+if ! sudo docker ps | grep -q rave-pb; then
+    echo "Starting PocketBase Docker container..."
+    sudo docker-compose up -d pocketbase || sudo docker compose up -d pocketbase
+    sleep 5
+    echo "✅ PocketBase Docker started"
+else
+    echo "✅ PocketBase Docker is already running"
+fi
 
-# Build backend
-echo "Building backend..."
-cd backend
-if [ ! -d "node_modules" ]; then
-    npm install
-else
-    echo "  ⏭️  Skipping backend npm install (node_modules exists)"
-fi
-if [ ! -d "dist" ]; then
-    npm run build
-else
-    echo "  ⏭️  Skipping backend build (dist exists)"
-fi
-cd ..
+echo "🏗️  Building projects..."
 
 # Build frontend
 echo "Building frontend..."
@@ -192,14 +219,9 @@ cd ..
 
 echo "🔄 Restarting services with PM2..."
 
-# Stop existing processes
-pm2 stop all 2>/dev/null || true
-pm2 delete all 2>/dev/null || true
-
-# Start backend
-cd backend
-pm2 start dist/index.js --name rave-backend
-cd ..
+# Stop existing processes (except PocketBase which runs in Docker)
+pm2 stop rave-frontend rave-backoffice 2>/dev/null || true
+pm2 delete rave-frontend rave-backoffice 2>/dev/null || true
 
 # Start frontend
 cd frontend
@@ -257,12 +279,14 @@ upload_if_not_exists() {
 
 # Upload files with existence check
 echo "Checking existing files on server..."
-upload_if_not_exists "$DEPLOY_DIR/backend" "backend"
 upload_if_not_exists "$DEPLOY_DIR/frontend" "frontend"
 upload_if_not_exists "$DEPLOY_DIR/backoffice" "backoffice"
 upload_if_not_exists "$DEPLOY_DIR/pocketbase" "pocketbase"
 upload_if_not_exists "$DEPLOY_DIR/package.json" "package.json"
 upload_if_not_exists "$DEPLOY_DIR/package-lock.json" "package-lock.json"
+upload_if_not_exists "$DEPLOY_DIR/docker-compose.yml" "docker-compose.yml"
+upload_if_not_exists "$DEPLOY_DIR/Dockerfile.pocketbase" "Dockerfile.pocketbase"
+upload_if_not_exists "$DEPLOY_DIR/Makefile" "Makefile"
 if [ -f "$DEPLOY_DIR/.env" ]; then
     upload_if_not_exists "$DEPLOY_DIR/.env" ".env"
 fi
@@ -280,8 +304,11 @@ rm -rf "$DEPLOY_DIR"
 
 echo "✅ AWS Deployment Complete!"
 echo "🌐 Your services should be running on:"
-echo "   - Backend API: http://$SERVER_IP:3001"
 echo "   - Frontend: http://$SERVER_IP:3000"
-echo "   - Backoffice: http://$SERVER_IP:3002"
-echo "   - PocketBase: http://$SERVER_IP:8092"
+echo "   - Backoffice: http://$SERVER_IP:3001"
+echo "   - PocketBase: http://$SERVER_IP:8090 (Docker)"
+echo ""
+echo "📊 Check service status:"
+echo "   - PM2: ssh -i $SSH_KEY $REMOTE_USER@$SERVER_IP 'pm2 status'"
+echo "   - Docker: ssh -i $SSH_KEY $REMOTE_USER@$SERVER_IP 'sudo docker ps'"
 
