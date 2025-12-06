@@ -102,12 +102,31 @@ export const refundsApi = {
 export const seatsApi = {
   getAvailableSeats: async (eventId: string) => {
     const pb = getPocketBase();
-    // This is complex logic (checking tickets vs seats). 
-    // For now, fetch all seats and filter client-side or use a simple rule.
-    // Assuming 'seats' collection has status or we check tickets.
-    const seats = await pb.collection('seats').getFullList({ filter: `event_id="${eventId}"` });
-    // TODO: Filter out sold seats by checking tickets collection
-    return { data: seats };
+    // First get the event to find the venue_id
+    const event = await pb.collection('events').getOne(eventId);
+    const venueId = event.venue_id;
+    
+    // Fetch all seats for this venue
+    const seats = await pb.collection('seats').getFullList({ 
+      filter: `venue_id="${venueId}"`,
+      sort: 'section,row,seat_number',
+    });
+    
+    // Get all tickets for this event to determine sold seats
+    const tickets = await pb.collection('tickets').getFullList({
+      filter: `event_id="${eventId}" && status="issued"`,
+    });
+    
+    const soldSeatIds = new Set(tickets.map((t: any) => t.seat_id).filter(Boolean));
+    
+    // Mark seats as sold/available
+    const seatsWithStatus = seats.map((seat: any) => ({
+      ...seat,
+      available: !soldSeatIds.has(seat.id),
+      sold: soldSeatIds.has(seat.id),
+    }));
+    
+    return { data: { seats: seatsWithStatus } };
   },
 };
 

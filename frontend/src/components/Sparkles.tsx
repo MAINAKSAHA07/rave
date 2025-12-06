@@ -48,11 +48,12 @@ export default function Sparkles() {
         };
 
         const createParticle = (x: number, y: number) => {
-            const colors = ['#FFD700', '#FF69B4', '#00BFFF', '#7B68EE'];
+            // More vibrant colors that show up on white
+            const colors = ['#6366f1', '#ec4899', '#8b5cf6', '#f59e0b', '#10b981'];
             const particle: Particle = {
                 x,
                 y,
-                size: Math.random() * 3 + 1,
+                size: Math.random() * 4 + 2, // Slightly larger
                 speedX: Math.random() * 2 - 1,
                 speedY: Math.random() * 2 - 1,
                 color: colors[Math.floor(Math.random() * colors.length)],
@@ -81,7 +82,7 @@ export default function Sparkles() {
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fillStyle = p.color;
-                ctx.globalAlpha = p.life;
+                ctx.globalAlpha = p.life * 0.6; // Slightly transparent
                 ctx.fill();
                 ctx.globalAlpha = 1.0;
             }
@@ -104,8 +105,7 @@ export default function Sparkles() {
     return (
         <canvas
             ref={canvasRef}
-            className="absolute top-0 left-0 w-full h-full pointer-events-none z-[1]"
-            style={{ mixBlendMode: 'screen' }}
+            className="absolute top-0 left-0 w-full h-full pointer-events-none z-[5]"
         />
     );
 }

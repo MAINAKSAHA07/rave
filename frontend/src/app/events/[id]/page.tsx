@@ -7,6 +7,7 @@ import { ordersApi, seatsApi, seatReservationsApi } from '@/lib/api';
 import Script from 'next/script';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import FloorPlanView from '@/components/FloorPlanView';
 
 interface Event {
   id: string;
@@ -78,6 +79,7 @@ export default function EventDetailsPage() {
   const [availableSeats, setAvailableSeats] = useState<Seat[]>([]);
   const [isSeated, setIsSeated] = useState(false);
   const [showSeatSelection, setShowSeatSelection] = useState<Record<string, boolean>>({});
+  const [seatViewMode, setSeatViewMode] = useState<Record<string, 'list' | 'map'>>({}); // 'list' or 'map'
   const [reservedSeats, setReservedSeats] = useState<Set<string>>(new Set());
   const [reservationTimer, setReservationTimer] = useState<NodeJS.Timeout | null>(null);
   const [attendeeDetails, setAttendeeDetails] = useState({
@@ -674,58 +676,98 @@ export default function EventDetailsPage() {
                     {/* Seat Selection for Seated Events */}
                     {isSeated && (selectedTickets[tt.id] || 0) > 0 && (
                       <div className="mt-4 border-t pt-4">
-                        <button
-                          onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
-                          className="text-sm text-blue-600 hover:underline mb-2"
-                        >
-                          {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
-                        </button>
+                        <div className="flex justify-between items-center mb-2">
+                          <button
+                            onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
+                          </button>
+                          {showSeatSelection[tt.id] && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'list' })}
+                                className={`px-3 py-1 text-xs rounded border ${
+                                  (seatViewMode[tt.id] || 'list') === 'list'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                List View
+                              </button>
+                              <button
+                                onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'map' })}
+                                className={`px-3 py-1 text-xs rounded border ${
+                                  seatViewMode[tt.id] === 'map'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                Map View
+                              </button>
+                            </div>
+                          )}
+                        </div>
                         {showSeatSelection[tt.id] && (
                           <div className="mt-2">
                             <p className="text-sm text-gray-600 mb-2">
                               Select {selectedTickets[tt.id]} seat(s). Selected: {(selectedSeats[tt.id] || []).length}
                             </p>
-                            <div className="max-h-64 overflow-y-auto border rounded p-3">
-                              {availableSeats.length === 0 ? (
-                                <p className="text-sm text-gray-500">Loading seats...</p>
-                              ) : (
-                                <div className="flex flex-wrap gap-2">
-                                  {availableSeats.map((seat) => {
-                                    const isSelected = (selectedSeats[tt.id] || []).includes(seat.id);
-                                    const isReserved = reservedSeats.has(seat.id) && !isSelected;
-                                    const isUnavailable = !seat.available || seat.sold || isReserved;
+                            
+                            {/* Map View */}
+                            {(seatViewMode[tt.id] || 'list') === 'map' ? (
+                              <FloorPlanView
+                                seats={availableSeats}
+                                selectedSeatIds={selectedSeats[tt.id] || []}
+                                reservedSeatIds={reservedSeats}
+                                onSeatClick={(seatId) => handleSeatToggle(tt.id, seatId)}
+                                maxSelections={selectedTickets[tt.id] || 0}
+                                ticketTypeId={tt.id}
+                              />
+                            ) : (
+                              /* List View */
+                              <div className="max-h-64 overflow-y-auto border rounded p-3">
+                                {availableSeats.length === 0 ? (
+                                  <p className="text-sm text-gray-500">Loading seats...</p>
+                                ) : (
+                                  <div className="flex flex-wrap gap-2">
+                                    {availableSeats.map((seat) => {
+                                      const isSelected = (selectedSeats[tt.id] || []).includes(seat.id);
+                                      const isReserved = reservedSeats.has(seat.id) && !isSelected;
+                                      const isUnavailable = !seat.available || seat.sold || isReserved;
 
-                                    return (
-                                      <button
-                                        key={seat.id}
-                                        onClick={() => handleSeatToggle(tt.id, seat.id)}
-                                        disabled={isUnavailable}
-                                        className={`px-2 py-1 text-xs rounded ${isSelected
-                                          ? 'bg-blue-600 text-white'
-                                          : isReserved
-                                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
-                                            : seat.available && !seat.sold
-                                              ? 'bg-gray-100 hover:bg-gray-200'
-                                              : 'bg-red-100 text-gray-400 cursor-not-allowed'
-                                          }`}
-                                        title={
-                                          isSelected
-                                            ? `Selected: ${seat.section} - Row ${seat.row} - ${seat.label}`
+                                      return (
+                                        <button
+                                          key={seat.id}
+                                          onClick={() => handleSeatToggle(tt.id, seat.id)}
+                                          disabled={isUnavailable}
+                                          className={`px-2 py-1 text-xs rounded ${isSelected
+                                            ? 'bg-blue-600 text-white'
                                             : isReserved
-                                              ? `Reserved: ${seat.section} - Row ${seat.row} - ${seat.label}`
-                                              : seat.sold
-                                                ? 'Sold'
-                                                : `${seat.section} - Row ${seat.row} - ${seat.label}`
-                                        }
-                                      >
-                                        💺 {seat.label}
-                                        {isReserved && <span className="ml-1 text-xs">⏱️</span>}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
+                                              ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                                              : seat.available && !seat.sold
+                                                ? 'bg-gray-100 hover:bg-gray-200'
+                                                : 'bg-red-100 text-gray-400 cursor-not-allowed'
+                                            }`}
+                                          title={
+                                            isSelected
+                                              ? `Selected: ${seat.section} - Row ${seat.row} - ${seat.label}`
+                                              : isReserved
+                                                ? `Reserved: ${seat.section} - Row ${seat.row} - ${seat.label}`
+                                                : seat.sold
+                                                  ? 'Sold'
+                                                  : `${seat.section} - Row ${seat.row} - ${seat.label}`
+                                          }
+                                        >
+                                          💺 {seat.label}
+                                          {isReserved && <span className="ml-1 text-xs">⏱️</span>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

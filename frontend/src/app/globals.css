@@ -74,21 +74,45 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    /* Mobile-first gradient background - purple to pink */
-    background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
-    background-attachment: fixed;
+    /* Vibrant Party Gradient */
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 25%, #DB2777 50%, #EA580C 100%);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
     min-height: 100vh;
   }
 
-  /* Mobile-constrained container for all content */
+  @keyframes gradientBG {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Glassmorphism Mobile Container */
   .mobile-container {
     max-width: 428px;
-    /* Standard mobile width */
     width: 100%;
     margin: 0 auto;
-    background: white;
-    border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+    /* Glass Effect */
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 32px;
+
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+
     min-height: calc(100vh - 40px);
     overflow-y: auto;
     position: relative;
@@ -107,8 +131,9 @@
     position: sticky;
     top: 0;
     z-index: 50;
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
 }
 
