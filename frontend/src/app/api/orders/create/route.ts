@@ -19,12 +19,14 @@ export async function POST(request: NextRequest) {
         const pb = getPocketBase();
 
         // Validate admin credentials are configured
-        const adminEmail = process.env.POCKETBASE_ADMIN_EMAIL;
-        const adminPassword = process.env.POCKETBASE_ADMIN_PASSWORD;
+        // Priority: AWS-prefixed vars (for production) > regular vars (for local)
+        const adminEmail = process.env.AWS_POCKETBASE_ADMIN_EMAIL || process.env.POCKETBASE_ADMIN_EMAIL;
+        const adminPassword = process.env.AWS_POCKETBASE_ADMIN_PASSWORD || process.env.POCKETBASE_ADMIN_PASSWORD;
 
         if (!adminEmail || !adminPassword) {
             console.error('❌ PocketBase admin credentials not configured');
-            console.error('   Required: POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD');
+            console.error('   Required: AWS_POCKETBASE_ADMIN_EMAIL and AWS_POCKETBASE_ADMIN_PASSWORD (production)');
+            console.error('   OR: POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD (local)');
             return NextResponse.json({ 
                 error: 'Server configuration error. Please contact support.' 
             }, { status: 500 });

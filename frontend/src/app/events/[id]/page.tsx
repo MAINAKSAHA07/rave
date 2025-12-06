@@ -80,15 +80,23 @@ export default function EventDetailsPage() {
   async function loadEvent() {
     try {
       const pb = getPocketBase();
+      console.log('Loading event:', eventId);
+
       const eventData = await pb.collection('events').getOne(eventId, {
         expand: 'venue_id,organizer_id',
       });
+      console.log('Loaded event data:', eventData);
+      console.log('Event venue_id:', eventData.venue_id);
+      console.log('Event expanded venue:', eventData.expand?.venue_id);
+
       setEvent(eventData as any);
 
       try {
+        console.log('Fetching ticket types for event:', eventId);
         const ticketTypesData = await pb.collection('ticket_types').getFullList({
           filter: `event_id="${eventId}"`,
         });
+        console.log('Ticket types raw response:', ticketTypesData);
         setTicketTypes(ticketTypesData as any);
         console.log('Loaded ticket types:', ticketTypesData.length);
       } catch (ticketError) {
@@ -100,7 +108,9 @@ export default function EventDetailsPage() {
       let venue = eventData.expand?.venue_id;
       if (!venue && eventData.venue_id) {
         try {
+          console.log('Fetching venue manually:', eventData.venue_id);
           venue = await pb.collection('venues').getOne(eventData.venue_id);
+          console.log('Manually fetched venue:', venue);
         } catch (venueError: any) {
           console.warn('Failed to load venue:', venueError);
           // Venue might not exist or user might not have access - continue without venue data

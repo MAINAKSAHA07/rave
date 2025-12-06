@@ -17,10 +17,16 @@ NEXT_PUBLIC_POCKETBASE_URL=http://localhost:8090
 # AWS_POCKETBASE_URL is not set (will use POCKETBASE_URL)
 ```
 
-### AWS Deployment (.env on server):
+### AWS Deployment (.env on server or local development connecting to AWS):
 ```
-AWS_POCKETBASE_URL=http://13.201.90.240:8090
+AWS_POCKETBASE_URL=http://13.201.90.240:8092
+# OR set NEXT_PUBLIC_POCKETBASE_URL to auto-detect AWS
+NEXT_PUBLIC_POCKETBASE_URL=http://13.201.90.240:8092
 # POCKETBASE_URL can be set as fallback
 ```
+
+### Auto-Detection:
+The code automatically detects AWS environment if `NEXT_PUBLIC_POCKETBASE_URL` contains the AWS server IP (`13.201.90.240`).
+This allows connecting to AWS PocketBase even when running locally.
 
 ✅ The code automatically detects which environment it's running in!

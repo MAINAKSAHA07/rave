@@ -10,6 +10,11 @@ function getPocketBaseUrl(): string {
     return process.env.AWS_POCKETBASE_URL;
   }
   
+  // Auto-detect AWS URL from NEXT_PUBLIC_POCKETBASE_URL if it contains AWS server IP
+  if (process.env.NEXT_PUBLIC_POCKETBASE_URL && process.env.NEXT_PUBLIC_POCKETBASE_URL.includes('13.201.90.240')) {
+    return process.env.NEXT_PUBLIC_POCKETBASE_URL;
+  }
+  
   // Check for explicit POCKETBASE_URL (for local or custom setups)
   if (process.env.POCKETBASE_URL) {
     return process.env.POCKETBASE_URL;
