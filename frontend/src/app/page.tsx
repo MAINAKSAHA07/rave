@@ -110,18 +110,12 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    // Check if this is a reload (hard refresh) or first load
+    // Check if this is the very first page load (not a navigation)
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    const isReload = navigation?.type === 'reload';
-    const hasSeenInSession = sessionStorage.getItem('hasSeenBrandReveal');
+    const isFirstLoad = navigation?.type === 'navigate' && !sessionStorage.getItem('hasSeenBrandReveal');
     
-    // Clear sessionStorage on hard refresh to show animation again
-    if (isReload) {
-      sessionStorage.removeItem('hasSeenBrandReveal');
-    }
-    
-    // Show brand reveal on first load or hard refresh
-    if (isReload || !hasSeenInSession) {
+    // Show brand reveal only on very first load
+    if (isFirstLoad) {
       // Show brand reveal for 15 seconds
       const timer = setTimeout(() => {
         setShowContent(true);
@@ -143,7 +137,7 @@ export default function HomePage() {
         unsubscribe();
       };
     } else {
-      // Skip brand reveal if already seen in this session (normal navigation)
+      // Skip brand reveal on all navigations (including home button click)
       setShowContent(true);
       
       loadFeaturedEvents();

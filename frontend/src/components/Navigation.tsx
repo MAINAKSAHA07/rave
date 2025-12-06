@@ -64,9 +64,6 @@ export default function Navigation() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <span className="text-xs text-gray-600 hidden sm:inline max-w-[100px] truncate">
-                  {user.name || user.email}
-                </span>
                 <Button onClick={handleLogout} variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
                   Logout
                 </Button>
