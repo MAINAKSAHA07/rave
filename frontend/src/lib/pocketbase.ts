@@ -343,47 +343,82 @@ class ProxyPocketBase {
   get files() {
     return {
       getUrl: (record: any, filename: string, queryParams: any = {}) => {
+        // Validate inputs
+        if (!record || !record.id) {
+          console.warn('Invalid record provided to files.getUrl:', record);
+          return ''; // Return empty string for invalid records
+        }
+        
+        if (!filename || filename.trim() === '') {
+          console.warn('Invalid filename provided to files.getUrl:', filename);
+          return ''; // Return empty string for invalid filenames
+        }
+        
         // Check if we're on HTTPS (production) - if so, use proxy to avoid Mixed Content errors
         const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
         
-        if (isHttps) {
-          // Use proxy route for HTTPS environments
-          const pb = new PocketBase(pbUrl);
-          const directUrl = pb.files.getUrl(record, filename, queryParams);
-          
-          // Extract the path from the direct URL (e.g., /api/files/collectionId/recordId/filename)
-          try {
-            const url = new URL(directUrl);
-            const path = url.pathname; // This will be like /api/files/collectionId/recordId/filename
+        try {
+          if (isHttps) {
+            // Use proxy route for HTTPS environments
+            const pb = new PocketBase(pbUrl);
+            const directUrl = pb.files.getUrl(record, filename, queryParams);
             
-            // Extract the file path part (everything after /api/files/)
-            const filePath = path.replace(/^\/api\/files\//, '');
-            
-            // Build proxy URL
-            const proxyUrl = new URL(`/api/pocketbase/files/${filePath}`, window.location.origin);
-            
-            // Add query parameters if any (from both queryParams and original URL)
-            if (url.search) {
-              url.searchParams.forEach((value, key) => {
-                proxyUrl.searchParams.append(key, value);
-              });
-            }
-            if (queryParams && Object.keys(queryParams).length > 0) {
-              Object.entries(queryParams).forEach(([key, value]) => {
-                proxyUrl.searchParams.set(key, String(value));
-              });
+            // Validate the direct URL before processing
+            if (!directUrl || directUrl.trim() === '' || directUrl.startsWith('data:')) {
+              console.warn('Invalid direct URL generated:', directUrl);
+              return ''; // Return empty string for invalid URLs
             }
             
-            return proxyUrl.toString();
-          } catch (e) {
-            // Fallback to direct URL if parsing fails
-            console.warn('Failed to parse PocketBase file URL, using direct URL:', e);
+            // Extract the path from the direct URL (e.g., /api/files/collectionId/recordId/filename)
+            try {
+              const url = new URL(directUrl);
+              const path = url.pathname; // This will be like /api/files/collectionId/recordId/filename
+              
+              // Extract the file path part (everything after /api/files/)
+              const filePath = path.replace(/^\/api\/files\//, '');
+              
+              if (!filePath || filePath.trim() === '') {
+                console.warn('Invalid file path extracted:', filePath);
+                return directUrl; // Fallback to direct URL
+              }
+              
+              // Build proxy URL
+              const proxyUrl = new URL(`/api/pocketbase/files/${filePath}`, window.location.origin);
+              
+              // Add query parameters if any (from both queryParams and original URL)
+              if (url.search) {
+                url.searchParams.forEach((value, key) => {
+                  proxyUrl.searchParams.append(key, value);
+                });
+              }
+              if (queryParams && Object.keys(queryParams).length > 0) {
+                Object.entries(queryParams).forEach(([key, value]) => {
+                  proxyUrl.searchParams.set(key, String(value));
+                });
+              }
+              
+              return proxyUrl.toString();
+            } catch (e) {
+              // Fallback to direct URL if parsing fails
+              console.warn('Failed to parse PocketBase file URL, using direct URL:', e);
+              return directUrl;
+            }
+          } else {
+            // Use direct PocketBase URL for HTTP (local development)
+            const pb = new PocketBase(pbUrl);
+            const directUrl = pb.files.getUrl(record, filename, queryParams);
+            
+            // Validate the direct URL
+            if (!directUrl || directUrl.trim() === '' || directUrl.startsWith('data:')) {
+              console.warn('Invalid direct URL generated:', directUrl);
+              return ''; // Return empty string for invalid URLs
+            }
+            
             return directUrl;
           }
-        } else {
-          // Use direct PocketBase URL for HTTP (local development)
-          const pb = new PocketBase(pbUrl);
-          return pb.files.getUrl(record, filename, queryParams);
+        } catch (error: any) {
+          console.error('Error generating file URL:', error);
+          return ''; // Return empty string on error
         }
       },
     };

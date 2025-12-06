@@ -105,22 +105,62 @@ export async function POST(request: NextRequest) {
         // 3. Create Order Record
         const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-        const orderData = {
+        const orderData: any = {
             user_id: userId,
             event_id: eventId,
             order_number: orderNumber,
             status: 'pending',
             total_amount_minor: totalAmount,
-            base_amount_minor: totalBaseAmount,
-            gst_amount_minor: totalGstAmount,
-            currency: currency,
+            currency: currency || 'INR',
             attendee_name: attendeeName,
             attendee_email: attendeeEmail,
             attendee_phone: attendeePhone,
             payment_method: paymentMethod,
         };
 
-        const order = await pb.collection('orders').create(orderData);
+        // Add optional fields if they exist in schema (for backward compatibility)
+        // These fields might not exist in older database schemas
+        if (totalBaseAmount !== undefined && totalBaseAmount !== null) {
+            orderData.base_amount_minor = totalBaseAmount;
+        }
+        if (totalGstAmount !== undefined && totalGstAmount !== null) {
+            orderData.gst_amount_minor = totalGstAmount;
+        }
+
+        let order;
+        try {
+            order = await pb.collection('orders').create(orderData);
+        } catch (createError: any) {
+            console.error('❌ Failed to create order:', createError);
+            console.error('   Order data:', JSON.stringify(orderData, null, 2));
+            console.error('   Error response:', JSON.stringify(createError.response, null, 2));
+            
+            // If it's a schema validation error, try without optional fields
+            if (createError.response?.data) {
+                const errorData = createError.response.data;
+                const hasFieldErrors = Object.keys(errorData).some(key => 
+                    key === 'base_amount_minor' || key === 'gst_amount_minor'
+                );
+                
+                if (hasFieldErrors) {
+                    console.warn('⚠️  Retrying order creation without optional GST fields...');
+                    const fallbackOrderData = { ...orderData };
+                    delete fallbackOrderData.base_amount_minor;
+                    delete fallbackOrderData.gst_amount_minor;
+                    
+                    try {
+                        order = await pb.collection('orders').create(fallbackOrderData);
+                        console.log('✅ Order created successfully without GST fields');
+                    } catch (fallbackError: any) {
+                        throw createError; // Throw original error if fallback also fails
+                    }
+                } else {
+                    throw createError;
+                }
+            } else {
+                throw createError;
+            }
+        }
 
         // 4. Create Razorpay Order (if applicable)
         let razorpayOrder = null;
@@ -170,24 +210,44 @@ export async function POST(request: NextRequest) {
         // 5. Create Pending Tickets
         // Note: We create them as 'pending'. They will be 'issued' upon payment confirmation.
         const tickets = [];
-        for (const item of ticketItems) {
-            for (let i = 0; i < item.quantity; i++) {
-                const ticketCode = generateTicketCode();
-                const ticketData: any = {
-                    order_id: order.id,
-                    event_id: eventId,
-                    ticket_type_id: item.ticketTypeId,
-                    ticket_code: ticketCode,
-                    status: 'pending',
-                };
+        try {
+            for (const item of ticketItems) {
+                for (let i = 0; i < item.quantity; i++) {
+                    const ticketCode = generateTicketCode();
+                    const ticketData: any = {
+                        order_id: order.id,
+                        event_id: eventId,
+                        ticket_type_id: item.ticketTypeId,
+                        ticket_code: ticketCode,
+                        status: 'pending',
+                    };
 
-                if (item.seatIds && item.seatIds[i]) {
-                    ticketData.seat_id = item.seatIds[i];
+                    if (item.seatIds && item.seatIds[i]) {
+                        ticketData.seat_id = item.seatIds[i];
+                    }
+
+                    try {
+                        const ticket = await pb.collection('tickets').create(ticketData);
+                        tickets.push(ticket);
+                    } catch (ticketError: any) {
+                        console.error(`❌ Failed to create ticket ${i + 1} for item:`, item);
+                        console.error('   Ticket data:', JSON.stringify(ticketData, null, 2));
+                        console.error('   Error:', ticketError.message || ticketError);
+                        
+                        // If ticket creation fails, try to clean up the order
+                        try {
+                            await pb.collection('orders').delete(order.id);
+                        } catch (deleteError) {
+                            console.error('Failed to delete order after ticket creation error:', deleteError);
+                        }
+                        
+                        throw new Error(`Failed to create ticket: ${ticketError.message || 'Unknown error'}`);
+                    }
                 }
-
-                const ticket = await pb.collection('tickets').create(ticketData);
-                tickets.push(ticket);
             }
+        } catch (ticketCreationError: any) {
+            // Re-throw with context
+            throw new Error(`Ticket creation failed: ${ticketCreationError.message || ticketCreationError}`);
         }
 
         return NextResponse.json({
@@ -197,7 +257,55 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error('Order creation error:', error);
-        return NextResponse.json({ error: error.message || 'Failed to create order' }, { status: 500 });
+        console.error('❌ Order creation error:', error);
+        console.error('   Error type:', error.constructor?.name);
+        console.error('   Error message:', error.message);
+        console.error('   Error status:', error.status);
+        console.error('   Error URL:', error.url);
+        if (error.response) {
+            console.error('   Error response:', JSON.stringify(error.response, null, 2));
+        }
+        if (error.stack) {
+            console.error('   Error stack:', error.stack);
+        }
+        
+        // Provide more detailed error information
+        let errorMessage = 'Failed to create order';
+        if (error.message) {
+            errorMessage = error.message;
+        } else if (error.response?.message) {
+            errorMessage = error.response.message;
+        }
+        
+        // Include error details for better debugging
+        const errorDetails: any = {
+            message: errorMessage,
+        };
+        
+        // Add additional context if available
+        if (error.status) {
+            errorDetails.status = error.status;
+        }
+        if (error.url) {
+            errorDetails.url = error.url;
+        }
+        if (error.response?.data) {
+            errorDetails.data = error.response.data;
+        }
+        
+        // In production, include safe error details (no stack traces)
+        if (process.env.NODE_ENV === 'production') {
+            errorDetails.type = error.constructor?.name;
+        } else {
+            // In development, include full details
+            errorDetails.type = error.constructor?.name;
+            errorDetails.stack = error.stack;
+            errorDetails.fullError = error;
+        }
+        
+        return NextResponse.json({ 
+            error: errorMessage,
+            details: errorDetails
+        }, { status: 500 });
     }
 }

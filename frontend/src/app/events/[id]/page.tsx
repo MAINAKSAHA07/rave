@@ -455,7 +455,7 @@ export default function EventDetailsPage() {
         <div className="w-full">
           {event.cover_image && (
             <img
-              src={getPocketBase().files.getUrl(event as any, event.cover_image)}
+              src={event.cover_image ? getPocketBase().files.getUrl(event as any, event.cover_image) : ''}
               alt={event.name}
               className="w-full h-48 object-cover rounded-xl mb-4"
             />

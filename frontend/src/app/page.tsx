@@ -74,7 +74,7 @@ export default function HomePage() {
                   <div className="aspect-video overflow-hidden">
                     {event.cover_image ? (
                       <img
-                        src={getPocketBase().files.getUrl(event, event.cover_image)}
+                        src={event.cover_image ? getPocketBase().files.getUrl(event, event.cover_image) : ''}
                         alt={event.name}
                         className="w-full h-full object-cover"
                       />
