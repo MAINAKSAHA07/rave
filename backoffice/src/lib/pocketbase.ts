@@ -309,10 +309,24 @@ class ProxyPocketBase {
   get files() {
     return {
       getUrl: (record: any, filename: string, queryParams: any = {}) => {
-        // Build file URL using a direct PocketBase client
-        // This avoids depending on the proxy for static file URLs
-        const pb = new PocketBase(pbUrl);
-        return pb.files.getUrl(record, filename, queryParams);
+        // Get the correct base URL for client-side
+        // Use NEXT_PUBLIC_POCKETBASE_URL which is available on client-side
+        const clientBaseUrl = typeof window !== 'undefined' 
+          ? (process.env.NEXT_PUBLIC_POCKETBASE_URL || pbUrl)
+          : pbUrl;
+        
+        // Build file URL using a direct PocketBase client with correct URL
+        const pb = new PocketBase(clientBaseUrl);
+        const url = pb.files.getUrl(record, filename, queryParams);
+        
+        console.log('[ProxyPocketBase.files.getUrl] Generated URL:', {
+          baseUrl: clientBaseUrl,
+          record_id: record?.id,
+          filename,
+          url,
+        });
+        
+        return url;
       },
     };
   }

@@ -25,16 +25,22 @@ export function getPocketBaseFileUrl(record: any, filename: string | string[] | 
   
   try {
     const pb = getPocketBase();
+    
+    // Use the PocketBase files.getUrl method which handles URL construction correctly
+    // This ensures it works with both local and hosted environments
     const url = pb.files.getUrl(record, actualFilename);
+    
     console.log('[getPocketBaseFileUrl] Generated URL:', {
       record_id: record.id,
       filename: actualFilename,
       url,
+      record_collection: record.collectionName || record.collectionId,
     });
+    
     return url;
   } catch (error) {
     console.error('[getPocketBaseFileUrl] Error generating URL:', {
-      record_id: record.id,
+      record_id: record?.id,
       filename: actualFilename,
       error,
     });

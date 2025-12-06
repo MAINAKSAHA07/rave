@@ -66,7 +66,12 @@ export default function TableMapEditorPage() {
         layout_image: venueData.layout_image,
         layout_image_type: typeof venueData.layout_image,
         layout_image_is_array: Array.isArray(venueData.layout_image),
+        full_venue_data: venueData,
       });
+      // Ensure collectionName is set for file URL generation
+      if (!venueData.collectionName && !venueData.collectionId) {
+        venueData.collectionName = 'venues';
+      }
       setVenue(venueData);
 
       if (venueData.layout_type === 'GA_TABLE') {
