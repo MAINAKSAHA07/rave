@@ -61,17 +61,33 @@ export default function TableMapEditorPage() {
       const pb = getPocketBase();
       const venueData = await pb.collection('venues').getOne(venueId);
       
-      // Get collection info to get the collection ID for file URLs
+      // Ensure collection info is set for file URL generation
+      venueData.collectionName = 'venues';
+      
+      // Try to get the actual collection ID for better file URL generation
       try {
         const collections = await pb.collections.getFullList();
         const venuesCollection = collections.find((c: any) => c.name === 'venues');
         if (venuesCollection) {
           venueData.collectionId = venuesCollection.id;
-          venueData.collectionName = 'venues';
         }
       } catch (e) {
         console.warn('[TableMap] Could not get collection info:', e);
-        venueData.collectionName = 'venues';
+      }
+      
+      // Generate file URL using PocketBase SDK directly for better compatibility
+      if (venueData.layout_image) {
+        try {
+          const layoutImageFilename = Array.isArray(venueData.layout_image) 
+            ? venueData.layout_image[0] 
+            : venueData.layout_image;
+          venueData.layout_image_url = pb.files.getUrl(venueData, layoutImageFilename);
+          console.log('[TableMap] Generated layout image URL:', venueData.layout_image_url);
+        } catch (urlError) {
+          console.error('[TableMap] Failed to generate layout image URL:', urlError);
+          // Fallback to getPocketBaseFileUrl
+          venueData.layout_image_url = getPocketBaseFileUrl(venueData, venueData.layout_image);
+        }
       }
       
       console.log('[TableMap] Venue data loaded:', {
@@ -80,6 +96,7 @@ export default function TableMapEditorPage() {
         layout_image: venueData.layout_image,
         layout_image_type: typeof venueData.layout_image,
         layout_image_is_array: Array.isArray(venueData.layout_image),
+        layout_image_url: venueData.layout_image_url,
         collectionId: venueData.collectionId,
         collectionName: venueData.collectionName,
       });
@@ -356,12 +373,13 @@ export default function TableMapEditorPage() {
                   <p className="text-sm text-gray-600 mb-2">Current floor plan:</p>
                   <div className="relative inline-block border-2 border-gray-300 rounded-lg overflow-hidden">
                     <img
-                      src={getPocketBaseFileUrl(venue, venue.layout_image)}
+                      src={venue.layout_image_url || getPocketBaseFileUrl(venue, venue.layout_image)}
                       alt="Floor Plan"
                       className="max-h-48 object-contain"
                       onError={(e) => {
                         console.error('[TableMap] Failed to load floor plan image:', {
                           layout_image: venue.layout_image,
+                          layout_image_url: venue.layout_image_url,
                           venue_id: venue.id,
                           venue_record: venue,
                           error: e,
@@ -432,13 +450,14 @@ export default function TableMapEditorPage() {
               {/* Floor Plan Background Image */}
               {venue.layout_image && (
                 <img
-                  src={getPocketBaseFileUrl(venue, venue.layout_image)}
+                  src={venue.layout_image_url || getPocketBaseFileUrl(venue, venue.layout_image)}
                   alt="Floor Plan Background"
                   className="absolute inset-0 w-full h-full object-contain z-0"
                   style={{ opacity: 0.3 }}
                   onError={(e) => {
                     console.error('[TableMap] Failed to load floor plan background image:', {
                       layout_image: venue.layout_image,
+                      layout_image_url: venue.layout_image_url,
                       venue_id: venue.id,
                       venue_record: venue,
                       error: e,

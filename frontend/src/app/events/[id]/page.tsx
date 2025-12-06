@@ -9,6 +9,7 @@ import Script from 'next/script';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import FloorPlanView from '@/components/FloorPlanView';
+import TableFloorPlanView from '@/components/TableFloorPlanView';
 import Loading from '@/components/Loading';
 import BottomNavigation from '@/components/BottomNavigation';
 
@@ -277,8 +278,14 @@ export default function EventDetailsPage() {
         console.error('Failed to release table reservation:', error);
       }
     } else {
-      // Select table (one table per ticket type for GA_TABLE)
+      // Select table (multiple tables allowed based on quantity)
       if (quantity > 0) {
+        // Check if we've already selected the maximum number of tables
+        if (currentTables.length >= quantity) {
+          alert(`You can only select ${quantity} table(s) for ${quantity} ticket(s). Please deselect a table first.`);
+          return;
+        }
+
         // Check if table is available
         if (table.sold) {
           alert('This table is already sold');
@@ -306,7 +313,7 @@ export default function EventDetailsPage() {
           if (reserveResponse.data.reserved && reserveResponse.data.reserved.includes(tableId)) {
             setSelectedTables({
               ...selectedTables,
-              [ticketTypeId]: [tableId], // Only one table per ticket type
+              [ticketTypeId]: [...currentTables, tableId], // Add to existing tables
             });
 
             setReservedTables((prev) => {
@@ -325,6 +332,13 @@ export default function EventDetailsPage() {
                 const newSet = new Set(prev);
                 newSet.delete(tableId);
                 return newSet;
+              });
+              setSelectedTables((prev) => {
+                const newTables = { ...prev };
+                if (newTables[ticketTypeId]) {
+                  newTables[ticketTypeId] = newTables[ticketTypeId].filter((id) => id !== tableId);
+                }
+                return newTables;
               });
               alert('Your table reservation has expired. Please select a table again.');
             }, 10 * 60 * 1000)); // 10 minutes
@@ -613,7 +627,11 @@ export default function EventDetailsPage() {
         if (quantity > 0) {
           const selectedTableIds = selectedTables[ticketTypeId] || [];
           if (selectedTableIds.length === 0) {
-            alert(`Please select a table for ${ticketTypes.find(tt => tt.id === ticketTypeId)?.name || 'this ticket type'}`);
+            alert(`Please select at least one table for ${ticketTypes.find(tt => tt.id === ticketTypeId)?.name || 'this ticket type'}`);
+            return;
+          }
+          if (selectedTableIds.length !== quantity) {
+            alert(`Please select exactly ${quantity} table(s) for ${ticketTypes.find(tt => tt.id === ticketTypeId)?.name || 'this ticket type'}. Currently selected: ${selectedTableIds.length}`);
             return;
           }
         }
@@ -1212,16 +1230,21 @@ export default function EventDetailsPage() {
                         </div>
                         {showTableSelection[tt.id] && (
                           <div className="mt-2">
-                            <p className="text-sm text-gray-600 mb-2">
-                              Select 1 table for {selectedTickets[tt.id]} ticket(s). Selected: {(selectedTables[tt.id] || []).length > 0 ? '1' : '0'}
+                            <p className="text-sm text-gray-700 mb-2 font-medium">
+                              Select {selectedTickets[tt.id]} table(s) for {selectedTickets[tt.id]} ticket(s). Selected: {(selectedTables[tt.id] || []).length} of {selectedTickets[tt.id]}
                             </p>
                             
                             {/* Map View */}
                             {(tableViewMode[tt.id] || 'list') === 'map' ? (
-                              <div className="border rounded p-4 bg-gray-50">
-                                <p className="text-sm text-gray-600 mb-2">Table map view coming soon. Use list view for now.</p>
-                                {/* TODO: Create TableFloorPlanView component similar to FloorPlanView */}
-                              </div>
+                              <TableFloorPlanView
+                                tables={availableTables}
+                                selectedTableIds={selectedTables[tt.id] || []}
+                                reservedTableIds={reservedTables}
+                                onTableClick={(tableId) => handleTableToggle(tt.id, tableId)}
+                                maxSelections={selectedTickets[tt.id] || 0}
+                                ticketTypeId={tt.id}
+                                floorPlanImageUrl={event.expand?.venue_id?.layout_image ? getPocketBase().files.getUrl(event.expand.venue_id as any, (event.expand.venue_id as any).layout_image) : undefined}
+                              />
                             ) : (
                               /* List View */
                               <div className="max-h-64 overflow-y-auto border rounded p-3">
@@ -1260,7 +1283,7 @@ export default function EventDetailsPage() {
                                         >
                                           <div className="text-center">
                                             <div className="font-semibold">🪑 {table.name}</div>
-                                            <div className="text-xs mt-1">👥 {table.capacity}</div>
+                                            <div className="text-xs mt-1">👥 {table.capacity} {table.capacity === 1 ? 'person' : 'people'}</div>
                                             {table.section && (
                                               <div className="text-xs text-gray-500">{table.section}</div>
                                             )}

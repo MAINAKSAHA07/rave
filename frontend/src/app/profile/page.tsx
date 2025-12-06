@@ -171,34 +171,34 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-700">Full Name *</Label>
+                <Label htmlFor="name" className="text-gray-900 font-semibold">Full Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900"
                   placeholder="Enter your full name"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700">Email Address *</Label>
+                <Label htmlFor="email" className="text-gray-900 font-semibold">Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900"
                   placeholder="Enter your email"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-gray-700">Phone Number *</Label>
+                <Label htmlFor="phone" className="text-gray-900 font-semibold">Phone Number *</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900"
                   placeholder="Enter your phone number"
                 />
               </div>
@@ -213,36 +213,36 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword" className="text-gray-700">Current Password</Label>
+                <Label htmlFor="currentPassword" className="text-gray-900 font-semibold">Current Password</Label>
                 <Input
                   id="currentPassword"
                   type="password"
                   value={formData.currentPassword}
                   onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                   placeholder="Enter current password"
-                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-gray-700">New Password</Label>
+                <Label htmlFor="newPassword" className="text-gray-900 font-semibold">New Password</Label>
                 <Input
                   id="newPassword"
                   type="password"
                   value={formData.newPassword}
                   onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                   placeholder="Enter new password"
-                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-gray-700">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword" className="text-gray-900 font-semibold">Confirm New Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   placeholder="Confirm new password"
-                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900"
                 />
               </div>
             </CardContent>

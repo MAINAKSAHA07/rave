@@ -21,7 +21,7 @@ import Loading from '@/components/Loading';
 const formSchema = z.object({
   name: z.string().min(1, 'Ticket type name is required'),
   description: z.string().optional(),
-  ticket_type_category: z.string().optional(), // 'GA' or 'TABLE' - will be validated conditionally
+  ticket_type_category: z.string().optional(), // 'GA' or 'TABLE' - required for GA_TABLE venues
   base_price_minor: z.string().min(1, 'Base price is required').refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Base price must be a positive number'),
   gst_rate: z.string().min(1, 'GST rate is required').refine((val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100, 'GST rate must be between 0 and 100'),
   currency: z.string().min(1, 'Currency is required'),
@@ -39,12 +39,15 @@ const formSchema = z.object({
   path: ['sales_end'],
 });
 
-export default function CreateTicketTypePage() {
+export default function EditTicketTypePage() {
   const params = useParams();
   const router = useRouter();
   const eventId = params.id as string;
-  const [loading, setLoading] = useState(false);
+  const ticketTypeId = params.ticketTypeId as string;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [event, setEvent] = useState<any>(null);
+  const [ticketType, setTicketType] = useState<any>(null);
   const [tables, setTables] = useState<any[]>([]);
   const [isGATable, setIsGATable] = useState(false);
   const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
@@ -69,7 +72,7 @@ export default function CreateTicketTypePage() {
   });
 
   useEffect(() => {
-    async function loadEvent() {
+    async function loadData() {
       const user = getCurrentUser();
       if (!user) {
         router.push('/login');
@@ -78,6 +81,7 @@ export default function CreateTicketTypePage() {
 
       const pb = getPocketBase();
       try {
+        // Load event
         const eventData = await pb.collection('events').getOne(eventId, {
           expand: 'organizer_id,venue_id',
         });
@@ -88,6 +92,19 @@ export default function CreateTicketTypePage() {
         if (venueData && typeof venueData === 'object' && venueData.layout_type === 'GA_TABLE') {
           setIsGATable(true);
           setVenue(venueData);
+          
+          // Generate layout image URL if available
+          if (venueData.layout_image) {
+            try {
+              const layoutImageFilename = Array.isArray(venueData.layout_image) 
+                ? venueData.layout_image[0] 
+                : venueData.layout_image;
+              venueData.layout_image_url = pb.files.getUrl(venueData, layoutImageFilename);
+            } catch (urlError) {
+              console.error('Failed to generate layout image URL:', urlError);
+              venueData.layout_image_url = getPocketBaseFileUrl(venueData, venueData.layout_image);
+            }
+          }
           
           // Load tables for the venue
           try {
@@ -120,26 +137,47 @@ export default function CreateTicketTypePage() {
           }
         }
 
-        // Set default sales dates based on event dates
-        if (eventData.start_date) {
-          const startDate = new Date(eventData.start_date);
-          startDate.setHours(0, 0, 0, 0);
-          form.setValue('sales_start', startDate.toISOString().slice(0, 16));
+        // Load ticket type
+        const ticketTypeData = await pb.collection('ticket_types').getOne(ticketTypeId);
+        setTicketType(ticketTypeData);
+
+        // Load selected table IDs if this is a GA_TABLE event
+        if (isGATable && ticketTypeData.table_ids) {
+          try {
+            const parsedTableIds = typeof ticketTypeData.table_ids === 'string' 
+              ? JSON.parse(ticketTypeData.table_ids) 
+              : ticketTypeData.table_ids;
+            if (Array.isArray(parsedTableIds)) {
+              setSelectedTableIds(parsedTableIds);
+            }
+          } catch (error) {
+            console.error('Failed to parse table_ids:', error);
+          }
         }
-        if (eventData.end_date) {
-          const endDate = new Date(eventData.end_date);
-          endDate.setHours(23, 59, 59, 999);
-          form.setValue('sales_end', endDate.toISOString().slice(0, 16));
-        }
+
+        // Populate form
+        form.setValue('name', ticketTypeData.name || '');
+        form.setValue('description', ticketTypeData.description || '');
+        form.setValue('ticket_type_category', ticketTypeData.ticket_type_category || '');
+        form.setValue('base_price_minor', (ticketTypeData.base_price_minor / 100).toFixed(2));
+        form.setValue('gst_rate', ticketTypeData.gst_rate?.toString() || '18');
+        form.setValue('currency', ticketTypeData.currency || 'INR');
+        form.setValue('initial_quantity', ticketTypeData.initial_quantity?.toString() || '');
+        form.setValue('sales_start', new Date(ticketTypeData.sales_start).toISOString().slice(0, 16));
+        form.setValue('sales_end', new Date(ticketTypeData.sales_end).toISOString().slice(0, 16));
+        form.setValue('max_per_order', ticketTypeData.max_per_order?.toString() || '10');
+        form.setValue('max_per_user_per_event', ticketTypeData.max_per_user_per_event?.toString() || '');
       } catch (error: any) {
-        console.error('Failed to load event:', error);
-        alert('Event not found or access denied');
-        router.push('/organizer/events');
+        console.error('Failed to load data:', error);
+        alert('Ticket type not found or access denied');
+        router.push(`/organizer/events/${eventId}`);
+      } finally {
+        setLoading(false);
       }
     }
 
-    loadEvent();
-  }, [eventId, router, form]);
+    loadData();
+  }, [eventId, ticketTypeId, router, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Validate ticket type category for GA_TABLE events
@@ -154,7 +192,7 @@ export default function CreateTicketTypePage() {
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     try {
       const user = getCurrentUser();
       if (!user) {
@@ -165,13 +203,18 @@ export default function CreateTicketTypePage() {
       const pb = getPocketBase();
 
       // Calculate GST and final price
-      const basePriceMinor = Math.round(parseFloat(values.base_price_minor) * 100); // Convert to paise
+      const basePriceMinor = Math.round(parseFloat(values.base_price_minor) * 100);
       const gstRate = parseFloat(values.gst_rate);
       const gstAmountMinor = Math.round((basePriceMinor * gstRate) / 100);
       const finalPriceMinor = basePriceMinor + gstAmountMinor;
 
-      const recordData: any = {
-        event_id: eventId,
+      // Calculate remaining quantity adjustment
+      const oldInitialQuantity = ticketType.initial_quantity;
+      const newInitialQuantity = parseInt(values.initial_quantity);
+      const quantityDifference = newInitialQuantity - oldInitialQuantity;
+      const newRemainingQuantity = Math.max(0, ticketType.remaining_quantity + quantityDifference);
+
+      const updateData: any = {
         name: values.name,
         description: values.description || '',
         base_price_minor: basePriceMinor,
@@ -179,38 +222,49 @@ export default function CreateTicketTypePage() {
         gst_amount_minor: gstAmountMinor,
         final_price_minor: finalPriceMinor,
         currency: values.currency,
-        initial_quantity: parseInt(values.initial_quantity),
-        remaining_quantity: parseInt(values.initial_quantity), // Initially same as initial
+        initial_quantity: newInitialQuantity,
+        remaining_quantity: newRemainingQuantity,
         sales_start: new Date(values.sales_start).toISOString(),
         sales_end: new Date(values.sales_end).toISOString(),
         max_per_order: values.max_per_order ? parseInt(values.max_per_order) : 10,
         max_per_user_per_event: values.max_per_user_per_event ? parseInt(values.max_per_user_per_event) : null,
       };
 
-      // Add ticket_type_category if this is a GA_TABLE event
+      // Update ticket_type_category if this is a GA_TABLE event
       if (isGATable && values.ticket_type_category) {
-        recordData.ticket_type_category = values.ticket_type_category;
+        updateData.ticket_type_category = values.ticket_type_category;
       }
 
-      // Add table_ids if this is a GA_TABLE event with Table category and tables are selected
-      if (isGATable && values.ticket_type_category === 'TABLE' && selectedTableIds.length > 0) {
-        recordData.table_ids = JSON.stringify(selectedTableIds);
+      // Update table_ids if this is a GA_TABLE event with Table category
+      if (isGATable && values.ticket_type_category === 'TABLE') {
+        if (selectedTableIds.length > 0) {
+          updateData.table_ids = JSON.stringify(selectedTableIds);
+        } else {
+          updateData.table_ids = null;
+        }
+      } else if (isGATable && values.ticket_type_category === 'GA') {
+        // Clear table_ids if switching to GA
+        updateData.table_ids = null;
       }
 
-      const record = await pb.collection('ticket_types').create(recordData);
+      await pb.collection('ticket_types').update(ticketTypeId, updateData);
 
-      alert('Ticket type created successfully!');
+      alert('Ticket type updated successfully!');
       router.push(`/organizer/events/${eventId}`);
     } catch (error: any) {
-      console.error('Failed to create ticket type:', error);
-      alert(`Error: ${error.message || 'Failed to create ticket type'}`);
+      console.error('Failed to update ticket type:', error);
+      alert(`Error: ${error.message || 'Failed to update ticket type'}`);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
 
-  if (!event) {
+  if (loading) {
     return <Loading />;
+  }
+
+  if (!event || !ticketType) {
+    return null;
   }
 
   // Calculate preview values
@@ -224,7 +278,7 @@ export default function CreateTicketTypePage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold">Create Ticket Type</h1>
+            <h1 className="text-4xl font-bold">Edit Ticket Type</h1>
             <p className="text-gray-600 mt-2">For event: {event.name}</p>
           </div>
           <Link href={`/organizer/events/${eventId}`}>
@@ -388,6 +442,9 @@ export default function CreateTicketTypePage() {
                     placeholder="100"
                     min="1"
                   />
+                  <p className="text-xs text-gray-500">
+                    Current remaining: {ticketType.remaining_quantity} / {ticketType.initial_quantity}
+                  </p>
                   {form.formState.errors.initial_quantity && (
                     <p className="text-sm text-red-600">{form.formState.errors.initial_quantity.message}</p>
                   )}
@@ -646,8 +703,8 @@ export default function CreateTicketTypePage() {
               )}
 
               <div className="flex gap-4">
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Creating...' : 'Create Ticket Type'}
+                <Button type="submit" disabled={saving}>
+                  {saving ? 'Updating...' : 'Update Ticket Type'}
                 </Button>
                 <Link href={`/organizer/events/${eventId}`}>
                   <Button type="button" variant="outline">Cancel</Button>

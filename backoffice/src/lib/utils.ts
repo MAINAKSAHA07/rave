@@ -31,27 +31,9 @@ export function getPocketBaseFileUrl(record: any, filename: string | string[] | 
       window.location.hostname !== '127.0.0.1';
     
     if (isHosted) {
-      // Use API proxy for hosted environments to handle CORS and authentication
-      // Get collection ID from the record or infer from context
-      // PocketBase stores collection ID in the record, but we need to get it from the collection name
-      const pb = getPocketBase();
-      let collectionId = record.collectionId;
-      
-      // If collectionId is not available, try to get it from the collection name
-      if (!collectionId) {
-        // Try common collection names and their IDs
-        // For venues collection, we need to get the actual collection ID
-        // Since we're in a hosted environment, use the proxy for file access
-        // The collection ID format in PocketBase is usually a short string
-        // We'll use the collection name as fallback and let PocketBase handle it
-        const collectionName = record.collectionName || 'venues';
-        // For now, we'll construct the URL and let the proxy figure out the collection ID
-        // The proxy will need to look up the collection ID from the collection name
-        collectionId = collectionName;
-      }
-      
+      // In hosted environments, always use the proxy route to handle CORS and authentication
+      const collectionId = record.collectionId || record.collectionName || 'venues';
       const recordId = record.id;
-      // Encode filename to handle special characters and slashes
       const encodedFilename = encodeURIComponent(actualFilename).replace(/%2F/g, '/');
       const proxyUrl = `/api/pocketbase/api/files/${collectionId}/${recordId}/${encodedFilename}`;
       
@@ -60,16 +42,15 @@ export function getPocketBaseFileUrl(record: any, filename: string | string[] | 
         filename: actualFilename,
         proxyUrl,
         collectionId,
-        record_keys: Object.keys(record),
       });
       
       return proxyUrl;
     } else {
-      // Use direct URL for localhost
+      // For localhost, use PocketBase SDK to generate direct URL
       const pb = getPocketBase();
       const url = pb.files.getUrl(record, actualFilename);
       
-      console.log('[getPocketBaseFileUrl] Generated direct URL:', {
+      console.log('[getPocketBaseFileUrl] Generated direct URL for localhost:', {
         record_id: record.id,
         filename: actualFilename,
         url,

@@ -1,17 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { getPocketBase, getCurrentUser } from '@/lib/pocketbase';
+import { getPocketBaseFileUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
+import Loading from '@/components/Loading';
 
 const venueFormSchema = z.object({
   name: z.string().min(1, 'Venue name is required'),
@@ -24,13 +26,18 @@ const venueFormSchema = z.object({
   organizer_id: z.string().optional(), // Optional for admin users
 });
 
-export default function CreateVenuePage() {
+export default function EditVenuePage() {
+  const params = useParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const venueId = params.id as string;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [venue, setVenue] = useState<any>(null);
   const [organizer, setOrganizer] = useState<any>(null);
   const [organizers, setOrganizers] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [layoutImage, setLayoutImage] = useState<File | null>(null);
+  const [existingLayoutImageUrl, setExistingLayoutImageUrl] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof venueFormSchema>>({
     resolver: zodResolver(venueFormSchema),
@@ -47,7 +54,7 @@ export default function CreateVenuePage() {
   });
 
   useEffect(() => {
-    async function loadOrganizer() {
+    async function loadData() {
       const user = getCurrentUser();
       if (!user) {
         router.push('/login');
@@ -56,42 +63,97 @@ export default function CreateVenuePage() {
 
       const pb = getPocketBase();
 
-      // Super Admin or Admin: Can create venues for any organizer
-      if (user.role === 'super_admin' || user.role === 'admin') {
-        setIsAdmin(true);
-        // Load all approved organizers for selection
-        try {
-          const allOrganizers = await pb.collection('organizers').getFullList({
-            filter: 'status="approved"',
-            sort: 'name',
-          });
-          setOrganizers(allOrganizers as any);
-        } catch (error) {
-          console.error('Failed to fetch organizers:', error);
-        }
-        return;
-      }
-
-      // Try to find organizer staff association
+      // Load venue data
       try {
-        const staff = await pb.collection('organizer_staff').getFirstListItem(
-          `user_id="${user.id}" && status="active"`
-        );
+        let venueData;
+        try {
+          venueData = await pb.collection('venues').getOne(venueId, {
+            expand: 'organizer_id',
+          });
+        } catch (error: any) {
+          // If direct access fails, check if user is organizer staff
+          if (user.role !== 'super_admin' && user.role !== 'admin') {
+            // Try to verify organizer staff access
+            try {
+              const staff = await pb.collection('organizer_staff').getFirstListItem(
+                `user_id="${user.id}" && status="active"`
+              );
+              // Try again with organizer filter
+              venueData = await pb.collection('venues').getOne(venueId, {
+                expand: 'organizer_id',
+                filter: `organizer_id="${staff.organizer_id}"`,
+              });
+            } catch (staffError) {
+              throw new Error('You do not have access to this venue');
+            }
+          } else {
+            throw error;
+          }
+        }
 
-        const organizerData = await pb.collection('organizers').getOne(staff.organizer_id);
-        setOrganizer(organizerData);
-      } catch (error) {
-        console.error('Failed to fetch organizer:', error);
-        alert('You are not associated with an organizer account.');
-        router.push('/organizer/dashboard');
+        setVenue(venueData);
+
+        // Set existing layout image URL if available
+        if (venueData.layout_image) {
+          const imageUrl = getPocketBaseFileUrl(
+            venueData,
+            Array.isArray(venueData.layout_image) ? venueData.layout_image[0] : venueData.layout_image
+          );
+          setExistingLayoutImageUrl(imageUrl);
+        }
+
+        // Populate form
+        form.setValue('name', venueData.name || '');
+        form.setValue('address', venueData.address || '');
+        form.setValue('city', venueData.city || '');
+        form.setValue('state', venueData.state || '');
+        form.setValue('pincode', venueData.pincode || '');
+        form.setValue('capacity', venueData.capacity?.toString() || '');
+        form.setValue('layout_type', venueData.layout_type || 'GA');
+        if (venueData.organizer_id) {
+          const orgId = typeof venueData.organizer_id === 'string' ? venueData.organizer_id : venueData.organizer_id.id;
+          form.setValue('organizer_id', orgId);
+        }
+
+        // Super Admin or Admin: Can edit venues for any organizer
+        if (user.role === 'super_admin' || user.role === 'admin') {
+          setIsAdmin(true);
+          // Load all approved organizers for selection
+          try {
+            const allOrganizers = await pb.collection('organizers').getFullList({
+              filter: 'status="approved"',
+              sort: 'name',
+            });
+            setOrganizers(allOrganizers as any);
+          } catch (error) {
+            console.error('Failed to fetch organizers:', error);
+          }
+        } else {
+          // Try to find organizer staff association
+          try {
+            const staff = await pb.collection('organizer_staff').getFirstListItem(
+              `user_id="${user.id}" && status="active"`
+            );
+            const organizerData = await pb.collection('organizers').getOne(staff.organizer_id);
+            setOrganizer(organizerData);
+          } catch (error) {
+            console.error('Failed to fetch organizer:', error);
+          }
+        }
+      } catch (error: any) {
+        console.error('Failed to load venue:', error);
+        alert(`Venue not found or access denied: ${error.message || 'Unknown error'}`);
+        router.push('/organizer/venues');
+      } finally {
+        setLoading(false);
       }
     }
 
-    loadOrganizer();
-  }, [router]);
+    loadData();
+  }, [venueId, router, form]);
 
   async function onSubmit(values: z.infer<typeof venueFormSchema>) {
-    setLoading(true);
+    setSaving(true);
     try {
       const user = getCurrentUser();
       if (!user) {
@@ -100,28 +162,10 @@ export default function CreateVenuePage() {
       }
 
       const pb = getPocketBase();
-      let organizerId: string;
 
-      // Super Admin or Admin: Use selected organizer
-      if (user.role === 'super_admin' || user.role === 'admin') {
-        if (!values.organizer_id) {
-          alert('Please select an organizer');
-          setLoading(false);
-          return;
-        }
-        organizerId = values.organizer_id;
-      } else {
-        // Get organizer from staff association
-        const staff = await pb.collection('organizer_staff').getFirstListItem(
-          `user_id="${user.id}" && status="active"`
-        );
-        organizerId = staff.organizer_id;
-      }
-
-      // Create FormData if we have a layout image, otherwise use regular object
+      // Create FormData if we have a new layout image, otherwise use regular object
       if (layoutImage) {
         const formData = new FormData();
-        formData.append('organizer_id', organizerId);
         formData.append('name', values.name);
         formData.append('address', values.address);
         formData.append('city', values.city);
@@ -131,12 +175,16 @@ export default function CreateVenuePage() {
         formData.append('layout_type', values.layout_type);
         formData.append('layout_image', layoutImage);
         
-        const record = await pb.collection('venues').create(formData);
-        alert('Venue created successfully!');
-        router.push(`/organizer/venues/${record.id}`);
+        // Only update organizer_id if admin and it's different
+        if (isAdmin && values.organizer_id) {
+          formData.append('organizer_id', values.organizer_id);
+        }
+        
+        await pb.collection('venues').update(venueId, formData);
+        alert('Venue updated successfully!');
+        router.push(`/organizer/venues/${venueId}`);
       } else {
-        const record = await pb.collection('venues').create({
-          organizer_id: organizerId,
+        const updateData: any = {
           name: values.name,
           address: values.address,
           city: values.city,
@@ -144,30 +192,47 @@ export default function CreateVenuePage() {
           pincode: values.pincode,
           capacity: parseInt(values.capacity),
           layout_type: values.layout_type,
-        });
-        alert('Venue created successfully!');
-        router.push(`/organizer/venues/${record.id}`);
-      }
+        };
 
+        // Only update organizer_id if admin and it's different
+        if (isAdmin && values.organizer_id) {
+          updateData.organizer_id = values.organizer_id;
+        }
+
+        await pb.collection('venues').update(venueId, updateData);
+        alert('Venue updated successfully!');
+        router.push(`/organizer/venues/${venueId}`);
+      }
     } catch (error: any) {
-      console.error('Failed to create venue:', error);
-      alert(`Error: ${error.message || 'Failed to create venue'}`);
+      console.error('Failed to update venue:', error);
+      alert(`Error: ${error.message || 'Failed to update venue'}`);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
 
-  if (!isAdmin && !organizer) {
-    return <div className="p-8">Loading...</div>;
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (!venue) {
+    return (
+      <div className="p-8">
+        <p className="text-red-600">Venue not found.</p>
+        <Link href="/organizer/venues">
+          <Button variant="outline" className="mt-4">Back to Venues</Button>
+        </Link>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-4xl font-bold">Create New Venue</h1>
-          <Link href="/organizer/venues">
-            <Button variant="outline">Back to Venues</Button>
+          <h1 className="text-4xl font-bold">Edit Venue</h1>
+          <Link href={`/organizer/venues/${venueId}`}>
+            <Button variant="outline">Back to Venue</Button>
           </Link>
         </div>
 
@@ -305,7 +370,17 @@ export default function CreateVenuePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="layout_image">Layout Image (Optional)</Label>
+                <Label htmlFor="layout_image">Layout Image</Label>
+                {existingLayoutImageUrl && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-600 mb-2">Current layout image:</p>
+                    <img
+                      src={existingLayoutImageUrl}
+                      alt="Current layout"
+                      className="w-full max-w-md rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
                 <Input
                   id="layout_image"
                   type="file"
@@ -316,20 +391,22 @@ export default function CreateVenuePage() {
                   }}
                 />
                 <p className="text-sm text-gray-500">
-                  Upload a floor plan or layout image for this venue (max 10MB, JPEG/PNG/WebP)
+                  {existingLayoutImageUrl 
+                    ? 'Upload a new image to replace the current one (max 10MB, JPEG/PNG/WebP)'
+                    : 'Upload a floor plan or layout image for this venue (max 10MB, JPEG/PNG/WebP)'}
                 </p>
                 {layoutImage && (
                   <div className="mt-2">
-                    <p className="text-sm text-green-600">Selected: {layoutImage.name}</p>
+                    <p className="text-sm text-green-600">New image selected: {layoutImage.name}</p>
                   </div>
                 )}
               </div>
 
               <div className="flex gap-4">
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Creating...' : 'Create Venue'}
+                <Button type="submit" disabled={saving}>
+                  {saving ? 'Updating...' : 'Update Venue'}
                 </Button>
-                <Link href="/organizer/venues">
+                <Link href={`/organizer/venues/${venueId}`}>
                   <Button type="button" variant="outline">Cancel</Button>
                 </Link>
               </div>

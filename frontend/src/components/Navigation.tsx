@@ -51,6 +51,9 @@ export default function Navigation() {
     return null;
   }
 
+  // Hide logout button on profile page (it has its own Sign Out button)
+  const showLogout = pathname !== '/profile';
+
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-[428px] mx-auto px-4">
@@ -64,9 +67,11 @@ export default function Navigation() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <Button onClick={handleLogout} variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
-                  Logout
-                </Button>
+                {showLogout && (
+                  <Button onClick={handleLogout} variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50 text-xs">
+                    Logout
+                  </Button>
+                )}
               </>
             ) : (
               <>

@@ -81,17 +81,17 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full bg-white border border-gray-200 shadow-md">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-teal-500 to-emerald-500">
+      <Card className="w-full max-w-md bg-white border-2 border-gray-200 shadow-xl rounded-2xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
-          <CardDescription className="text-gray-600">Sign in to your account to continue</CardDescription>
+          <CardDescription className="text-gray-700">Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full bg-white text-gray-900 hover:bg-gray-100 border border-gray-200 transition-all hover:scale-[1.02]"
+            className="w-full bg-white text-gray-900 hover:bg-gray-100 border-2 border-gray-300 transition-all hover:scale-[1.02] font-medium"
             variant="outline"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -117,22 +117,22 @@ function LoginForm() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200" />
+              <span className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+              <span className="bg-white px-2 text-gray-700 font-medium">Or continue with email</span>
             </div>
           </div>
 
           <form onSubmit={handleEmailLogin} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-50 border-2 border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm font-medium">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">Email</Label>
+              <Label htmlFor="email" className="text-gray-900 font-semibold">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -140,14 +140,14 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-gray-700">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-purple-600 hover:text-purple-700 hover:underline">
+                <Label htmlFor="password" className="text-gray-900 font-semibold">Password</Label>
+                <Link href="/forgot-password" className="text-sm text-teal-600 hover:text-teal-700 hover:underline font-medium">
                   Forgot password?
                 </Link>
               </div>
@@ -158,18 +158,18 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900"
               />
             </div>
 
-            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={loading}>
+            <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
           <div className="text-center text-sm">
-            <span className="text-gray-600">Don't have an account? </span>
-            <Link href="/signup" className="text-purple-600 hover:text-purple-700 hover:underline font-medium">
+            <span className="text-gray-700">Don't have an account? </span>
+            <Link href="/signup" className="text-teal-600 hover:text-teal-700 hover:underline font-semibold">
               Sign up
             </Link>
           </div>

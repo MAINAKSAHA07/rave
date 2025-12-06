@@ -7,7 +7,6 @@ import { getPocketBaseFileUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import Loading from '@/components/Loading';
 
 export default function VenueDetailPage() {
   const params = useParams();
@@ -81,7 +80,7 @@ export default function VenueDetailPage() {
   }
 
   if (loading) {
-    return <Loading />;
+    return <div className="p-8">Loading...</div>;
   }
 
   if (!venue) {
@@ -96,7 +95,7 @@ export default function VenueDetailPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-gray-50">
+    <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>

@@ -309,24 +309,45 @@ class ProxyPocketBase {
   get files() {
     return {
       getUrl: (record: any, filename: string, queryParams: any = {}) => {
-        // Get the correct base URL for client-side
-        // Use NEXT_PUBLIC_POCKETBASE_URL which is available on client-side
-        const clientBaseUrl = typeof window !== 'undefined' 
-          ? (process.env.NEXT_PUBLIC_POCKETBASE_URL || pbUrl)
-          : pbUrl;
+        // Check if we're in a hosted environment (not localhost)
+        const isHosted = typeof window !== 'undefined' && 
+          window.location.hostname !== 'localhost' && 
+          window.location.hostname !== '127.0.0.1';
         
-        // Build file URL using a direct PocketBase client with correct URL
-        const pb = new PocketBase(clientBaseUrl);
-        const url = pb.files.getUrl(record, filename, queryParams);
-        
-        console.log('[ProxyPocketBase.files.getUrl] Generated URL:', {
-          baseUrl: clientBaseUrl,
-          record_id: record?.id,
-          filename,
-          url,
-        });
-        
-        return url;
+        if (isHosted) {
+          // In hosted environments, use the proxy route to handle CORS and authentication
+          const collectionId = record.collectionId || record.collectionName || 'venues';
+          const recordId = record.id;
+          const actualFilename = Array.isArray(filename) ? filename[0] : filename;
+          const encodedFilename = encodeURIComponent(actualFilename).replace(/%2F/g, '/');
+          const proxyUrl = `/api/pocketbase/api/files/${collectionId}/${recordId}/${encodedFilename}`;
+          
+          console.log('[ProxyPocketBase.files.getUrl] Using proxy URL for hosted environment:', {
+            record_id: recordId,
+            filename: actualFilename,
+            proxyUrl,
+            collectionId,
+          });
+          
+          return proxyUrl;
+        } else {
+          // For localhost, use direct PocketBase URL
+          const clientBaseUrl = typeof window !== 'undefined' 
+            ? (process.env.NEXT_PUBLIC_POCKETBASE_URL || pbUrl)
+            : pbUrl;
+          
+          const pb = new PocketBase(clientBaseUrl);
+          const url = pb.files.getUrl(record, filename, queryParams);
+          
+          console.log('[ProxyPocketBase.files.getUrl] Generated direct URL for localhost:', {
+            baseUrl: clientBaseUrl,
+            record_id: record?.id,
+            filename,
+            url,
+          });
+          
+          return url;
+        }
       },
     };
   }
