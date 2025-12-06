@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getPocketBase } from '@/lib/pocketbase';
 import { QRCodeSVG } from 'qrcode.react';
+import Loading from '@/components/Loading';
 
 export default function TicketPage() {
   const params = useParams();
@@ -39,7 +40,7 @@ export default function TicketPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading ticket...</div>;
+    return <Loading />;
   }
 
   if (!ticket) {

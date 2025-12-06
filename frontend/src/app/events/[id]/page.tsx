@@ -8,6 +8,7 @@ import Script from 'next/script';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import FloorPlanView from '@/components/FloorPlanView';
+import Loading from '@/components/Loading';
 
 interface Event {
   id: string;
@@ -798,7 +799,7 @@ export default function EventDetailsPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   if (!event) {

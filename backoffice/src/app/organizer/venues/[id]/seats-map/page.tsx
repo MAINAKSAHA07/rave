@@ -60,18 +60,29 @@ export default function SeatMapEditorPage() {
 
       const pb = getPocketBase();
       const venueData = await pb.collection('venues').getOne(venueId);
+      
+      // Get collection info to get the collection ID for file URLs
+      try {
+        const collections = await pb.collections.getFullList();
+        const venuesCollection = collections.find((c: any) => c.name === 'venues');
+        if (venuesCollection) {
+          venueData.collectionId = venuesCollection.id;
+          venueData.collectionName = 'venues';
+        }
+      } catch (e) {
+        console.warn('[SeatMap] Could not get collection info:', e);
+        venueData.collectionName = 'venues';
+      }
+      
       console.log('[SeatMap] Venue data loaded:', {
         id: venueData.id,
         name: venueData.name,
         layout_image: venueData.layout_image,
         layout_image_type: typeof venueData.layout_image,
         layout_image_is_array: Array.isArray(venueData.layout_image),
-        full_venue_data: venueData,
+        collectionId: venueData.collectionId,
+        collectionName: venueData.collectionName,
       });
-      // Ensure collectionName is set for file URL generation
-      if (!venueData.collectionName && !venueData.collectionId) {
-        venueData.collectionName = 'venues';
-      }
       setVenue(venueData);
 
       if (venueData.layout_type === 'SEATED') {

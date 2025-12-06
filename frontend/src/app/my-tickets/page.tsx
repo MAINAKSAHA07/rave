@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import Loading from '@/components/Loading';
 
 interface Ticket {
   id: string;
@@ -76,11 +77,7 @@ export default function MyTicketsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <Loading />;
   }
 
   const frontendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:3000';

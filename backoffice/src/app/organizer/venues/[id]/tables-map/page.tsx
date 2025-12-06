@@ -60,26 +60,36 @@ export default function TableMapEditorPage() {
 
       const pb = getPocketBase();
       const venueData = await pb.collection('venues').getOne(venueId);
+      
+      // Get collection info to get the collection ID for file URLs
+      try {
+        const collections = await pb.collections.getFullList();
+        const venuesCollection = collections.find((c: any) => c.name === 'venues');
+        if (venuesCollection) {
+          venueData.collectionId = venuesCollection.id;
+          venueData.collectionName = 'venues';
+        }
+      } catch (e) {
+        console.warn('[TableMap] Could not get collection info:', e);
+        venueData.collectionName = 'venues';
+      }
+      
       console.log('[TableMap] Venue data loaded:', {
         id: venueData.id,
         name: venueData.name,
         layout_image: venueData.layout_image,
+        layout_image_type: typeof venueData.layout_image,
+        layout_image_is_array: Array.isArray(venueData.layout_image),
         collectionId: venueData.collectionId,
         collectionName: venueData.collectionName,
       });
-
-      // Ensure collection fields are set for file URL generation
-      // PocketBase SDK returns RecordModel which has these, but explicit setting ensures they are enumerable/present for utils
-      if (!venueData.collectionName) venueData.collectionName = 'venues';
-      if (!venueData.collectionId) venueData.collectionId = venueData.id ? 'venues' : ''; // Fallback
-
       setVenue(venueData);
 
       if (venueData.layout_type === 'GA_TABLE') {
         console.log('[TableMap] Loading tables for venue:', venueId);
         // Try multiple filter formats to handle both string and relation venue_id
         let tablesData: any[] = [];
-
+        
         // First try: Direct venue_id match (for string IDs)
         try {
           tablesData = await pb.collection('tables').getFullList({
@@ -90,7 +100,7 @@ export default function TableMapEditorPage() {
         } catch (filterError) {
           console.log('[TableMap] Direct filter failed, trying relation filter');
         }
-
+        
         // If no results, try relation filter format
         if (tablesData.length === 0) {
           try {
@@ -103,7 +113,7 @@ export default function TableMapEditorPage() {
             console.log('[TableMap] Relation filter also failed');
           }
         }
-
+        
         // If still no results, get all and filter manually
         if (tablesData.length === 0) {
           console.log('[TableMap] No results with filters, fetching all and filtering manually...');
@@ -111,17 +121,17 @@ export default function TableMapEditorPage() {
             sort: 'section,name',
           });
           console.log('[TableMap] Total tables in database:', allTables.length);
-
+          
           // Filter manually by comparing venue_id values
           tablesData = allTables.filter((t: any) => {
-            const tableVenueId = typeof t.venue_id === 'string'
-              ? t.venue_id
+            const tableVenueId = typeof t.venue_id === 'string' 
+              ? t.venue_id 
               : (t.venue_id?.id || t.venue_id || '');
             return tableVenueId === venueId;
           });
           console.log('[TableMap] Filtered tables manually:', tablesData.length);
         }
-
+        
         console.log('[TableMap] Final tables count:', tablesData.length);
         setTables(tablesData as any);
       }
@@ -239,11 +249,11 @@ export default function TableMapEditorPage() {
       formData.append('layout_image', floorPlanImage);
 
       await pb.collection('venues').update(venueId, formData);
-
+      
       await loadData();
       alert('Floor plan image uploaded successfully!');
       setFloorPlanImage(null);
-
+      
       const fileInput = document.getElementById('floor-plan-image') as HTMLInputElement;
       if (fileInput) {
         fileInput.value = '';
@@ -266,7 +276,7 @@ export default function TableMapEditorPage() {
       await pb.collection('venues').update(venueId, {
         layout_image: null,
       });
-
+      
       await loadData();
       alert('Floor plan image removed successfully!');
     } catch (error: any) {
@@ -344,8 +354,6 @@ export default function TableMapEditorPage() {
               {venue.layout_image && (
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 mb-2">Current floor plan:</p>
-                  {/* Debug log for URL */}
-                  <div className="hidden">{console.log('[TableMap] Image URL:', getPocketBaseFileUrl(venue, venue.layout_image))}</div>
                   <div className="relative inline-block border-2 border-gray-300 rounded-lg overflow-hidden">
                     <img
                       src={getPocketBaseFileUrl(venue, venue.layout_image)}
@@ -374,7 +382,7 @@ export default function TableMapEditorPage() {
                   </Button>
                 </div>
               )}
-
+              
               <div className="space-y-2">
                 <Label htmlFor="floor-plan-image">Upload Floor Plan Image</Label>
                 <Input
@@ -441,7 +449,7 @@ export default function TableMapEditorPage() {
                   }}
                 />
               )}
-
+              
               {/* Tables overlay */}
               <div className="relative z-10 w-full h-full">
                 {tables.map((table) => {
@@ -508,8 +516,8 @@ export default function TableMapEditorPage() {
                     <div
                       key={table.id}
                       className={`px-2 py-1 border rounded text-xs ${table.position_x !== undefined && table.position_y !== undefined
-                        ? 'bg-green-50 border-green-300'
-                        : 'bg-gray-50 border-gray-300'
+                          ? 'bg-green-50 border-green-300'
+                          : 'bg-gray-50 border-gray-300'
                         }`}
                     >
                       {table.name} ({table.capacity})

@@ -69,7 +69,107 @@ export async function GET(
 
     // Parse the path to determine collection and action
     // Path format: api/collections/{collection} or api/collections/{collection}/records/{id}
+    // Also handle: api/files/{collectionId}/{recordId}/{filename}
     const pathParts = path.split('/');
+
+    // Handle file requests: api/files/{collectionId}/{recordId}/{filename}
+    if (pathParts[0] === 'api' && pathParts[1] === 'files' && pathParts.length >= 5) {
+      let collectionId = pathParts[2];
+      const recordId = pathParts[3];
+      const filename = decodeURIComponent(pathParts.slice(4).join('/')); // Handle filenames with slashes
+      
+      // If collectionId is a collection name (not an ID), we need to get the actual collection ID
+      // Try to get collection info to resolve name to ID
+      try {
+        const pb = new PocketBase(pbUrl);
+        pb.autoCancellation(false);
+        
+        if (token) {
+          pb.authStore.save(token, null);
+        }
+        
+        // Try to get collection by name if it looks like a name (not a short ID)
+        // PocketBase collection IDs are typically short strings like '6jufmvxr0ihyle1'
+        // Collection names are longer like 'venues', 'events', etc.
+        if (collectionId.length > 10 || !collectionId.match(/^[a-z0-9]+$/)) {
+          // This looks like a collection name, try to get the collection
+          try {
+            const collections = await pb.collections.getFullList();
+            const collection = collections.find((c: any) => c.name === collectionId);
+            if (collection) {
+              collectionId = collection.id;
+              console.log(`[Proxy] Resolved collection name "${pathParts[2]}" to ID "${collectionId}"`);
+            }
+          } catch (e) {
+            console.warn(`[Proxy] Could not resolve collection name, using as-is:`, e);
+          }
+        }
+        
+        // Build the file URL using PocketBase SDK
+        const record = { id: recordId, collectionId };
+        const fileUrl = pb.files.getUrl(record, filename);
+        
+        console.log('[Proxy] Fetching file:', {
+          collectionId,
+          recordId,
+          filename,
+          fileUrl,
+          hasAuth: !!token,
+        });
+        
+        // Fetch the file with authentication if available
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const fileResponse = await fetch(fileUrl, {
+          headers,
+        });
+        
+        if (!fileResponse.ok) {
+          console.error('[Proxy] File fetch failed:', {
+            status: fileResponse.status,
+            statusText: fileResponse.statusText,
+            url: fileUrl,
+          });
+          return NextResponse.json(
+            { error: `File not found: ${fileResponse.statusText}` },
+            { status: fileResponse.status }
+          );
+        }
+        
+        // Get the file content and content type
+        const fileBlob = await fileResponse.blob();
+        const contentType = fileResponse.headers.get('content-type') || 'application/octet-stream';
+        
+        console.log('[Proxy] File fetched successfully:', {
+          contentType,
+          size: fileBlob.size,
+        });
+        
+        // Return the file with proper headers
+        return new NextResponse(fileBlob, {
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=31536000, immutable',
+            'Access-Control-Allow-Origin': '*',
+          },
+        });
+      } catch (error: any) {
+        console.error('[Proxy] File fetch error:', {
+          error: error.message,
+          stack: error.stack,
+          collectionId,
+          recordId,
+          filename,
+        });
+        return NextResponse.json(
+          { error: error.message || 'Failed to fetch file' },
+          { status: 500 }
+        );
+      }
+    }
 
     if (pathParts[0] === 'api' && pathParts[1] === 'collections') {
       const collectionName = pathParts[2];
