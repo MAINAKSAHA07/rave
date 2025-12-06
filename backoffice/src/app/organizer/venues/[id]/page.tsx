@@ -119,6 +119,16 @@ export default function VenueDetailPage() {
                 </Link>
               </>
             )}
+            {venue.layout_type === 'GA_TABLE' && (
+              <>
+                <Link href={`/organizer/venues/${venueId}/tables`}>
+                  <Button variant="outline">Manage Tables</Button>
+                </Link>
+                <Link href={`/organizer/venues/${venueId}/tables-map`}>
+                  <Button variant="outline">🪑 Table Map Editor</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

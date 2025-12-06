@@ -16,6 +16,7 @@ export interface CreateOrderRequest {
     ticketTypeId: string;
     quantity: number;
     seatIds?: string[];
+    tableIds?: string[];
   }>;
   attendeeName?: string;
   attendeeEmail?: string;
@@ -144,6 +145,37 @@ export const seatReservationsApi = {
   },
   check: async (seatIds: string[], eventId: string, userId?: string) => {
     return { data: { available: seatIds, unavailable: [] } };
+  },
+};
+
+export const tablesApi = {
+  getAvailableTables: async (eventId: string) => {
+    const pb = getPocketBase();
+    // First get the event to find the venue_id
+    const event = await pb.collection('events').getOne(eventId);
+    const venueId = event.venue_id;
+    
+    // Fetch all tables for this venue
+    const tables = await pb.collection('tables').getFullList({ 
+      filter: `venue_id="${venueId}"`,
+      sort: 'section,name',
+    });
+    
+    // Get all tickets for this event to determine sold tables
+    const tickets = await pb.collection('tickets').getFullList({
+      filter: `event_id="${eventId}" && status="issued"`,
+    });
+    
+    const soldTableIds = new Set(tickets.map((t: any) => t.table_id).filter(Boolean));
+    
+    // Mark tables as sold/available
+    const tablesWithStatus = tables.map((table: any) => ({
+      ...table,
+      available: !soldTableIds.has(table.id),
+      sold: soldTableIds.has(table.id),
+    }));
+    
+    return { data: { tables: tablesWithStatus } };
   },
 };
 

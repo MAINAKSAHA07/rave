@@ -20,7 +20,7 @@ const venueFormSchema = z.object({
   state: z.string().min(1, 'State is required'),
   pincode: z.string().min(1, 'Pincode is required'),
   capacity: z.string().min(1, 'Capacity is required').refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Capacity must be a positive number'),
-  layout_type: z.enum(['GA', 'SEATED']),
+  layout_type: z.enum(['GA', 'SEATED', 'GA_TABLE']),
   organizer_id: z.string().optional(), // Optional for admin users
 });
 
@@ -276,6 +276,7 @@ export default function CreateVenuePage() {
                     <SelectContent>
                       <SelectItem value="GA">General Admission (GA)</SelectItem>
                       <SelectItem value="SEATED">Seated</SelectItem>
+                      <SelectItem value="GA_TABLE">General Admission + Tables</SelectItem>
                     </SelectContent>
                   </Select>
                   {form.formState.errors.layout_type && (

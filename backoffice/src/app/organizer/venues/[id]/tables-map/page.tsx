@@ -9,22 +9,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-interface Seat {
+interface Table {
   id: string;
+  name: string;
+  capacity: number;
   section: string;
-  row: string;
-  seat_number: string;
-  label: string;
   position_x?: number;
   position_y?: number;
 }
 
-export default function SeatMapEditorPage() {
+export default function TableMapEditorPage() {
   const params = useParams();
   const router = useRouter();
   const venueId = params.id as string;
   const [venue, setVenue] = useState<any>(null);
-  const [seats, setSeats] = useState<Seat[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [floorPlanImage, setFloorPlanImage] = useState<File | null>(null);
@@ -32,7 +31,7 @@ export default function SeatMapEditorPage() {
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
-  const [activeSeatId, setActiveSeatId] = useState<string | null>(null);
+  const [activeTableId, setActiveTableId] = useState<string | null>(null);
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
@@ -62,12 +61,12 @@ export default function SeatMapEditorPage() {
       const venueData = await pb.collection('venues').getOne(venueId);
       setVenue(venueData);
 
-      if (venueData.layout_type === 'SEATED') {
-        const seatsData = await pb.collection('seats').getFullList({
+      if (venueData.layout_type === 'GA_TABLE') {
+        const tablesData = await pb.collection('tables').getFullList({
           filter: `venue_id="${venueId}"`,
-          sort: 'section,row,seat_number',
+          sort: 'section,name',
         });
-        setSeats(seatsData as any);
+        setTables(tablesData as any);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -76,10 +75,10 @@ export default function SeatMapEditorPage() {
     }
   }
 
-  function handleMouseDown(e: React.MouseEvent, seatId: string) {
+  function handleMouseDown(e: React.MouseEvent, tableId: string) {
     e.preventDefault();
-    const seat = seats.find((s) => s.id === seatId);
-    if (!seat) return;
+    const table = tables.find((t) => t.id === tableId);
+    if (!table) return;
 
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -87,41 +86,41 @@ export default function SeatMapEditorPage() {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const seatX = seat.position_x || 0;
-    const seatY = seat.position_y || 0;
+    const tableX = table.position_x || 0;
+    const tableY = table.position_y || 0;
 
     setIsDragging(true);
-    setActiveSeatId(seatId);
+    setActiveTableId(tableId);
     setDragStartPos({ x: mouseX, y: mouseY });
     setDragOffset({
-      x: mouseX - seatX,
-      y: mouseY - seatY,
+      x: mouseX - tableX,
+      y: mouseY - tableY,
     });
   }
 
   function handleMouseMove(e: React.MouseEvent) {
-    if (!isDragging || !activeSeatId || !canvasRef.current) return;
+    if (!isDragging || !activeTableId || !canvasRef.current) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const newX = Math.max(0, Math.min(canvasSize.width - 40, mouseX - dragOffset.x));
-    const newY = Math.max(0, Math.min(canvasSize.height - 40, mouseY - dragOffset.y));
+    const newX = Math.max(0, Math.min(canvasSize.width - 100, mouseX - dragOffset.x));
+    const newY = Math.max(0, Math.min(canvasSize.height - 60, mouseY - dragOffset.y));
 
-    setSeats((prevSeats) =>
-      prevSeats.map((seat) =>
-        seat.id === activeSeatId
-          ? { ...seat, position_x: newX, position_y: newY }
-          : seat
+    setTables((prevTables) =>
+      prevTables.map((table) =>
+        table.id === activeTableId
+          ? { ...table, position_x: newX, position_y: newY }
+          : table
       )
     );
   }
 
   function handleMouseUp() {
-    if (isDragging && activeSeatId) {
+    if (isDragging && activeTableId) {
       setIsDragging(false);
-      setActiveSeatId(null);
+      setActiveTableId(null);
     }
   }
 
@@ -129,36 +128,24 @@ export default function SeatMapEditorPage() {
     setSaving(true);
     try {
       const pb = getPocketBase();
-      const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
-      // Update all seats with positions
+      // Update all tables with positions
       await Promise.all(
-        seats.map(async (seat) => {
-          if (seat.position_x !== undefined && seat.position_y !== undefined) {
+        tables.map(async (table) => {
+          if (table.position_x !== undefined && table.position_y !== undefined) {
             try {
-              const response = await fetch(`${API_URL}/api/seats/${seat.id}/position`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${pb.authStore.token}`,
-                },
-                body: JSON.stringify({
-                  position_x: seat.position_x,
-                  position_y: seat.position_y,
-                }),
+              await pb.collection('tables').update(table.id, {
+                position_x: table.position_x,
+                position_y: table.position_y,
               });
-
-              if (!response.ok) {
-                console.error(`Failed to update seat ${seat.id}:`, await response.text());
-              }
             } catch (error) {
-              console.error(`Error updating seat ${seat.id}:`, error);
+              console.error(`Error updating table ${table.id}:`, error);
             }
           }
         })
       );
 
-      alert('Seat positions saved successfully!');
+      alert('Table positions saved successfully!');
       await loadData();
     } catch (error: any) {
       console.error('Failed to save positions:', error);
@@ -169,13 +156,13 @@ export default function SeatMapEditorPage() {
   }
 
   function handleResetPositions() {
-    if (!confirm('Reset all seat positions? This cannot be undone.')) {
+    if (!confirm('Reset all table positions? This cannot be undone.')) {
       return;
     }
 
-    setSeats((prevSeats) =>
-      prevSeats.map((seat) => ({
-        ...seat,
+    setTables((prevTables) =>
+      prevTables.map((table) => ({
+        ...table,
         position_x: undefined,
         position_y: undefined,
       }))
@@ -196,13 +183,10 @@ export default function SeatMapEditorPage() {
 
       await pb.collection('venues').update(venueId, formData);
       
-      // Reload venue data to get updated image
       await loadData();
-      
       alert('Floor plan image uploaded successfully!');
       setFloorPlanImage(null);
       
-      // Reset file input
       const fileInput = document.getElementById('floor-plan-image') as HTMLInputElement;
       if (fileInput) {
         fileInput.value = '';
@@ -242,13 +226,13 @@ export default function SeatMapEditorPage() {
     return <div className="p-8">Venue not found</div>;
   }
 
-  if (venue.layout_type !== 'SEATED') {
+  if (venue.layout_type !== 'GA_TABLE') {
     return (
       <div className="p-8">
         <Card>
           <CardContent className="pt-6">
             <p className="text-gray-600">
-              This venue is configured as General Admission (GA). Seat map editor is only available for SEATED venues.
+              This venue is not configured as General Admission + Tables. Table map editor is only available for GA_TABLE venues.
             </p>
             <Button variant="outline" className="mt-4" onClick={() => router.push(`/organizer/venues/${venueId}`)}>
               Back to Venue
@@ -259,13 +243,14 @@ export default function SeatMapEditorPage() {
     );
   }
 
-  // Group seats by section for better organization
-  const seatsBySection: Record<string, Seat[]> = {};
-  seats.forEach((seat) => {
-    if (!seatsBySection[seat.section]) {
-      seatsBySection[seat.section] = [];
+  // Group tables by section
+  const tablesBySection: Record<string, Table[]> = {};
+  tables.forEach((table) => {
+    const section = table.section || 'Main';
+    if (!tablesBySection[section]) {
+      tablesBySection[section] = [];
     }
-    seatsBySection[seat.section].push(seat);
+    tablesBySection[section].push(table);
   });
 
   return (
@@ -273,15 +258,15 @@ export default function SeatMapEditorPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold">💺 Seat Map Editor</h1>
+            <h1 className="text-4xl font-bold">🪑 Table Map Editor</h1>
             <p className="text-gray-600 mt-2">{venue.name}</p>
             <p className="text-sm text-gray-500 mt-1">
-              Drag and drop seats to position them on the floor plan
+              Drag and drop tables to position them on the floor plan
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => router.push(`/organizer/venues/${venueId}/seats`)}>
-              Back to Seat List
+            <Button variant="outline" onClick={() => router.push(`/organizer/venues/${venueId}/tables`)}>
+              Back to Table List
             </Button>
             <Button variant="outline" onClick={handleResetPositions}>
               Reset Positions
@@ -334,7 +319,7 @@ export default function SeatMapEditorPage() {
                   }}
                 />
                 <p className="text-sm text-gray-500">
-                  Upload a floor plan image (JPEG, PNG, or WebP). Max size: 10MB. This will be used as the background for positioning seats.
+                  Upload a floor plan image (JPEG, PNG, or WebP). Max size: 10MB. This will be used as the background for positioning tables.
                 </p>
                 {floorPlanImage && (
                   <div className="mt-2">
@@ -376,39 +361,43 @@ export default function SeatMapEditorPage() {
                 />
               )}
               
-              {/* Seats overlay */}
+              {/* Tables overlay */}
               <div className="relative z-10 w-full h-full">
-              {seats.map((seat) => {
-                const x = seat.position_x ?? Math.random() * (canvasSize.width - 40);
-                const y = seat.position_y ?? Math.random() * (canvasSize.height - 40);
+                {tables.map((table) => {
+                  const x = table.position_x ?? Math.random() * (canvasSize.width - 100);
+                  const y = table.position_y ?? Math.random() * (canvasSize.height - 60);
 
-                return (
-                  <div
-                    key={seat.id}
-                    className={`absolute cursor-grab active:cursor-grabbing bg-blue-500 text-white rounded px-2 py-1 text-xs font-medium shadow-md hover:bg-blue-600 transition-colors ${activeSeatId === seat.id ? 'ring-2 ring-blue-300 z-50' : 'z-10'
-                      }`}
-                    style={{
-                      left: `${x}px`,
-                      top: `${y}px`,
-                      transform: activeSeatId === seat.id ? 'scale(1.1)' : 'scale(1)',
-                    }}
-                    onMouseDown={(e) => handleMouseDown(e, seat.id)}
-                    title={`${seat.section} - Row ${seat.row} - ${seat.label}`}
-                  >
-                    💺 {seat.label}
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      key={table.id}
+                      className={`absolute cursor-grab active:cursor-grabbing bg-purple-500 text-white rounded-lg px-3 py-2 text-sm font-medium shadow-md hover:bg-purple-600 transition-colors ${activeTableId === table.id ? 'ring-2 ring-purple-300 z-50' : 'z-10'
+                        }`}
+                      style={{
+                        left: `${x}px`,
+                        top: `${y}px`,
+                        transform: activeTableId === table.id ? 'scale(1.1)' : 'scale(1)',
+                        minWidth: '80px',
+                      }}
+                      onMouseDown={(e) => handleMouseDown(e, table.id)}
+                      title={`${table.name} - Capacity: ${table.capacity} (${table.section})`}
+                    >
+                      <div className="text-center">
+                        <div className="font-bold">{table.name}</div>
+                        <div className="text-xs">👥 {table.capacity}</div>
+                      </div>
+                    </div>
+                  );
+                })}
 
-                {seats.length === 0 && (
+                {tables.length === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                     <div className="text-center">
-                      <p className="text-lg mb-2">No seats created yet</p>
+                      <p className="text-lg mb-2">No tables created yet</p>
                       <Button
                         variant="outline"
-                        onClick={() => router.push(`/organizer/venues/${venueId}/seats`)}
+                        onClick={() => router.push(`/organizer/venues/${venueId}/tables`)}
                       >
-                        Create Seats
+                        Create Tables
                       </Button>
                     </div>
                   </div>
@@ -416,10 +405,10 @@ export default function SeatMapEditorPage() {
               </div>
             </div>
 
-            <div className="mt-4 p-4 bg-blue-50 rounded">
-              <p className="text-sm text-blue-800">
-                <strong>Instructions:</strong> Click and drag seats to reposition them on the floor plan.
-                Click "Save Positions" to save your changes. Seats without positions will be randomly placed.
+            <div className="mt-4 p-4 bg-purple-50 rounded">
+              <p className="text-sm text-purple-800">
+                <strong>Instructions:</strong> Click and drag tables to reposition them on the floor plan.
+                Click "Save Positions" to save your changes. Tables without positions will be randomly placed.
               </p>
             </div>
           </CardContent>
@@ -427,23 +416,23 @@ export default function SeatMapEditorPage() {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Seats by Section ({seats.length} total)</CardTitle>
+            <CardTitle>Tables by Section ({tables.length} total)</CardTitle>
           </CardHeader>
           <CardContent>
-            {Object.entries(seatsBySection).map(([section, sectionSeats]) => (
+            {Object.entries(tablesBySection).map(([section, sectionTables]) => (
               <div key={section} className="mb-4">
-                <h3 className="font-semibold mb-2">Section: {section} ({sectionSeats.length} seats)</h3>
+                <h3 className="font-semibold mb-2">Section: {section} ({sectionTables.length} tables)</h3>
                 <div className="flex flex-wrap gap-2">
-                  {sectionSeats.map((seat) => (
+                  {sectionTables.map((table) => (
                     <div
-                      key={seat.id}
-                      className={`px-2 py-1 border rounded text-xs ${seat.position_x !== undefined && seat.position_y !== undefined
+                      key={table.id}
+                      className={`px-2 py-1 border rounded text-xs ${table.position_x !== undefined && table.position_y !== undefined
                           ? 'bg-green-50 border-green-300'
                           : 'bg-gray-50 border-gray-300'
                         }`}
                     >
-                      {seat.label}
-                      {seat.position_x !== undefined && seat.position_y !== undefined && (
+                      {table.name} ({table.capacity})
+                      {table.position_x !== undefined && table.position_y !== undefined && (
                         <span className="ml-1 text-green-600">✓</span>
                       )}
                     </div>
@@ -457,5 +446,3 @@ export default function SeatMapEditorPage() {
     </div>
   );
 }
-
-

@@ -23,6 +23,7 @@ interface FloorPlanViewProps {
   onSeatClick: (seatId: string) => void;
   maxSelections: number;
   ticketTypeId: string;
+  floorPlanImageUrl?: string; // Optional floor plan background image
 }
 
 export default function FloorPlanView({
@@ -32,6 +33,7 @@ export default function FloorPlanView({
   onSeatClick,
   maxSelections,
   ticketTypeId,
+  floorPlanImageUrl,
 }: FloorPlanViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
@@ -183,6 +185,16 @@ export default function FloorPlanView({
             position: 'relative',
           }}
         >
+          {/* Floor Plan Background Image */}
+          {floorPlanImageUrl && (
+            <img
+              src={floorPlanImageUrl}
+              alt="Floor Plan"
+              className="absolute inset-0 w-full h-full object-contain z-0"
+              style={{ opacity: 0.4 }}
+            />
+          )}
+          
           {/* Entrance Label */}
           <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10">
             <span className="px-3 py-1 bg-white border-2 border-gray-400 rounded-lg font-semibold text-xs shadow-md">

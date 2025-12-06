@@ -73,14 +73,16 @@ export default function Sparkles() {
                 p.life -= 0.02;
                 p.size -= 0.05;
 
-                if (p.life <= 0 || p.size <= 0) {
+                if (p.life <= 0 || p.size <= 0.1) {
                     particles.current.splice(i, 1);
                     i--;
                     continue;
                 }
 
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                // Ensure radius is never negative
+                const radius = Math.max(0, p.size);
+                ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
                 ctx.fillStyle = p.color;
                 ctx.globalAlpha = p.life * 0.6; // Slightly transparent
                 ctx.fill();
