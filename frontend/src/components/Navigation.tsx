@@ -53,7 +53,6 @@ export default function Navigation() {
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img src="/logo.png" alt="Powerglide" className="h-8 w-auto" />
-              <span className="text-xl font-bold text-purple-600">Powerglide</span>
             </Link>
             <div className="flex items-center gap-3">
               <Link
