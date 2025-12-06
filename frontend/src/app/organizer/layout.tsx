@@ -11,7 +11,7 @@ export default function OrganizerLayout({
             {/* Sidebar */}
             <aside className="w-64 bg-white shadow-md hidden md:block">
                 <div className="p-6">
-                    <h1 className="text-2xl font-bold text-primary">Rave Organizer</h1>
+                    <h1 className="text-2xl font-bold text-primary">Powerglide Organizer</h1>
                 </div>
                 <nav className="mt-6">
                     <Link href="/organizer" className="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 hover:text-primary">

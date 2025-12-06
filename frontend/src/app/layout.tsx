@@ -7,7 +7,7 @@ import Sparkles from '@/components/Sparkles'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Rave - Event Ticketing Platform',
+  title: 'Powerglide - Event Ticketing Platform',
   description: 'Modern event ticketing platform for India',
 }
 
@@ -17,7 +17,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen`} suppressHydrationWarning>
         <div className="min-h-screen py-4 px-4">
           <div className="mobile-container bg-white text-gray-900 relative">

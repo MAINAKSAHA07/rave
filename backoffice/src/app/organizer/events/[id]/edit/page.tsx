@@ -24,6 +24,14 @@ const formSchema = z.object({
   venue_id: z.string().min(1, 'Venue is required'),
   city: z.string().min(1, 'City is required'),
   status: z.enum(['draft', 'published', 'cancelled']),
+  about: z.string().optional(),
+  overview: z.string().optional(),
+  things_to_carry: z.string().optional(),
+  inclusions: z.string().optional(),
+  terms_and_conditions: z.string().optional(),
+  venue_details: z.string().optional(),
+  organizer_info: z.string().optional(),
+  tags: z.string().optional(),
 });
 
 export default function EditEventPage() {
@@ -50,6 +58,14 @@ export default function EditEventPage() {
       venue_id: '',
       city: '',
       status: 'draft',
+      about: '',
+      overview: '',
+      things_to_carry: '',
+      inclusions: '',
+      terms_and_conditions: '',
+      venue_details: '',
+      organizer_info: '',
+      tags: '',
     },
   });
 
@@ -112,6 +128,26 @@ export default function EditEventPage() {
         form.setValue('status', eventData.status);
         form.setValue('start_date', startDate.toISOString().slice(0, 16));
         form.setValue('end_date', endDate.toISOString().slice(0, 16));
+        form.setValue('about', eventData.about || '');
+        form.setValue('overview', eventData.overview || '');
+        form.setValue('things_to_carry', eventData.things_to_carry || '');
+        form.setValue('inclusions', eventData.inclusions || '');
+        form.setValue('terms_and_conditions', eventData.terms_and_conditions || '');
+        form.setValue('venue_details', eventData.venue_details || '');
+        form.setValue('organizer_info', eventData.organizer_info || '');
+        // Handle tags - convert JSON array to comma-separated string
+        if (eventData.tags && Array.isArray(eventData.tags)) {
+          form.setValue('tags', eventData.tags.join(', '));
+        } else if (typeof eventData.tags === 'string') {
+          try {
+            const tagsArray = JSON.parse(eventData.tags);
+            form.setValue('tags', Array.isArray(tagsArray) ? tagsArray.join(', ') : '');
+          } catch {
+            form.setValue('tags', '');
+          }
+        } else {
+          form.setValue('tags', '');
+        }
 
         // Load existing images
         if (eventData.images && Array.isArray(eventData.images)) {
@@ -147,6 +183,21 @@ export default function EditEventPage() {
       formData.append('end_date', new Date(values.end_date).toISOString());
       formData.append('city', values.city);
       formData.append('status', values.status);
+      formData.append('about', values.about || '');
+      formData.append('overview', values.overview || '');
+      formData.append('things_to_carry', values.things_to_carry || '');
+      formData.append('inclusions', values.inclusions || '');
+      formData.append('terms_and_conditions', values.terms_and_conditions || '');
+      formData.append('venue_details', values.venue_details || '');
+      formData.append('organizer_info', values.organizer_info || '');
+      
+      // Handle tags - convert comma-separated string to JSON array
+      if (values.tags) {
+        const tagsArray = values.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        formData.append('tags', JSON.stringify(tagsArray));
+      } else {
+        formData.append('tags', JSON.stringify([]));
+      }
 
       // Only update cover image if a new one is selected
       if (coverImage) {
@@ -227,6 +278,88 @@ export default function EditEventPage() {
                   placeholder="Enter event description"
                   rows={4}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="about">About the Event</Label>
+                <Textarea
+                  id="about"
+                  {...form.register('about')}
+                  placeholder="Provide detailed information about the event"
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="overview">Overview</Label>
+                <Textarea
+                  id="overview"
+                  {...form.register('overview')}
+                  placeholder="Provide an overview of what attendees can expect"
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="things_to_carry">Things to Carry</Label>
+                <Textarea
+                  id="things_to_carry"
+                  {...form.register('things_to_carry')}
+                  placeholder="List items attendees should bring (one per line or comma-separated)"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="inclusions">Inclusions</Label>
+                <Textarea
+                  id="inclusions"
+                  {...form.register('inclusions')}
+                  placeholder="List what's included in the ticket (one per line or comma-separated)"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="terms_and_conditions">Terms & Conditions</Label>
+                <Textarea
+                  id="terms_and_conditions"
+                  {...form.register('terms_and_conditions')}
+                  placeholder="Enter terms and conditions for the event"
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="venue_details">Venue Details</Label>
+                <Textarea
+                  id="venue_details"
+                  {...form.register('venue_details')}
+                  placeholder="Additional venue information (parking, accessibility, etc.)"
+                  rows={3}
+                />
+                <p className="text-sm text-gray-500">This supplements the venue information from the selected venue.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="organizer_info">Organizer Information</Label>
+                <Textarea
+                  id="organizer_info"
+                  {...form.register('organizer_info')}
+                  placeholder="Additional organizer information and contact details"
+                  rows={3}
+                />
+                <p className="text-sm text-gray-500">This supplements the organizer information from your account.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags</Label>
+                <Input
+                  id="tags"
+                  {...form.register('tags')}
+                  placeholder="Enter tags separated by commas (e.g., music, live, outdoor)"
+                />
+                <p className="text-sm text-gray-500">Comma-separated tags to help users find your event</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

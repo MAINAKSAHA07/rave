@@ -20,11 +20,27 @@ interface Event {
   event_date?: string;
   venue_id: string;
   organizer_id: string;
+  about?: string;
+  overview?: string;
+  things_to_carry?: string;
+  inclusions?: string;
+  terms_and_conditions?: string;
+  venue_details?: string;
+  organizer_info?: string;
+  tags?: string | string[];
   expand?: {
     venue_id?: {
       id: string;
       name: string;
       layout_type: 'GA' | 'SEATED';
+      address?: string;
+      city?: string;
+    };
+    organizer_id?: {
+      id: string;
+      name: string;
+      email?: string;
+      phone?: string;
     };
   };
 }
@@ -80,23 +96,17 @@ export default function EventDetailsPage() {
   async function loadEvent() {
     try {
       const pb = getPocketBase();
-      console.log('Loading event:', eventId);
-
       const eventData = await pb.collection('events').getOne(eventId, {
         expand: 'venue_id,organizer_id',
       });
-      console.log('Loaded event data:', eventData);
-      console.log('Event venue_id:', eventData.venue_id);
-      console.log('Event expanded venue:', eventData.expand?.venue_id);
-
       setEvent(eventData as any);
+      console.log('Event expanded venue:', eventData.expand?.venue_id);
+      console.log('Event expanded organizer:', eventData.expand?.organizer_id);
 
       try {
-        console.log('Fetching ticket types for event:', eventId);
         const ticketTypesData = await pb.collection('ticket_types').getFullList({
           filter: `event_id="${eventId}"`,
         });
-        console.log('Ticket types raw response:', ticketTypesData);
         setTicketTypes(ticketTypesData as any);
         console.log('Loaded ticket types:', ticketTypesData.length);
       } catch (ticketError) {
@@ -108,9 +118,7 @@ export default function EventDetailsPage() {
       let venue = eventData.expand?.venue_id;
       if (!venue && eventData.venue_id) {
         try {
-          console.log('Fetching venue manually:', eventData.venue_id);
           venue = await pb.collection('venues').getOne(eventData.venue_id);
-          console.log('Manually fetched venue:', venue);
         } catch (venueError: any) {
           console.warn('Failed to load venue:', venueError);
           // Venue might not exist or user might not have access - continue without venue data
@@ -374,7 +382,7 @@ export default function EventDetailsPage() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
-        name: 'Rave Ticketing',
+        name: 'Powerglide Ticketing',
         description: event?.name,
         order_id: razorpayOrder.id,
         handler: async function (response: any) {
@@ -484,10 +492,131 @@ export default function EventDetailsPage() {
             })}
           </p>
 
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2 text-gray-900">Description</h2>
-            <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.description}</p>
-          </div>
+          {event.description && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">Description</h2>
+              <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.description}</p>
+            </div>
+          )}
+
+          {event.about && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">About the Event</h2>
+              <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.about}</p>
+            </div>
+          )}
+
+          {event.overview && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">Overview</h2>
+              <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.overview}</p>
+            </div>
+          )}
+
+          {event.things_to_carry && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">Things to Carry</h2>
+              <div className="text-gray-700 text-sm">
+                {event.things_to_carry.split('\n').map((item: string, idx: number) => (
+                  <div key={idx} className="mb-1">
+                    {item.trim() && (
+                      <>
+                        <span className="mr-2">•</span>
+                        {item.trim()}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {event.inclusions && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">Inclusions</h2>
+              <div className="text-gray-700 text-sm">
+                {event.inclusions.split('\n').map((item: string, idx: number) => (
+                  <div key={idx} className="mb-1">
+                    {item.trim() && (
+                      <>
+                        <span className="mr-2">✓</span>
+                        {item.trim()}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {event.terms_and_conditions && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">Terms & Conditions</h2>
+              <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.terms_and_conditions}</p>
+            </div>
+          )}
+
+          {event.expand?.venue_id && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">Venue Details</h2>
+              <div className="text-gray-700 text-sm space-y-1">
+                <p><strong>Venue:</strong> {event.expand.venue_id.name}</p>
+                {event.expand.venue_id.address && (
+                  <p><strong>Address:</strong> {event.expand.venue_id.address}</p>
+                )}
+                {event.expand.venue_id.city && (
+                  <p><strong>City:</strong> {event.expand.venue_id.city}</p>
+                )}
+              </div>
+              {event.venue_details && (
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.venue_details}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {event.expand?.organizer_id && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">Organizer Information</h2>
+              <div className="text-gray-700 text-sm space-y-1">
+                <p><strong>Organizer:</strong> {event.expand.organizer_id.name}</p>
+                {event.expand.organizer_id.email && (
+                  <p><strong>Email:</strong> {event.expand.organizer_id.email}</p>
+                )}
+                {event.expand.organizer_id.phone && (
+                  <p><strong>Phone:</strong> {event.expand.organizer_id.phone}</p>
+                )}
+              </div>
+              {event.organizer_info && (
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.organizer_info}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {event.tags && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">Tags</h2>
+              <div className="flex flex-wrap gap-2">
+                {(Array.isArray(event.tags) ? event.tags : typeof event.tags === 'string' ? (() => {
+                  try {
+                    return JSON.parse(event.tags);
+                  } catch {
+                    return event.tags.split(',').map((t: string) => t.trim());
+                  }
+                })() : []).map((tag: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mb-6">
             <h2 className="text-lg font-semibold mb-3 text-gray-900">Tickets</h2>

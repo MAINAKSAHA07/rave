@@ -42,7 +42,7 @@ export default function BackofficeHome() {
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Rave Backoffice</h1>
+        <h1 className="text-4xl font-bold mb-8">Powerglide Backoffice</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link href="/organizer" className="p-6 border rounded-lg hover:bg-gray-100">

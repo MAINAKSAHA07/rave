@@ -83,20 +83,24 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full bg-white border border-gray-200 shadow-md">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
-          <CardDescription className="text-gray-600">Sign up to start buying tickets</CardDescription>
+    <div className="min-h-[80vh] flex items-center justify-center p-4">
+      <Card className="w-full bg-white/90 backdrop-blur-sm border border-white/50 shadow-xl rounded-3xl overflow-hidden relative">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-500"></div>
+        <CardHeader className="text-center space-y-3 pb-8 pt-8">
+          <div className="mx-auto w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center text-2xl mb-2">
+            ✨
+          </div>
+          <CardTitle className="text-3xl font-black text-gray-900 tracking-tight">Create Account</CardTitle>
+          <CardDescription className="text-gray-500 font-medium">Join us to start booking tickets</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 px-8 pb-10">
           <Button
             onClick={handleGoogleSignup}
             disabled={loading}
-            className="w-full bg-white text-gray-900 hover:bg-gray-100 border border-gray-200 transition-all hover:scale-[1.02]"
+            className="w-full bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 shadow-sm transition-all hover:scale-[1.01] hover:shadow-md h-12 rounded-xl text-sm font-semibold"
             variant="outline"
           >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -119,22 +123,22 @@ export default function SignupPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200" />
+              <span className="w-full border-t border-gray-100" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or sign up with email</span>
+            <div className="relative flex justify-center text-xs uppercase tracking-wider font-semibold">
+              <span className="bg-white/90 px-3 text-gray-400">Or sign up with email</span>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
+              <div className="bg-red-50/50 backdrop-blur-sm border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+                <span>⚠️</span> {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-700">Full Name</Label>
+              <Label htmlFor="name" className="text-gray-700 font-semibold text-sm">Full Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -142,12 +146,12 @@ export default function SignupPage() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="John Doe"
                 required
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-gray-50/50 border-gray-200 focus:bg-white focus:border-purple-500 h-12 rounded-xl transition-all"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">Email</Label>
+              <Label htmlFor="email" className="text-gray-700 font-semibold text-sm">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -155,12 +159,12 @@ export default function SignupPage() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="you@example.com"
                 required
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-gray-50/50 border-gray-200 focus:bg-white focus:border-purple-500 h-12 rounded-xl transition-all"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-gray-700">Phone Number</Label>
+              <Label htmlFor="phone" className="text-gray-700 font-semibold text-sm">Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -168,12 +172,12 @@ export default function SignupPage() {
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+91 9876543210"
                 required
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-gray-50/50 border-gray-200 focus:bg-white focus:border-purple-500 h-12 rounded-xl transition-all"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700">Password</Label>
+              <Label htmlFor="password" className="text-gray-700 font-semibold text-sm">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -182,13 +186,13 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 required
                 minLength={8}
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-gray-50/50 border-gray-200 focus:bg-white focus:border-purple-500 h-12 rounded-xl transition-all"
               />
-              <p className="text-xs text-gray-500">Must be at least 8 characters</p>
+              <p className="text-xs text-gray-500 font-medium bg-gray-50 py-1 px-2 rounded-lg inline-block">Must be at least 8 characters</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="passwordConfirm" className="text-gray-700">Confirm Password</Label>
+              <Label htmlFor="passwordConfirm" className="text-gray-700 font-semibold text-sm">Confirm Password</Label>
               <Input
                 id="passwordConfirm"
                 type="password"
@@ -196,18 +200,27 @@ export default function SignupPage() {
                 onChange={(e) => setFormData({ ...formData, passwordConfirm: e.target.value })}
                 placeholder="••••••••"
                 required
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-gray-50/50 border-gray-200 focus:bg-white focus:border-purple-500 h-12 rounded-xl transition-all"
               />
             </div>
 
-            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={loading}>
-              {loading ? 'Creating account...' : 'Sign Up'}
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white h-12 rounded-xl text-base font-bold shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02] active:scale-95"
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Creating Account...</span>
+                </div>
+              ) : 'Sign Up'}
             </Button>
           </form>
 
-          <div className="text-center text-sm">
-            <span className="text-gray-600">Already have an account? </span>
-            <Link href="/login" className="text-purple-600 hover:text-purple-700 hover:underline font-medium">
+          <div className="text-center text-sm pt-2">
+            <span className="text-gray-500">Already have an account? </span>
+            <Link href="/login" className="text-purple-600 hover:text-purple-700 font-bold hover:underline">
               Sign in
             </Link>
           </div>

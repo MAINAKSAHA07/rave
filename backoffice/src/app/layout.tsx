@@ -6,7 +6,7 @@ import Navigation from '@/components/Navigation'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Rave Backoffice - Organizer & Admin Dashboard',
+  title: 'Powerglide Backoffice - Organizer & Admin Dashboard',
   description: 'Backoffice dashboard for organizers and administrators',
 }
 

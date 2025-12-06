@@ -5,13 +5,22 @@ import Link from 'next/link';
 import { getPocketBase } from '@/lib/pocketbase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import BrandReveal from '@/components/BrandReveal';
 
 export default function HomePage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
+    // Show content after brand reveal animation (15 seconds)
+    const timer = setTimeout(() => {
+      setShowContent(true);
+    }, 15000);
+
     loadFeaturedEvents();
+
+    return () => clearTimeout(timer);
   }, []);
 
   async function loadFeaturedEvents() {
@@ -33,22 +42,29 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="w-full">
-        {/* Hero Section */}
-        <div className="text-center py-8 mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">
-            Welcome to Rave
-          </h1>
-          <p className="text-gray-600 mb-6 text-lg">
-            Discover amazing events happening near you
-          </p>
-          <Link href="/events">
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg">
-              Browse Events
-            </Button>
-          </Link>
-        </div>
+    <div className="min-h-screen">
+      {/* Brand Reveal Animation */}
+      <div className={`fixed inset-0 z-50 transition-opacity duration-1000 ${showContent ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <BrandReveal />
+      </div>
+
+      {/* Main Content */}
+      <div className={`min-h-screen p-4 transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="w-full">
+          {/* Hero Section */}
+          <div className="text-center py-8 mb-8">
+            <h1 className="text-4xl font-bold mb-4 text-gray-900">
+              Welcome to Powerglide
+            </h1>
+            <p className="text-gray-600 mb-6 text-lg">
+              Discover amazing events happening near you
+            </p>
+            <Link href="/events">
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg">
+                Browse Events
+              </Button>
+            </Link>
+          </div>
 
         {/* Featured Events */}
         <div className="mb-8">
@@ -107,24 +123,25 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Quick Links */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <Link href="/events">
-            <Card className="bg-purple-50 border-purple-200 hover:bg-purple-100 transition-colors">
-              <CardContent className="p-6 text-center">
-                <h3 className="font-bold text-purple-700 mb-2">All Events</h3>
-                <p className="text-sm text-purple-600">Browse all events</p>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href="/become-organizer">
-            <Card className="bg-pink-50 border-pink-200 hover:bg-pink-100 transition-colors">
-              <CardContent className="p-6 text-center">
-                <h3 className="font-bold text-pink-700 mb-2">Organize</h3>
-                <p className="text-sm text-pink-600">Host your event</p>
-              </CardContent>
-            </Card>
-          </Link>
+          {/* Quick Links */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <Link href="/events">
+              <Card className="bg-purple-50 border-purple-200 hover:bg-purple-100 transition-colors">
+                <CardContent className="p-6 text-center">
+                  <h3 className="font-bold text-purple-700 mb-2">All Events</h3>
+                  <p className="text-sm text-purple-600">Browse all events</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/become-organizer">
+              <Card className="bg-pink-50 border-pink-200 hover:bg-pink-100 transition-colors">
+                <CardContent className="p-6 text-center">
+                  <h3 className="font-bold text-pink-700 mb-2">Organize</h3>
+                  <p className="text-sm text-pink-600">Host your event</p>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

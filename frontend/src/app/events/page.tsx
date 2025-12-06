@@ -108,32 +108,36 @@ export default function EventsPage() {
   // Get unique cities from events
   const cities = Array.from(new Set(events.map((e) => e.city).filter(Boolean))).sort();
 
+
   return (
-    <div className="min-h-screen p-4 pt-4">
+    <div className="min-h-screen p-4 pb-24">
       <div className="w-full">
-        <h1 className="text-2xl font-bold mb-4 text-gray-900">All Events</h1>
+        <h1 className="text-3xl font-black mb-6 text-gray-900 tracking-tight">Discover Events</h1>
 
         {/* Filters */}
-        <Card className="mb-6 bg-white border border-gray-200 shadow-md">
-          <CardContent className="pt-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="search" className="text-gray-700">Search</Label>
+        <div className="mb-6 bg-white/80 backdrop-blur-md border border-white/50 shadow-lg rounded-3xl p-5 sticky top-20 z-40 supports-[backdrop-filter]:bg-white/60">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="search" className="text-gray-700 text-xs font-bold uppercase tracking-wider pl-1">Search</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg">🔍</span>
                 <Input
                   id="search"
-                  placeholder="Event name..."
+                  placeholder="Find your next vibe..."
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  className="bg-gray-50 border-gray-200 focus:bg-white focus:border-purple-500 rounded-2xl pl-10 h-12"
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city" className="text-gray-700">City</Label>
+                <Label htmlFor="city" className="text-gray-700 text-xs font-bold uppercase tracking-wider pl-1">City</Label>
                 <Select value={filters.city || 'all'} onValueChange={(value) => setFilters({ ...filters, city: value === 'all' ? '' : value })}>
-                  <SelectTrigger id="city" className="bg-white border-gray-300 focus:border-purple-500">
+                  <SelectTrigger id="city" className="bg-gray-50 border-gray-200 focus:bg-white focus:border-purple-500 rounded-2xl h-12">
                     <SelectValue placeholder="All Cities" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     <SelectItem value="all">All Cities</SelectItem>
                     {cities.map((city) => (
                       <SelectItem key={city} value={city}>
@@ -144,49 +148,56 @@ export default function EventsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-gray-700">Category</Label>
+                <Label htmlFor="category" className="text-gray-700 text-xs font-bold uppercase tracking-wider pl-1">Category</Label>
                 <Select
                   value={filters.category}
                   onValueChange={(value) => setFilters({ ...filters, category: value })}
                 >
-                  <SelectTrigger id="category" className="bg-white border-gray-300 focus:border-purple-500">
+                  <SelectTrigger id="category" className="bg-gray-50 border-gray-200 focus:bg-white focus:border-purple-500 rounded-2xl h-12">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     {CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
+                      <SelectItem key={cat} value={cat} className="capitalize">
                         {cat}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="minPrice" className="text-gray-700">Min Price (₹)</Label>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="space-y-2 flex-1">
+                <Label htmlFor="minPrice" className="text-gray-700 text-xs font-bold uppercase tracking-wider pl-1">Min ₹</Label>
                 <Input
                   id="minPrice"
                   type="number"
                   placeholder="0"
                   value={filters.minPrice}
                   onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  className="bg-gray-50 border-gray-200 focus:bg-white focus:border-purple-500 rounded-2xl h-12"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxPrice" className="text-gray-700">Max Price (₹)</Label>
+              <div className="space-y-2 flex-1">
+                <Label htmlFor="maxPrice" className="text-gray-700 text-xs font-bold uppercase tracking-wider pl-1">Max ₹</Label>
                 <Input
                   id="maxPrice"
                   type="number"
-                  placeholder="No limit"
+                  placeholder="Any"
                   value={filters.maxPrice}
                   onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  className="bg-gray-50 border-gray-200 focus:bg-white focus:border-purple-500 rounded-2xl h-12"
                 />
               </div>
             </div>
-            <div className="mt-6 flex justify-end">
+          </div>
+
+          {(filters.city || filters.category !== 'All' || filters.search || filters.minPrice || filters.maxPrice) && (
+            <div className="mt-4 flex justify-end">
               <Button
-                variant="outline"
+                variant="ghost"
+                size="sm"
                 onClick={() =>
                   setFilters({
                     city: '',
@@ -196,59 +207,67 @@ export default function EventsPage() {
                     maxPrice: '',
                   })
                 }
-                className="border-gray-300 hover:bg-gray-50 text-gray-700 hover:text-gray-900"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl px-4"
               >
-                Clear Filters
+                Reset Filters
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
         {/* Events Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-5">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-64 rounded-xl bg-gray-100 animate-pulse" />
+              <div key={i} className="h-64 rounded-3xl bg-gray-100 animate-pulse" />
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-            <p className="text-gray-600 mb-4">No events found matching your filters.</p>
-            <Button variant="outline" onClick={() => setFilters({ city: '', category: 'All', search: '', minPrice: '', maxPrice: '' })} className="border-gray-300 text-gray-700 hover:bg-gray-100">
-              Clear Filters
+          <div className="text-center py-16 bg-white/50 rounded-3xl border border-gray-200 border-dashed">
+            <div className="text-4xl mb-3">🔍</div>
+            <p className="text-gray-900 font-bold mb-1">No matches found</p>
+            <p className="text-gray-500 text-sm mb-4">Try adjusting your filters to find more events.</p>
+            <Button variant="outline" onClick={() => setFilters({ city: '', category: 'All', search: '', minPrice: '', maxPrice: '' })} className="border-gray-300 text-gray-700 hover:bg-white rounded-xl">
+              Clear All Filters
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-5">
             {events.map((event) => (
               <Link
                 key={event.id}
                 href={`/events/${event.id}`}
-                className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
+                className="group relative bg-white border border-gray-100 rounded-3xl overflow-hidden hover:border-purple-100 hover:shadow-xl transition-all duration-300 shadow-sm"
               >
-                <div className="aspect-[4/3] overflow-hidden">
+                <div className="aspect-[4/3] overflow-hidden relative">
                   {event.cover_image ? (
                     <img
                       src={event.cover_image ? getPocketBase().files.getUrl(event, event.cover_image) : ''}
                       alt={event.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <span className="text-muted-foreground">No image</span>
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                      <span className="text-gray-400 font-medium">No image</span>
                     </div>
                   )}
-                </div>
-                <div className="p-4">
-                  <div className="mb-2">
-                    <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 capitalize">
+                  <div className="absolute top-3 left-3">
+                    <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold bg-white/90 backdrop-blur-md text-gray-900 uppercase tracking-wider shadow-sm">
                       {event.category}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold mb-2 text-gray-900">{event.name}</h3>
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                    <span className="capitalize">{event.city}</span>
-                    <span>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-16">
+                  </div>
+                </div>
+                <div className="p-5 relative">
+                  <h3 className="text-xl font-extrabold mb-2 text-gray-900 leading-tight group-hover:text-purple-600 transition-colors">
+                    {event.name}
+                  </h3>
+                  <div className="flex items-center justify-between text-sm text-gray-500 font-medium border-t border-gray-50 pt-3 mt-1">
+                    <span className="flex items-center gap-1">
+                      📍 {event.city}
+                    </span>
+                    <span className="text-gray-900 bg-gray-50 px-2 py-1 rounded-lg">
                       {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
                         month: 'short',
                         day: 'numeric',
@@ -258,9 +277,6 @@ export default function EventsPage() {
                       })}
                     </span>
                   </div>
-                  {event.expand?.venue_id && (
-                    <p className="text-xs text-gray-500">{event.expand.venue_id.name}</p>
-                  )}
                 </div>
               </Link>
             ))}

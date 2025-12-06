@@ -46,17 +46,19 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm supports-[backdrop-filter]:bg-white/60">
       <div className="max-w-[428px] mx-auto px-4">
-        <div className="flex justify-between items-center h-14">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-xl font-bold text-purple-600 hover:opacity-80 transition-opacity">
-              Rave
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <img src="/logo.png" alt="Powerglide" className="h-10 w-auto" />
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
               <Link
                 href="/events"
-                className={`text-sm font-medium transition-colors ${pathname === '/events' ? 'text-purple-600' : 'text-gray-600 hover:text-purple-600'
+                className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-all ${pathname === '/events'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 Events
@@ -65,14 +67,18 @@ export default function Navigation() {
                 <>
                   <Link
                     href="/my-tickets"
-                    className={`text-sm font-medium transition-colors ${pathname === '/my-tickets' ? 'text-purple-600' : 'text-gray-600 hover:text-purple-600'
+                    className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-all ${pathname === '/my-tickets'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'text-gray-600 hover:bg-gray-100'
                       }`}
                   >
                     Tickets
                   </Link>
                   <Link
                     href="/profile"
-                    className={`text-sm font-medium transition-colors ${pathname === '/profile' ? 'text-purple-600' : 'text-gray-600 hover:text-purple-600'
+                    className={`text-sm font-semibold px-3 py-1.5 rounded-full transition-all ${pathname === '/profile'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'text-gray-600 hover:bg-gray-100'
                       }`}
                   >
                     Profile
@@ -84,27 +90,28 @@ export default function Navigation() {
 
           <div className="flex items-center gap-2">
             {user ? (
-              <>
-                <span className="text-xs text-gray-600 hidden sm:inline max-w-[100px] truncate">
-                  {user.name || user.email}
-                </span>
-                <Button onClick={handleLogout} variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
-                  Logout
-                </Button>
-              </>
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                size="icon"
+                className="rounded-full hover:bg-gray-100 text-gray-500 hover:text-red-600 transition-colors w-9 h-9"
+                title="Logout"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
+              </Button>
             ) : (
-              <>
+              <div className="flex items-center gap-2">
                 <Link href="/login">
-                  <Button variant="ghost" size="sm" className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 text-xs">
+                  <Button variant="ghost" size="sm" className="text-gray-600 font-medium hover:text-purple-600 hover:bg-purple-50 text-xs px-3">
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs">
+                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 text-xs px-4 rounded-full">
                     Sign Up
                   </Button>
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>

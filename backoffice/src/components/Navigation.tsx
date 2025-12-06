@@ -35,8 +35,9 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="text-xl font-bold">
-              Rave Backoffice
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/logo.png" alt="Powerglide" className="h-8 w-auto" />
+              <span className="text-xl font-bold">Powerglide Backoffice</span>
             </Link>
             <div className="flex space-x-4">
               {(user?.backoffice_access || user?.role === 'admin' || user?.role === 'super_admin') && (

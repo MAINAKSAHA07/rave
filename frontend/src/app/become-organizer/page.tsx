@@ -115,7 +115,7 @@ export default function OrganizerApplyPage() {
               Become an Organizer
             </CardTitle>
             <CardDescription className="text-center mt-2 text-gray-600">
-              Join Rave and start hosting amazing events.
+              Join Powerglide and start hosting amazing events.
             </CardDescription>
           </CardHeader>
           <CardContent>

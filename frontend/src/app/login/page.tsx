@@ -80,20 +80,24 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full bg-white border border-gray-200 shadow-md">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
-          <CardDescription className="text-gray-600">Sign in to your account to continue</CardDescription>
+    <div className="min-h-[80vh] flex items-center justify-center p-4">
+      <Card className="w-full bg-white/90 backdrop-blur-sm border border-white/50 shadow-xl rounded-3xl overflow-hidden relative">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+        <CardHeader className="text-center space-y-3 pb-8 pt-8">
+          <div className="mx-auto w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl mb-2">
+            👋
+          </div>
+          <CardTitle className="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</CardTitle>
+          <CardDescription className="text-gray-500 font-medium">Sign in to your account to continue</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 px-8 pb-10">
           <Button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full bg-white text-gray-900 hover:bg-gray-100 border border-gray-200 transition-all hover:scale-[1.02]"
+            className="w-full bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 shadow-sm transition-all hover:scale-[1.01] hover:shadow-md h-12 rounded-xl text-sm font-semibold"
             variant="outline"
           >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -116,37 +120,37 @@ function LoginForm() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200" />
+              <span className="w-full border-t border-gray-100" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+            <div className="relative flex justify-center text-xs uppercase tracking-wider font-semibold">
+              <span className="bg-white/90 px-3 text-gray-400">Or continue with email</span>
             </div>
           </div>
 
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          <form onSubmit={handleEmailLogin} className="space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
+              <div className="bg-red-50/50 backdrop-blur-sm border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+                <span>⚠️</span> {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">Email</Label>
+              <Label htmlFor="email" className="text-gray-700 font-semibold text-sm">Email Address</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="john@example.com"
                 required
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-gray-50/50 border-gray-200 focus:bg-white focus:border-purple-500 h-12 rounded-xl transition-all"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-gray-700">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-purple-600 hover:text-purple-700 hover:underline">
+                <Label htmlFor="password" className="text-gray-700 font-semibold text-sm">Password</Label>
+                <Link href="/forgot-password" className="text-xs text-purple-600 hover:text-purple-700 hover:underline font-semibold">
                   Forgot password?
                 </Link>
               </div>
@@ -157,19 +161,28 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="bg-white border-gray-300 focus:border-purple-500"
+                className="bg-gray-50/50 border-gray-200 focus:bg-white focus:border-purple-500 h-12 rounded-xl transition-all"
               />
             </div>
 
-            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white h-12 rounded-xl text-base font-bold shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02] active:scale-95"
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Signing in...</span>
+                </div>
+              ) : 'Sign In'}
             </Button>
           </form>
 
-          <div className="text-center text-sm">
-            <span className="text-gray-600">Don't have an account? </span>
-            <Link href="/signup" className="text-purple-600 hover:text-purple-700 hover:underline font-medium">
-              Sign up
+          <div className="text-center text-sm pt-2">
+            <span className="text-gray-500">Don't have an account? </span>
+            <Link href="/signup" className="text-purple-600 hover:text-purple-700 font-bold hover:underline">
+              Create Account
             </Link>
           </div>
         </CardContent>
