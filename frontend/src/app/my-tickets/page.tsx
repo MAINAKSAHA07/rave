@@ -16,6 +16,29 @@ interface Ticket {
   event_id: string;
   ticket_type_id: string;
   order_id: string;
+  seat_id?: string;
+  table_id?: string;
+  expand?: {
+    seat_id?: {
+      id: string;
+      section: string;
+      row: string;
+      seat_number: string;
+      label: string;
+    };
+    table_id?: {
+      id: string;
+      name: string;
+      capacity: number;
+      section?: string;
+    };
+    event_id?: any;
+    ticket_type_id?: {
+      id: string;
+      name: string;
+      ticket_type_category?: 'GA' | 'TABLE';
+    };
+  };
 }
 
 interface Order {
@@ -51,7 +74,7 @@ export default function MyTicketsPage() {
       const pb = getPocketBase();
       const ticketsData = await pb.collection('tickets').getFullList({
         filter: `order_id.user_id="${user.id}"`,
-        expand: 'order_id,event_id,ticket_type_id',
+        expand: 'order_id,event_id,ticket_type_id,seat_id,table_id',
       });
 
       setTickets(ticketsData as any);
@@ -128,10 +151,12 @@ export default function MyTicketsPage() {
                 <span class="label">Name:</span>
                 <span class="value">${getCurrentUser()?.name || getCurrentUser()?.email || 'Guest'}</span>
               </div>
+              ${ticket.expand?.ticket_type_id?.ticket_type_category ? `
               <div class="detail-row">
-                <span class="label">Gate:</span>
-                <span class="value">A21</span>
+                <span class="label">Type:</span>
+                <span class="value">${ticket.expand.ticket_type_id.ticket_type_category}${ticket.expand?.table_id ? ` - Table ${ticket.expand.table_id.name}${ticket.expand.table_id.section ? ` (${ticket.expand.table_id.section})` : ''}` : ''}</span>
               </div>
+              ` : ''}
               <div class="detail-row">
                 <span class="label">Time:</span>
                 <span class="value">${event?.start_date ? new Date(event.start_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'TBD'} - ${event?.end_date ? new Date(event.end_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'TBD'}</span>
@@ -144,6 +169,18 @@ export default function MyTicketsPage() {
                 <span class="label">Place:</span>
                 <span class="value">${event?.venue_id?.name || 'Venue TBD'}, ${event?.city || ''}</span>
               </div>
+              ${ticket.expand?.seat_id ? `
+              <div class="detail-row">
+                <span class="label">Seat:</span>
+                <span class="value">${ticket.expand.seat_id.section} - Row ${ticket.expand.seat_id.row} - ${ticket.expand.seat_id.label}</span>
+              </div>
+              ` : ''}
+              ${ticket.expand?.table_id ? `
+              <div class="detail-row">
+                <span class="label">Table:</span>
+                <span class="value">${ticket.expand.table_id.name}${ticket.expand.table_id.section ? ` (${ticket.expand.table_id.section})` : ''}${ticket.expand.table_id.capacity ? ` - Capacity: ${ticket.expand.table_id.capacity}` : ''}</span>
+              </div>
+              ` : ''}
             </div>
             <div class="qr-code">
               <p>Scan this QR code or show this ticket at the event</p>
@@ -245,10 +282,20 @@ export default function MyTicketsPage() {
                           {getCurrentUser()?.name || getCurrentUser()?.email?.split('@')[0] || 'Guest'}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Gate</p>
-                        <p className="text-sm font-semibold text-gray-900">A21</p>
-                      </div>
+                      {ticket.expand?.ticket_type_id?.ticket_type_category && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Type</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {ticket.expand.ticket_type_id.ticket_type_category}
+                            {ticket.expand?.table_id && (
+                              <span className="ml-1 text-xs font-normal text-gray-600">
+                                - Table {ticket.expand.table_id.name}
+                                {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-xs text-gray-500 mb-1">Time</p>
                         <p className="text-sm font-semibold text-gray-900">
@@ -287,6 +334,26 @@ export default function MyTicketsPage() {
                         {event?.venue_id?.name || 'Venue TBD'}, {event?.city || ''}
                       </p>
                     </div>
+
+                    {/* Seat/Table Information */}
+                    {ticket.expand?.seat_id && (
+                      <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                        <p className="text-xs text-blue-600 mb-1 font-semibold">💺 Seat Assignment</p>
+                        <p className="text-sm font-semibold text-blue-900">
+                          {ticket.expand.seat_id.section} - Row {ticket.expand.seat_id.row} - {ticket.expand.seat_id.label}
+                        </p>
+                      </div>
+                    )}
+                    {ticket.expand?.table_id && (
+                      <div className="mb-4 bg-teal-50 border border-teal-200 rounded-xl p-3">
+                        <p className="text-xs text-teal-600 mb-1 font-semibold">🪑 Table Assignment</p>
+                        <p className="text-sm font-semibold text-teal-900">
+                          Table: {ticket.expand.table_id.name}
+                          {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}
+                          {ticket.expand.table_id.capacity && ` - Capacity: ${ticket.expand.table_id.capacity}`}
+                        </p>
+                      </div>
+                    )}
 
                     {/* QR Code Section - Only show for issued or checked_in tickets */}
                     {ticket.status === 'issued' || ticket.status === 'checked_in' ? (

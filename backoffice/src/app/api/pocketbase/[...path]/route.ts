@@ -432,8 +432,37 @@ export async function PUT(
       if (pathParts.length === 5 && pathParts[3] === 'records') {
         // Update record: api/collections/{collection}/records/{id}
         const recordId = pathParts[4];
-        const result = await pb.collection(collectionName).update(recordId, body);
-        return NextResponse.json(result);
+        
+        // Add logging for ticket_types updates
+        if (collectionName === 'ticket_types') {
+          console.log(`[Proxy] PUT update for ticket_types/${recordId}`);
+          console.log(`[Proxy] Update data:`, JSON.stringify(body, null, 2));
+          console.log(`[Proxy] Has ticket_type_category:`, body.ticket_type_category !== undefined);
+          console.log(`[Proxy] Has table_ids:`, body.table_ids !== undefined);
+        }
+        
+        try {
+          const result = await pb.collection(collectionName).update(recordId, body);
+          
+          if (collectionName === 'ticket_types') {
+            console.log(`[Proxy] Update successful for ticket_types/${recordId}`);
+            console.log(`[Proxy] Updated record:`, {
+              id: result.id,
+              ticket_type_category: result.ticket_type_category,
+              table_ids: result.table_ids,
+            });
+          }
+          
+          return NextResponse.json(result);
+        } catch (updateError: any) {
+          console.error(`[Proxy] Update failed for ${collectionName}/${recordId}:`, updateError);
+          console.error(`[Proxy] Error details:`, {
+            message: updateError.message,
+            status: updateError.status,
+            response: updateError.response?.data,
+          });
+          throw updateError;
+        }
       }
     }
 

@@ -10,10 +10,24 @@ function generateTicketCode() {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
+        console.log('📦 Order creation request received:', {
+            userId: body.userId,
+            eventId: body.eventId,
+            ticketItemsCount: body.ticketItems?.length,
+            paymentMethod: body.paymentMethod,
+            hasAttendeeName: !!body.attendeeName,
+            hasAttendeeEmail: !!body.attendeeEmail,
+            hasAttendeePhone: !!body.attendeePhone,
+        });
         const { userId, eventId, ticketItems, attendeeName, attendeeEmail, attendeePhone, paymentMethod = 'razorpay' } = body;
 
         if (!userId || !eventId || !ticketItems || ticketItems.length === 0) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+            console.error('❌ Missing required fields:', {
+                userId: !!userId,
+                eventId: !!eventId,
+                ticketItems: ticketItems?.length || 0,
+            });
+            return NextResponse.json({ error: 'Missing required fields: userId, eventId, or ticketItems' }, { status: 400 });
         }
 
         const pb = getPocketBase();
@@ -82,8 +96,23 @@ export async function POST(request: NextRequest) {
 
             // Check sales window
             const now = new Date();
-            if (new Date(ticketType.sales_start) > now || new Date(ticketType.sales_end) < now) {
-                errors.push(`Ticket type ${ticketType.name} is not available for sale`);
+            const salesStart = new Date(ticketType.sales_start);
+            const salesEnd = new Date(ticketType.sales_end);
+            
+            console.log(`📅 Checking sales window for ${ticketType.name}:`, {
+                sales_start: ticketType.sales_start,
+                sales_end: ticketType.sales_end,
+                now: now.toISOString(),
+                salesStart: salesStart.toISOString(),
+                salesEnd: salesEnd.toISOString(),
+                isBeforeStart: salesStart > now,
+                isAfterEnd: salesEnd < now,
+            });
+            
+            if (salesStart > now) {
+                errors.push(`Ticket type ${ticketType.name} sales have not started yet. Sales start: ${salesStart.toLocaleString()}`);
+            } else if (salesEnd < now) {
+                errors.push(`Ticket type ${ticketType.name} sales have ended. Sales ended: ${salesEnd.toLocaleString()}`);
             }
 
             // Check quantity
@@ -131,11 +160,15 @@ export async function POST(request: NextRequest) {
 
         let order;
         try {
+            console.log('📦 Creating order with data:', JSON.stringify(orderData, null, 2));
             order = await pb.collection('orders').create(orderData);
+            console.log('✅ Order created successfully:', order.id);
         } catch (createError: any) {
             console.error('❌ Failed to create order:', createError);
             console.error('   Order data:', JSON.stringify(orderData, null, 2));
-            console.error('   Error response:', JSON.stringify(createError.response, null, 2));
+            console.error('   Error response:', JSON.stringify(createError.response?.data, null, 2));
+            console.error('   Error status:', createError.status);
+            console.error('   Error message:', createError.message);
             
             // If it's a schema validation error, try without optional fields
             if (createError.response?.data) {
@@ -157,10 +190,23 @@ export async function POST(request: NextRequest) {
                         throw createError; // Throw original error if fallback also fails
                     }
                 } else {
-                    throw createError;
+                    // Return the actual validation error
+                    const errorFields = Object.keys(errorData);
+                    const errorMessages = Object.values(errorData).flat();
+                    const errorMessage = Array.isArray(errorMessages[0]) 
+                        ? errorMessages[0].join(', ') 
+                        : errorMessages.join(', ');
+                    return NextResponse.json({ 
+                        error: `Validation failed: ${errorMessage}`,
+                        fields: errorFields,
+                        details: process.env.NODE_ENV === 'development' ? errorData : undefined
+                    }, { status: 400 });
                 }
             } else {
-                throw createError;
+                return NextResponse.json({ 
+                    error: createError.message || 'Failed to create order',
+                    details: process.env.NODE_ENV === 'development' ? createError.stack : undefined
+                }, { status: createError.status || 500 });
             }
         }
 
@@ -226,6 +272,11 @@ export async function POST(request: NextRequest) {
 
                     if (item.seatIds && item.seatIds[i]) {
                         ticketData.seat_id = item.seatIds[i];
+                    }
+
+                    // Add table_id if tableIds are provided
+                    if (item.tableIds && item.tableIds[i]) {
+                        ticketData.table_id = item.tableIds[i];
                     }
 
                     try {

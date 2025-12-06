@@ -61,6 +61,8 @@ interface TicketType {
   currency: string;
   remaining_quantity: number;
   max_per_order: number;
+  ticket_type_category?: 'GA' | 'TABLE';
+  table_ids?: string | string[];
 }
 
 interface Seat {
@@ -101,7 +103,6 @@ export default function EventDetailsPage() {
   const [selectedTables, setSelectedTables] = useState<Record<string, string[]>>({}); // ticketTypeId -> tableIds[]
   const [availableTables, setAvailableTables] = useState<any[]>([]);
   const [showTableSelection, setShowTableSelection] = useState<Record<string, boolean>>({});
-  const [tableViewMode, setTableViewMode] = useState<Record<string, 'list' | 'map'>>({}); // 'list' or 'map'
   const [attendeeDetails, setAttendeeDetails] = useState({
     name: '',
     email: '',
@@ -133,11 +134,31 @@ export default function EventDetailsPage() {
       });
 
       try {
+        // Try to get ticket types with explicit field selection
+        // Note: PocketBase may filter fields based on collection views/permissions
         const ticketTypesData = await pb.collection('ticket_types').getFullList({
           filter: `event_id="${eventId}"`,
         });
+        
+        // Log raw data to see what we're getting
+        console.log('[Event] Raw ticket types data:', ticketTypesData);
+        if (ticketTypesData.length > 0) {
+          console.log('[Event] First ticket type raw keys:', Object.keys(ticketTypesData[0]));
+          console.log('[Event] First ticket type raw data:', ticketTypesData[0]);
+        }
+        
         setTicketTypes(ticketTypesData as any);
         console.log('Loaded ticket types:', ticketTypesData.length);
+        // Debug: Log ticket type details
+        ticketTypesData.forEach((tt: any) => {
+          console.log(`[TicketType] ${tt.name}:`, {
+            id: tt.id,
+            ticket_type_category: tt.ticket_type_category,
+            has_table_ids: !!tt.table_ids,
+            table_ids: tt.table_ids ? (typeof tt.table_ids === 'string' ? JSON.parse(tt.table_ids) : tt.table_ids) : tt.table_ids,
+            allKeys: Object.keys(tt),
+          });
+        });
       } catch (ticketError) {
         console.error('Failed to load ticket types:', ticketError);
         setTicketTypes([]);
@@ -231,8 +252,21 @@ export default function EventDetailsPage() {
 
   async function loadTables() {
     try {
+      console.log('[Event] ===== Loading tables for event:', eventId, '=====');
       const tablesResponse = await tablesApi.getAvailableTables(eventId);
-      setAvailableTables(tablesResponse.data.tables || []);
+      console.log('[Event] Tables response received:', tablesResponse);
+      console.log('[Event] Tables response.data:', tablesResponse.data);
+      console.log('[Event] Tables response.data.tables:', tablesResponse.data?.tables);
+      const tables = tablesResponse.data.tables || [];
+      console.log('[Event] Extracted tables array length:', tables.length);
+      if (tables.length > 0) {
+        console.log('[Event] ✓ First table:', tables[0]);
+        console.log('[Event] ✓ All table IDs:', tables.map((t: any) => t.id));
+      } else {
+        console.warn('[Event] ⚠️ No tables loaded! availableTables will be empty.');
+      }
+      setAvailableTables(tables);
+      console.log('[Event] ===== Finished loading tables =====');
 
       // Load reserved tables
       const user = getPocketBase().authStore.model;
@@ -241,7 +275,11 @@ export default function EventDetailsPage() {
         setReservedTables(new Set((reservedResponse.data as any)?.reserved || []));
       }
     } catch (error) {
-      console.error('Failed to load tables:', error);
+      console.error('[Event] Failed to load tables:', error);
+      console.error('[Event] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     }
   }
 
@@ -301,16 +339,21 @@ export default function EventDetailsPage() {
         // Reserve the table
         try {
           const reserveResponse = await tableReservationsApi.reserve([tableId], user.id, eventId);
+          console.log('[Event] Reserve response:', reserveResponse);
 
           // Check for conflicts
-          if (reserveResponse.data.conflicts && reserveResponse.data.conflicts.length > 0) {
+          // Note: reserveResponse is already the data (from response.data), not wrapped in .data
+          const conflicts = reserveResponse.conflicts || reserveResponse.data?.conflicts || [];
+          const reserved = reserveResponse.reserved || reserveResponse.data?.reserved || [];
+          
+          if (conflicts.length > 0) {
             alert(`This table was just selected by another user. Please choose a different table.`);
             // Refresh table availability
             await loadTables();
             return;
           }
 
-          if (reserveResponse.data.reserved && reserveResponse.data.reserved.includes(tableId)) {
+          if (reserved.includes(tableId)) {
             setSelectedTables({
               ...selectedTables,
               [ticketTypeId]: [...currentTables, tableId], // Add to existing tables
@@ -347,7 +390,15 @@ export default function EventDetailsPage() {
           }
         } catch (error: any) {
           console.error('Failed to reserve table:', error);
-          if (error.response?.data?.conflicts) {
+          console.error('Error details:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+          });
+          
+          // Check if error response has conflicts
+          const errorConflicts = error.response?.data?.conflicts || [];
+          if (errorConflicts.length > 0) {
             alert('This table was just selected by another user. Please choose a different table.');
           } else {
             alert(`Error: ${error.message || 'Failed to reserve table'}`);
@@ -529,12 +580,14 @@ export default function EventDetailsPage() {
       
       // Start timer when tables are selected and user has filled in details (ready for checkout)
       if (allSelectedTableIds.length > 0 && hasRequiredDetails && checkoutTimer === null) {
+        console.log('[CheckoutTimer] Starting 5-minute checkout timer...');
         // Start 5-minute (300 seconds) checkout timer
         setCheckoutTimer(300);
         
         // Clear any existing interval
         if (checkoutTimerIntervalRef.current) {
           clearInterval(checkoutTimerIntervalRef.current);
+          checkoutTimerIntervalRef.current = null;
         }
         
         const interval = setInterval(() => {
@@ -551,6 +604,7 @@ export default function EventDetailsPage() {
         }, 1000);
         
         checkoutTimerIntervalRef.current = interval;
+        console.log('[CheckoutTimer] Timer started, interval ID:', interval);
       } else if ((allSelectedTableIds.length === 0 || !hasRequiredDetails) && checkoutTimer !== null) {
         // No tables selected or details missing - clear timer
         if (checkoutTimerIntervalRef.current) {
@@ -621,18 +675,22 @@ export default function EventDetailsPage() {
       }
     }
 
-    // Validate table selection for GA_TABLE events
+    // Validate table selection for GA_TABLE events - only for TABLE category ticket types
     if (isGATable) {
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
-          const selectedTableIds = selectedTables[ticketTypeId] || [];
-          if (selectedTableIds.length === 0) {
-            alert(`Please select at least one table for ${ticketTypes.find(tt => tt.id === ticketTypeId)?.name || 'this ticket type'}`);
-            return;
-          }
-          if (selectedTableIds.length !== quantity) {
-            alert(`Please select exactly ${quantity} table(s) for ${ticketTypes.find(tt => tt.id === ticketTypeId)?.name || 'this ticket type'}. Currently selected: ${selectedTableIds.length}`);
-            return;
+          const ticketType = ticketTypes.find(tt => tt.id === ticketTypeId);
+          // Only require table selection for TABLE category ticket types
+          if (ticketType?.ticket_type_category === 'TABLE') {
+            const selectedTableIds = selectedTables[ticketTypeId] || [];
+            if (selectedTableIds.length === 0) {
+              alert(`Please select at least one table for ${ticketType.name || 'this ticket type'}`);
+              return;
+            }
+            if (selectedTableIds.length !== quantity) {
+              alert(`Please select exactly ${quantity} table(s) for ${ticketType.name || 'this ticket type'}. Currently selected: ${selectedTableIds.length}`);
+              return;
+            }
           }
         }
       }
@@ -642,13 +700,21 @@ export default function EventDetailsPage() {
       if (allSelectedTableIds.length > 0) {
         try {
           const checkResponse = await tableReservationsApi.check(allSelectedTableIds, eventId, user.id);
-          if (checkResponse.data.unavailable && checkResponse.data.unavailable.length > 0) {
+          console.log('[Checkout] Table availability check response:', checkResponse);
+          // tableReservationsApi.check returns response.data directly, which is { available, unavailable }
+          // Handle both formats: direct { unavailable } or nested { data: { unavailable } }
+          const unavailable = (checkResponse && checkResponse.unavailable) || 
+                             (checkResponse.data && checkResponse.data.unavailable) || 
+                             [];
+          console.log('[Checkout] Unavailable tables:', unavailable);
+          if (unavailable.length > 0) {
             alert('Some of your selected tables are no longer available. Please select different tables.');
             await loadTables();
             return;
           }
         } catch (error) {
           console.error('Failed to check table availability:', error);
+          // Don't block checkout if check fails - just log the error
         }
       }
     }
@@ -787,6 +853,15 @@ export default function EventDetailsPage() {
       razorpay.open();
     } catch (error: any) {
       console.error('Checkout failed:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      if (error.response?.data?.error) {
+        const errorMessage = error.response.data.error;
+        console.error('Error message:', errorMessage);
+        alert(`Checkout failed: ${errorMessage}\n\nPlease check the ticket type sales dates in the backoffice.`);
+      } else {
+        alert(`Checkout failed: ${error.message || 'Unknown error'}`);
+      }
 
       // Release seat reservations on checkout failure
       if (isSeated) {
@@ -1193,8 +1268,18 @@ export default function EventDetailsPage() {
                       </div>
                     )}
 
-                    {/* Table Selection for GA_TABLE Events */}
-                    {isGATable && (selectedTickets[tt.id] || 0) > 0 && (
+                    {/* Table Selection for GA_TABLE Events - Only for TABLE category ticket types */}
+                    {/* Show warning if GA_TABLE event but ticket type doesn't have category set */}
+                    {isGATable && !tt.ticket_type_category && (selectedTickets[tt.id] || 0) > 0 && (
+                      <div className="mt-4 border-t pt-4">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                          <p className="text-sm text-yellow-800">
+                            ⚠️ This ticket type needs to be configured. Please contact the organizer to set up table selection for this ticket type.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {isGATable && tt.ticket_type_category === 'TABLE' && (selectedTickets[tt.id] || 0) > 0 && (
                       <div className="mt-4 border-t pt-4">
                         <div className="flex justify-between items-center mb-2">
                           <button
@@ -1203,101 +1288,56 @@ export default function EventDetailsPage() {
                           >
                             {showTableSelection[tt.id] ? 'Hide Table Selection' : 'Select Table'}
                           </button>
-                          {showTableSelection[tt.id] && (
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => setTableViewMode({ ...tableViewMode, [tt.id]: 'list' })}
-                                className={`px-3 py-1 text-xs rounded-lg border-2 transition-all ${
-                                  (tableViewMode[tt.id] || 'list') === 'list'
-                                    ? 'bg-teal-600 text-white border-teal-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                }`}
-                              >
-                                List View
-                              </button>
-                              <button
-                                onClick={() => setTableViewMode({ ...tableViewMode, [tt.id]: 'map' })}
-                                className={`px-3 py-1 text-xs rounded-lg border-2 transition-all ${
-                                  tableViewMode[tt.id] === 'map'
-                                    ? 'bg-teal-600 text-white border-teal-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                }`}
-                              >
-                                Map View
-                              </button>
-                            </div>
-                          )}
                         </div>
-                        {showTableSelection[tt.id] && (
-                          <div className="mt-2">
-                            <p className="text-sm text-gray-700 mb-2 font-medium">
-                              Select {selectedTickets[tt.id]} table(s) for {selectedTickets[tt.id]} ticket(s). Selected: {(selectedTables[tt.id] || []).length} of {selectedTickets[tt.id]}
-                            </p>
-                            
-                            {/* Map View */}
-                            {(tableViewMode[tt.id] || 'list') === 'map' ? (
-                              <TableFloorPlanView
-                                tables={availableTables}
-                                selectedTableIds={selectedTables[tt.id] || []}
-                                reservedTableIds={reservedTables}
-                                onTableClick={(tableId) => handleTableToggle(tt.id, tableId)}
-                                maxSelections={selectedTickets[tt.id] || 0}
-                                ticketTypeId={tt.id}
-                                floorPlanImageUrl={event.expand?.venue_id?.layout_image ? getPocketBase().files.getUrl(event.expand.venue_id as any, (event.expand.venue_id as any).layout_image) : undefined}
-                              />
-                            ) : (
-                              /* List View */
-                              <div className="max-h-64 overflow-y-auto border rounded p-3">
-                                {availableTables.length === 0 ? (
-                                  <p className="text-sm text-gray-500">Loading tables...</p>
-                                ) : (
-                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                    {availableTables.map((table) => {
-                                      const isSelected = (selectedTables[tt.id] || []).includes(table.id);
-                                      const isReserved = reservedTables.has(table.id) && !isSelected;
-                                      const isUnavailable = !table.available || table.sold || isReserved;
+                        {showTableSelection[tt.id] && (() => {
+                          // Filter tables based on ticket type's table_ids
+                          let filteredTables: any[] = [];
+                          if (!tt.table_ids) {
+                            console.warn(`[TableSelection] Ticket type ${tt.id} has no table_ids`);
+                          } else {
+                            let allowedTableIds: string[] = [];
+                            try {
+                              allowedTableIds = typeof tt.table_ids === 'string' 
+                                ? JSON.parse(tt.table_ids) 
+                                : tt.table_ids;
+                              if (!Array.isArray(allowedTableIds)) {
+                                console.warn(`[TableSelection] Invalid table_ids format for ticket type ${tt.id}`);
+                              } else {
+                                filteredTables = availableTables.filter(table => allowedTableIds.includes(table.id));
+                                console.log(`[TableSelection] Filtered ${filteredTables.length} tables from ${availableTables.length} available for ticket type ${tt.id}`);
+                              }
+                            } catch (error) {
+                              console.error(`[TableSelection] Failed to parse table_ids for ticket type ${tt.id}:`, error);
+                            }
+                          }
 
-                                      return (
-                                        <button
-                                          key={table.id}
-                                          onClick={() => handleTableToggle(tt.id, table.id)}
-                                          disabled={isUnavailable}
-                                          className={`px-3 py-2 text-sm rounded-lg border-2 transition-all ${
-                                            isSelected
-                                              ? 'bg-teal-600 text-white border-teal-700'
-                                              : isReserved
-                                                ? 'bg-yellow-100 text-yellow-800 border-yellow-300 cursor-not-allowed'
-                                                : isUnavailable
-                                                  ? 'bg-red-100 text-gray-400 border-red-300 cursor-not-allowed'
-                                                  : 'bg-white hover:bg-teal-50 border-teal-300 text-gray-700'
-                                          }`}
-                                          title={
-                                            isSelected
-                                              ? `Selected: ${table.name} (Capacity: ${table.capacity})`
-                                              : isReserved
-                                                ? `Reserved by another user: ${table.name} (Capacity: ${table.capacity})`
-                                                : table.sold
-                                                  ? 'Sold'
-                                                  : `${table.name} - Capacity: ${table.capacity} ${table.capacity === 1 ? 'person' : 'people'}${table.section ? ` (${table.section})` : ''}`
-                                          }
-                                        >
-                                          <div className="text-center">
-                                            <div className="font-semibold">🪑 {table.name}</div>
-                                            <div className="text-xs mt-1">👥 {table.capacity} {table.capacity === 1 ? 'person' : 'people'}</div>
-                                            {table.section && (
-                                              <div className="text-xs text-gray-500">{table.section}</div>
-                                            )}
-                                            {isReserved && <span className="text-xs mt-1 block">⏱️ Reserved</span>}
-                                          </div>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                          return (
+                            <div className="mt-2">
+                              <p className="text-sm text-gray-700 mb-2 font-medium">
+                                Select {selectedTickets[tt.id]} table(s) for {selectedTickets[tt.id]} ticket(s). Selected: {(selectedTables[tt.id] || []).length} of {selectedTickets[tt.id]}
+                              </p>
+                              
+                              {filteredTables.length === 0 ? (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                                  <p className="text-sm text-yellow-800">
+                                    ⚠️ No tables available for this ticket type. Please contact the organizer or select a different ticket type.
+                                  </p>
+                                </div>
+                              ) : (
+                                /* Map View Only */
+                                <TableFloorPlanView
+                                  tables={filteredTables}
+                                  selectedTableIds={selectedTables[tt.id] || []}
+                                  reservedTableIds={reservedTables}
+                                  onTableClick={(tableId) => handleTableToggle(tt.id, tableId)}
+                                  maxSelections={selectedTickets[tt.id] || 0}
+                                  ticketTypeId={tt.id}
+                                  floorPlanImageUrl={event.expand?.venue_id?.layout_image ? getPocketBase().files.getUrl(event.expand.venue_id as any, (event.expand.venue_id as any).layout_image) : undefined}
+                                />
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

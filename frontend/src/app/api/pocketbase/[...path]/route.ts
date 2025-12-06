@@ -115,9 +115,34 @@ export async function GET(
           if (expandParam && expandParam !== 'undefined' && expandParam !== 'null') {
             options.expand = expandParam;
           }
+          const fieldsParam = searchParams.get('fields');
+          if (fieldsParam && fieldsParam !== 'undefined' && fieldsParam !== 'null') {
+            options.fields = fieldsParam;
+          }
 
           try {
+            // Log the options being sent to PocketBase for debugging
+            if (collectionName === 'ticket_types' || collectionName === 'tables') {
+              console.log(`[Proxy] getFullList for ${collectionName} with options:`, JSON.stringify(options, null, 2));
+            }
             const result = await pb.collection(collectionName).getFullList(options);
+            // Log the result to see what fields are returned
+            if (collectionName === 'ticket_types' && result.length > 0) {
+              console.log(`[Proxy] getFullList result for ticket_types - first record fields:`, Object.keys(result[0]));
+              console.log(`[Proxy] First record has ticket_type_category:`, result[0].ticket_type_category !== undefined);
+              console.log(`[Proxy] First record has table_ids:`, result[0].table_ids !== undefined);
+            }
+            if (collectionName === 'tables') {
+              console.log(`[Proxy] getFullList result for tables: ${result.length} tables found`);
+              if (result.length > 0) {
+                console.log(`[Proxy] First table:`, {
+                  id: result[0].id,
+                  name: result[0].name,
+                  venue_id: result[0].venue_id,
+                  section: result[0].section,
+                });
+              }
+            }
             return NextResponse.json({ items: result, totalItems: result.length, page: 1, perPage: result.length, totalPages: 1 });
           } catch (error: any) {
             console.error(`[Proxy] getFullList error for ${collectionName}:`, error);

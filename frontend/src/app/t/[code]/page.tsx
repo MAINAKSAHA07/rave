@@ -94,8 +94,37 @@ export default function TicketPage() {
 
           <div>
             <p className="text-sm text-gray-600">Ticket Type</p>
-            <p className="font-semibold">{ticket.expand?.ticket_type_id?.name}</p>
+            <p className="font-semibold">
+              {ticket.expand?.ticket_type_id?.name}
+              {ticket.expand?.ticket_type_id?.ticket_type_category && (
+                <span className="ml-2 text-xs font-normal text-gray-500">
+                  ({ticket.expand.ticket_type_id.ticket_type_category}
+                  {ticket.expand?.table_id && ` - Table ${ticket.expand.table_id.name}`}
+                  )
+                </span>
+              )}
+            </p>
           </div>
+
+          {ticket.expand?.seat_id && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-600 mb-1 font-semibold">💺 Seat Assignment</p>
+              <p className="font-semibold text-blue-900">
+                {ticket.expand.seat_id.section} - Row {ticket.expand.seat_id.row} - {ticket.expand.seat_id.label}
+              </p>
+            </div>
+          )}
+
+          {ticket.expand?.table_id && (
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+              <p className="text-sm text-teal-600 mb-1 font-semibold">🪑 Table Assignment</p>
+              <p className="font-semibold text-teal-900">
+                Table: {ticket.expand.table_id.name}
+                {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}
+                {ticket.expand.table_id.capacity && ` - Capacity: ${ticket.expand.table_id.capacity}`}
+              </p>
+            </div>
+          )}
 
           <div>
             <p className="text-sm text-gray-600">Status</p>

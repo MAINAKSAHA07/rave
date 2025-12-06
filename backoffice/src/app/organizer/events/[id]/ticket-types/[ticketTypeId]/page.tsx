@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,9 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getPocketBaseFileUrl } from '@/lib/utils';
 import Link from 'next/link';
 import Loading from '@/components/Loading';
@@ -51,8 +49,8 @@ export default function EditTicketTypePage() {
   const [tables, setTables] = useState<any[]>([]);
   const [isGATable, setIsGATable] = useState(false);
   const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
-  const [tableViewMode, setTableViewMode] = useState<'list' | 'map'>('list');
   const [venue, setVenue] = useState<any>(null);
+  const [ticketCategory, setTicketCategory] = useState<string>('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,9 +86,38 @@ export default function EditTicketTypePage() {
         setEvent(eventData);
 
         // Check if venue is GA_TABLE
-        const venueData = eventData.expand?.venue_id || eventData.venue_id;
+        let venueData: any = eventData.expand?.venue_id || eventData.venue_id;
+        
+        // If venue is just an ID, fetch it
+        if (typeof venueData === 'string') {
+          try {
+            venueData = await pb.collection('venues').getOne(venueData);
+          } catch (error) {
+            console.error('Failed to fetch venue:', error);
+            venueData = null;
+          }
+        }
+        
+        // Store venue data for later use
+        const loadedVenue = venueData;
+        
+        console.log('[EditTicketType] Venue data:', { 
+          id: venueData?.id, 
+          layout_type: venueData?.layout_type,
+          isObject: typeof venueData === 'object',
+          hasLayoutType: venueData?.layout_type === 'GA_TABLE'
+        });
+        
+        // Check if venue is GA_TABLE
         if (venueData && typeof venueData === 'object' && venueData.layout_type === 'GA_TABLE') {
+          console.log('[EditTicketType] Setting isGATable to true');
           setIsGATable(true);
+          
+          // Ensure collection info for file URLs
+          if (!venueData.collectionName) {
+            venueData.collectionName = 'venues';
+          }
+          
           setVenue(venueData);
           
           // Generate layout image URL if available
@@ -106,40 +133,130 @@ export default function EditTicketTypePage() {
             }
           }
           
-          // Load tables for the venue
+          // Load tables for the venue - use the same logic as tables page
           try {
             const venueId = typeof venueData.id === 'string' ? venueData.id : venueData;
             let tablesData: any[] = [];
             
+            // First try: Direct venue_id match (for string IDs)
             try {
+              console.log('[EditTicketType] Trying venue_id filter:', venueId);
               tablesData = await pb.collection('tables').getFullList({
                 filter: `venue_id="${venueId}"`,
                 sort: 'section,name',
               });
-            } catch {
+              console.log('[EditTicketType] Loaded with venue_id filter:', tablesData.length);
+            } catch (filterError) {
+              console.log('[EditTicketType] Direct filter failed, trying relation filter');
+            }
+            
+            // If no results, try relation filter format (this works based on logs)
+            if (tablesData.length === 0) {
               try {
+                console.log('[EditTicketType] Trying venue_id.id filter:', venueId);
                 tablesData = await pb.collection('tables').getFullList({
                   filter: `venue_id.id="${venueId}"`,
                   sort: 'section,name',
                 });
-              } catch {
-                const allTables = await pb.collection('tables').getFullList();
-                tablesData = allTables.filter((t: any) => {
-                  const tableVenueId = typeof t.venue_id === 'string' ? t.venue_id : (t.venue_id?.id || t.venue_id || '');
-                  return tableVenueId === venueId;
-                });
+                console.log('[EditTicketType] Loaded with venue_id.id filter:', tablesData.length);
+              } catch (relError) {
+                console.log('[EditTicketType] Relation filter also failed');
               }
             }
             
+            // If still no results, get all and filter manually
+            if (tablesData.length === 0) {
+              console.log('[EditTicketType] No results with filters, fetching all and filtering manually...');
+              const allTables = await pb.collection('tables').getFullList({
+                sort: 'section,name',
+              });
+              console.log('[EditTicketType] Total tables in database:', allTables.length);
+              
+              // Filter manually by comparing venue_id values
+              tablesData = allTables.filter((t: any) => {
+                const tableVenueId = typeof t.venue_id === 'string' 
+                  ? t.venue_id 
+                  : (t.venue_id?.id || t.venue_id || '');
+                return tableVenueId === venueId;
+              });
+              console.log('[EditTicketType] Filtered tables manually:', tablesData.length);
+            }
+            
+            console.log('[EditTicketType] Final tables count:', tablesData.length);
             setTables(tablesData);
           } catch (error) {
-            console.error('Failed to load tables:', error);
+            console.error('[EditTicketType] Failed to load tables:', error);
           }
+        } else {
+          console.log('[EditTicketType] Venue is not GA_TABLE. Venue:', venueData?.layout_type, 'Type check:', typeof venueData === 'object');
         }
 
         // Load ticket type
         const ticketTypeData = await pb.collection('ticket_types').getOne(ticketTypeId);
         setTicketType(ticketTypeData);
+
+        // If ticket type has a category or table_ids, it's likely a GA_TABLE venue
+        // This is a fallback in case venue detection failed (check loadedVenue directly, not state)
+        const venueIsGATable = loadedVenue && typeof loadedVenue === 'object' && loadedVenue.layout_type === 'GA_TABLE';
+        if (!venueIsGATable && (ticketTypeData.ticket_type_category || ticketTypeData.table_ids)) {
+          console.log('[EditTicketType] Ticket type has category/table_ids but venue not detected as GA_TABLE. Enabling GA_TABLE mode.');
+          setIsGATable(true);
+          
+          // Try to get venue again
+          if (loadedVenue && typeof loadedVenue === 'object') {
+            if (!loadedVenue.collectionName) {
+              loadedVenue.collectionName = 'venues';
+            }
+            setVenue(loadedVenue);
+            if (loadedVenue.layout_image) {
+              try {
+                const layoutImageFilename = Array.isArray(loadedVenue.layout_image) 
+                  ? loadedVenue.layout_image[0] 
+                  : loadedVenue.layout_image;
+                loadedVenue.layout_image_url = pb.files.getUrl(loadedVenue, layoutImageFilename);
+              } catch (urlError) {
+                loadedVenue.layout_image_url = getPocketBaseFileUrl(loadedVenue, loadedVenue.layout_image);
+              }
+            }
+          }
+          
+          // Load tables if we have a venue - use same logic as above
+          if (loadedVenue && typeof loadedVenue === 'object') {
+            try {
+              const venueId = typeof loadedVenue.id === 'string' ? loadedVenue.id : loadedVenue;
+              let tablesData: any[] = [];
+              
+              // Try venue_id filter first
+              try {
+                tablesData = await pb.collection('tables').getFullList({
+                  filter: `venue_id="${venueId}"`,
+                  sort: 'section,name',
+                });
+              } catch {
+                // Try venue_id.id filter
+                try {
+                  tablesData = await pb.collection('tables').getFullList({
+                    filter: `venue_id.id="${venueId}"`,
+                    sort: 'section,name',
+                  });
+                } catch {
+                  // Fallback: load all and filter manually
+                  const allTables = await pb.collection('tables').getFullList();
+                  tablesData = allTables.filter((t: any) => {
+                    const tableVenueId = typeof t.venue_id === 'string' 
+                      ? t.venue_id 
+                      : (t.venue_id?.id || t.venue_id || '');
+                    return tableVenueId === venueId;
+                  });
+                }
+              }
+              setTables(tablesData);
+              console.log('[EditTicketType] Fallback loaded tables:', tablesData.length);
+            } catch (error) {
+              console.error('[EditTicketType] Failed to load tables in fallback:', error);
+            }
+          }
+        }
 
         // Load selected table IDs if this is a GA_TABLE event
         if (isGATable && ticketTypeData.table_ids) {
@@ -158,7 +275,13 @@ export default function EditTicketTypePage() {
         // Populate form
         form.setValue('name', ticketTypeData.name || '');
         form.setValue('description', ticketTypeData.description || '');
-        form.setValue('ticket_type_category', ticketTypeData.ticket_type_category || '');
+        
+        // Set ticket type category - important for GA_TABLE venues
+        const category = ticketTypeData.ticket_type_category || '';
+        form.setValue('ticket_type_category', category);
+        setTicketCategory(category); // Set local state to avoid infinite loops
+        console.log('[EditTicketType] Ticket type category:', category, 'isGATable:', isGATable, 'venue layout:', loadedVenue?.layout_type);
+        
         form.setValue('base_price_minor', (ticketTypeData.base_price_minor / 100).toFixed(2));
         form.setValue('gst_rate', ticketTypeData.gst_rate?.toString() || '18');
         form.setValue('currency', ticketTypeData.currency || 'INR');
@@ -177,7 +300,7 @@ export default function EditTicketTypePage() {
     }
 
     loadData();
-  }, [eventId, ticketTypeId, router, form]);
+  }, [eventId, ticketTypeId, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Validate ticket type category for GA_TABLE events
@@ -230,15 +353,21 @@ export default function EditTicketTypePage() {
         max_per_user_per_event: values.max_per_user_per_event ? parseInt(values.max_per_user_per_event) : null,
       };
 
-      // Update ticket_type_category if this is a GA_TABLE event
-      if (isGATable && values.ticket_type_category) {
-        updateData.ticket_type_category = values.ticket_type_category;
+      // Update ticket_type_category if this is a GA_TABLE event (required)
+      if (isGATable) {
+        if (values.ticket_type_category) {
+          updateData.ticket_type_category = values.ticket_type_category;
+          console.log('[EditTicketType] Updating ticket_type_category:', values.ticket_type_category);
+        } else {
+          console.warn('[EditTicketType] WARNING: GA_TABLE event but no ticket_type_category selected!');
+        }
       }
 
       // Update table_ids if this is a GA_TABLE event with Table category
       if (isGATable && values.ticket_type_category === 'TABLE') {
         if (selectedTableIds.length > 0) {
           updateData.table_ids = JSON.stringify(selectedTableIds);
+          console.log('[EditTicketType] Updating table_ids:', selectedTableIds);
         } else {
           updateData.table_ids = null;
         }
@@ -247,17 +376,55 @@ export default function EditTicketTypePage() {
         updateData.table_ids = null;
       }
 
-      await pb.collection('ticket_types').update(ticketTypeId, updateData);
-
-      alert('Ticket type updated successfully!');
-      router.push(`/organizer/events/${eventId}`);
+      console.log('[EditTicketType] Final updateData:', JSON.stringify(updateData, null, 2));
+      console.log('[EditTicketType] Updating ticket type ID:', ticketTypeId);
+      
+      try {
+        const updatedRecord = await pb.collection('ticket_types').update(ticketTypeId, updateData);
+        console.log('[EditTicketType] Update successful! Updated record:', updatedRecord);
+        console.log('[EditTicketType] Updated ticket type with category:', updatedRecord.ticket_type_category);
+        console.log('[EditTicketType] Updated ticket type with table_ids:', updatedRecord.table_ids);
+        
+        // Verify the update by fetching the record again
+        const verifyRecord = await pb.collection('ticket_types').getOne(ticketTypeId);
+        console.log('[EditTicketType] Verification - fetched record:', {
+          id: verifyRecord.id,
+          ticket_type_category: verifyRecord.ticket_type_category,
+          table_ids: verifyRecord.table_ids,
+        });
+        
+        alert('Ticket type updated successfully!');
+        router.push(`/organizer/events/${eventId}`);
+      } catch (updateError: any) {
+        console.error('[EditTicketType] Update failed:', updateError);
+        console.error('[EditTicketType] Error details:', {
+          message: updateError.message,
+          status: updateError.status,
+          response: updateError.response,
+          data: updateError.data,
+        });
+        throw updateError; // Re-throw to be caught by outer catch
+      }
     } catch (error: any) {
       console.error('Failed to update ticket type:', error);
-      alert(`Error: ${error.message || 'Failed to update ticket type'}`);
+      console.error('Error stack:', error.stack);
+      alert(`Error: ${error.message || 'Failed to update ticket type'}\n\nCheck console for details.`);
     } finally {
       setSaving(false);
     }
   }
+
+  // Memoize callbacks to prevent infinite re-renders - MUST be before early returns
+  const handleCategoryChange = useCallback((value: string) => {
+    setTicketCategory(value);
+    form.setValue('ticket_type_category', value, { shouldDirty: true });
+    // Clear table selection when switching to GA
+    if (value === 'GA') {
+      setSelectedTableIds([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // form.setValue is stable, no need for form in deps
+
 
   if (loading) {
     return <Loading />;
@@ -267,9 +434,13 @@ export default function EditTicketTypePage() {
     return null;
   }
 
-  // Calculate preview values
-  const basePrice = form.watch('base_price_minor') ? parseFloat(form.watch('base_price_minor')) : 0;
-  const gstRate = form.watch('gst_rate') ? parseFloat(form.watch('gst_rate')) : 0;
+  // Use local state for category to prevent infinite re-renders
+  // Calculate preview values - getValues doesn't cause re-renders
+  const basePriceValue = form.getValues('base_price_minor');
+  const gstRateValue = form.getValues('gst_rate');
+  
+  const basePrice = basePriceValue ? parseFloat(basePriceValue) : 0;
+  const gstRate = gstRateValue ? parseFloat(gstRateValue) : 0;
   const gstAmount = (basePrice * gstRate) / 100;
   const finalPrice = basePrice + gstAmount;
 
@@ -325,37 +496,26 @@ export default function EditTicketTypePage() {
                       Ticket Type Category * <span className="text-red-500">(Required)</span>
                     </Label>
                     <Select
-                      value={form.watch('ticket_type_category') || ''}
-                      onValueChange={(value) => {
-                        form.setValue('ticket_type_category', value);
-                        // Clear table selection when switching to GA
-                        if (value === 'GA') {
-                          setSelectedTableIds([]);
-                        }
-                      }}
+                      key="ticket-type-category-select"
+                      value={ticketCategory || ''}
+                      onValueChange={handleCategoryChange}
                     >
                       <SelectTrigger id="ticket_type_category" className="bg-white">
                         <SelectValue placeholder="Select ticket type category" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="GA">
-                          <div className="flex flex-col">
-                            <span className="font-semibold">General Admission (GA)</span>
-                            <span className="text-xs text-gray-500">No table assignment required</span>
-                          </div>
+                          General Admission (GA) - No table assignment required
                         </SelectItem>
                         <SelectItem value="TABLE">
-                          <div className="flex flex-col">
-                            <span className="font-semibold">Table</span>
-                            <span className="text-xs text-gray-500">Requires table selection during checkout</span>
-                          </div>
+                          Table - Requires table selection during checkout
                         </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-blue-700">
-                      {form.watch('ticket_type_category') === 'GA' 
+                      {ticketCategory === 'GA' 
                         ? '✓ This ticket type is for general admission without table assignment. Customers will not select tables.'
-                        : form.watch('ticket_type_category') === 'TABLE'
+                        : ticketCategory === 'TABLE'
                         ? '✓ This ticket type requires customers to select a table during checkout. You must select available tables below.'
                         : '⚠️ Please select whether this ticket type requires table selection or is general admission.'}
                     </p>
@@ -507,7 +667,7 @@ export default function EditTicketTypePage() {
               </div>
 
               {/* Table Selection for GA_TABLE Events with Table Category */}
-              {isGATable && form.watch('ticket_type_category') === 'TABLE' && (
+              {isGATable && ticketCategory === 'TABLE' && (
                 <div className="bg-teal-50 border-2 border-teal-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
@@ -535,148 +695,84 @@ export default function EditTicketTypePage() {
                   </div>
                   {tables.length > 0 ? (
                     <div>
-                      <Tabs value={tableViewMode} onValueChange={(v) => setTableViewMode(v as 'list' | 'map')} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 mb-4">
-                          <TabsTrigger value="list">📋 List View</TabsTrigger>
-                          <TabsTrigger value="map">🗺️ Map View</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="list" className="space-y-3">
-                          <div className="max-h-64 overflow-y-auto border border-teal-200 rounded p-3 bg-white">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {tables.map((table) => {
-                                const isSelected = selectedTableIds.includes(table.id);
-                                return (
-                                  <div
-                                    key={table.id}
-                                    className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                                      isSelected
-                                        ? 'border-teal-500 bg-teal-50'
-                                        : 'border-gray-200 bg-white hover:border-teal-300'
-                                    }`}
-                                    onClick={() => {
-                                      if (isSelected) {
-                                        setSelectedTableIds(selectedTableIds.filter((id) => id !== table.id));
-                                      } else {
-                                        setSelectedTableIds([...selectedTableIds, table.id]);
-                                      }
-                                    }}
-                                  >
-                                    <div className="flex items-start gap-3">
-                                      <Checkbox
-                                        checked={isSelected}
-                                        onCheckedChange={(checked) => {
-                                          if (checked) {
-                                            setSelectedTableIds([...selectedTableIds, table.id]);
-                                          } else {
-                                            setSelectedTableIds(selectedTableIds.filter((id) => id !== table.id));
-                                          }
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                      />
-                                      <div className="flex-1">
-                                        <div className="font-semibold text-sm">🪑 {table.name}</div>
-                                        <div className="text-xs text-gray-600 mt-1">
-                                          👥 {table.capacity} {table.capacity === 1 ? 'person' : 'people'}
-                                        </div>
-                                        {table.section && (
-                                          <div className="text-xs text-gray-500 mt-1">
-                                            📍 Section: {table.section}
-                                          </div>
-                                        )}
-                                        {table.features && (
-                                          <div className="text-xs text-gray-500 mt-1">
-                                            ✨ {table.features}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </TabsContent>
-                        
-                        <TabsContent value="map" className="space-y-3">
-                          <div className="relative border-2 border-teal-200 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden" style={{ height: '500px', minHeight: '500px' }}>
-                            {/* Floor Plan Background */}
-                            {venue?.layout_image && (
-                              <img
-                                src={venue.layout_image_url || getPocketBaseFileUrl(venue, venue.layout_image)}
-                                alt="Floor Plan"
-                                className="absolute inset-0 w-full h-full object-contain z-0"
-                                style={{ opacity: 0.3 }}
-                              />
-                            )}
-                            
-                            {/* Tables on Map */}
-                            <div className="relative z-10 w-full h-full">
-                              {tables.map((table, index) => {
-                                const isSelected = selectedTableIds.includes(table.id);
-                                // Calculate position - use stored position or generate grid layout
-                                const cols = Math.ceil(Math.sqrt(tables.length));
-                                const row = Math.floor(index / cols);
-                                const col = index % cols;
-                                const x = table.position_x ?? (col * 120) + 50;
-                                const y = table.position_y ?? (row * 100) + 50;
-                                
-                                return (
-                                  <button
-                                    key={table.id}
-                                    type="button"
-                                    onClick={() => {
-                                      if (isSelected) {
-                                        setSelectedTableIds(selectedTableIds.filter((id) => id !== table.id));
-                                      } else {
-                                        setSelectedTableIds([...selectedTableIds, table.id]);
-                                      }
-                                    }}
-                                    className={`absolute px-3 py-2 text-xs font-medium rounded-lg border-2 shadow-md transition-all ${
-                                      isSelected
-                                        ? 'bg-teal-600 text-white border-teal-700 ring-2 ring-teal-400 ring-offset-1 z-20 scale-110'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400 hover:bg-teal-50 z-10'
-                                    }`}
-                                    style={{
-                                      left: `${x}px`,
-                                      top: `${y}px`,
-                                      minWidth: '80px',
-                                    }}
-                                    title={`${table.name} - ${table.section || 'Main'} (Capacity: ${table.capacity})`}
-                                  >
-                                    <div className="flex flex-col items-center">
-                                      <span className="font-bold">🪑 {table.name}</span>
-                                      <span className="text-[10px] mt-0.5">👥 {table.capacity}</span>
-                                      {table.section && (
-                                        <span className="text-[9px] opacity-75">{table.section}</span>
-                                      )}
-                                    </div>
-                                  </button>
-                                );
-                              })}
+                      <div className="space-y-3">
+                        <div className="relative border-2 border-teal-200 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden" style={{ height: '500px', minHeight: '500px' }}>
+                          {/* Floor Plan Background */}
+                          {venue?.layout_image && (
+                            <img
+                              src={venue.layout_image_url || getPocketBaseFileUrl(venue, venue.layout_image)}
+                              alt="Floor Plan"
+                              className="absolute inset-0 w-full h-full object-contain z-0"
+                              style={{ opacity: 0.3 }}
+                            />
+                          )}
+                          
+                          {/* Tables on Map */}
+                          <div className="relative z-10 w-full h-full">
+                            {tables.map((table, index) => {
+                              const isSelected = selectedTableIds.includes(table.id);
+                              // Calculate position - use stored position or generate grid layout
+                              const cols = Math.ceil(Math.sqrt(tables.length));
+                              const row = Math.floor(index / cols);
+                              const col = index % cols;
+                              const x = table.position_x ?? (col * 120) + 50;
+                              const y = table.position_y ?? (row * 100) + 50;
                               
-                              {tables.length === 0 && (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                                  <p>No tables available</p>
-                                </div>
-                              )}
-                            </div>
+                              return (
+                                <button
+                                  key={table.id}
+                                  type="button"
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setSelectedTableIds(selectedTableIds.filter((id) => id !== table.id));
+                                    } else {
+                                      setSelectedTableIds([...selectedTableIds, table.id]);
+                                    }
+                                  }}
+                                  className={`absolute px-3 py-2 text-xs font-medium rounded-lg border-2 shadow-md transition-all ${
+                                    isSelected
+                                      ? 'bg-teal-600 text-white border-teal-700 ring-2 ring-teal-400 ring-offset-1 z-20 scale-110'
+                                      : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400 hover:bg-teal-50 z-10'
+                                  }`}
+                                  style={{
+                                    left: `${x}px`,
+                                    top: `${y}px`,
+                                    minWidth: '80px',
+                                  }}
+                                  title={`${table.name} - ${table.section || 'Main'} (Capacity: ${table.capacity})`}
+                                >
+                                  <div className="flex flex-col items-center">
+                                    <span className="font-bold">🪑 {table.name}</span>
+                                    <span className="text-[10px] mt-0.5">👥 {table.capacity}</span>
+                                    {table.section && (
+                                      <span className="text-[9px] opacity-75">{table.section}</span>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                            
+                            {tables.length === 0 && (
+                              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                                <p>No tables available</p>
+                              </div>
+                            )}
                           </div>
-                          <div className="flex items-center gap-4 text-xs bg-white p-2 rounded border border-teal-200">
-                            <div className="flex items-center gap-1">
-                              <div className="w-4 h-4 bg-white border-2 border-gray-300 rounded"></div>
-                              <span>Available</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <div className="w-4 h-4 bg-teal-600 rounded"></div>
-                              <span>Selected</span>
-                            </div>
-                            <p className="text-teal-700 font-medium ml-auto">
-                              Selected: {selectedTableIds.length} of {tables.length} tables
-                            </p>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs bg-white p-2 rounded border border-teal-200">
+                          <div className="flex items-center gap-1">
+                            <div className="w-4 h-4 bg-white border-2 border-gray-300 rounded"></div>
+                            <span>Available</span>
                           </div>
-                        </TabsContent>
-                      </Tabs>
+                          <div className="flex items-center gap-1">
+                            <div className="w-4 h-4 bg-teal-600 rounded"></div>
+                            <span>Selected</span>
+                          </div>
+                          <p className="text-teal-700 font-medium ml-auto">
+                            Selected: {selectedTableIds.length} of {tables.length} tables
+                          </p>
+                        </div>
+                      </div>
                       
                       {selectedTableIds.length === 0 && (
                         <p className="text-sm text-red-600 mt-3">
@@ -684,7 +780,7 @@ export default function EditTicketTypePage() {
                         </p>
                       )}
                       <p className="text-xs text-teal-600 mt-2">
-                        💡 Tip: Customers can select multiple tables based on ticket quantity. Each ticket requires one table. Use Map View to see table positions on the floor plan.
+                        💡 Tip: Customers can select multiple tables based on ticket quantity. Each ticket requires one table. Click on tables in the map to select them.
                       </p>
                     </div>
                   ) : (

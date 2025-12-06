@@ -92,6 +92,7 @@ export default function TableFloorPlanView({
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     setZoom((prev) => Math.max(0.5, Math.min(2, prev * delta)));
   };
@@ -172,7 +173,7 @@ export default function TableFloorPlanView({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
-        style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+        style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
         {/* Transform container for zoom and pan */}
         <div
