@@ -18,6 +18,7 @@ const formSchema = z.object({
   name: z.string().min(1, 'Event name is required'),
   description: z.string().optional(),
   category: z.enum(['concert', 'comedy', 'nightlife', 'workshop', 'sports', 'theatre', 'festival', 'other']),
+  event_date: z.string().min(1, 'Event date is required'),
   start_date: z.string().min(1, 'Start date is required'),
   end_date: z.string().min(1, 'End date is required'),
   venue_id: z.string().min(1, 'Venue is required'),
@@ -46,6 +47,7 @@ export default function CreateEventPage() {
       name: '',
       description: '',
       category: 'concert',
+      event_date: '',
       start_date: '',
       end_date: '',
       venue_id: '',
@@ -138,6 +140,7 @@ export default function CreateEventPage() {
       formData.append('name', values.name);
       formData.append('description', values.description || '');
       formData.append('category', values.category);
+      formData.append('event_date', new Date(values.event_date).toISOString());
       formData.append('start_date', new Date(values.start_date).toISOString());
       formData.append('end_date', new Date(values.end_date).toISOString());
       formData.append('city', values.city);
@@ -178,7 +181,7 @@ export default function CreateEventPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-gray-50">
+    <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-4xl font-bold">Create New Event</h1>
@@ -351,7 +354,20 @@ export default function CreateEventPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="event_date">Event Date & Time *</Label>
+                  <Input
+                    id="event_date"
+                    type="datetime-local"
+                    {...form.register('event_date')}
+                  />
+                  {form.formState.errors.event_date && (
+                    <p className="text-sm text-red-600">{form.formState.errors.event_date.message}</p>
+                  )}
+                  <p className="text-sm text-gray-500">The date when the event takes place</p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Start Date & Time *</Label>
                   <Input
@@ -362,6 +378,7 @@ export default function CreateEventPage() {
                   {form.formState.errors.start_date && (
                     <p className="text-sm text-red-600">{form.formState.errors.start_date.message}</p>
                   )}
+                  <p className="text-sm text-gray-500">When the event starts</p>
                 </div>
 
                 <div className="space-y-2">
@@ -374,6 +391,7 @@ export default function CreateEventPage() {
                   {form.formState.errors.end_date && (
                     <p className="text-sm text-red-600">{form.formState.errors.end_date.message}</p>
                   )}
+                  <p className="text-sm text-gray-500">When the event ends</p>
                 </div>
               </div>
 

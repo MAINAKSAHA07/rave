@@ -140,7 +140,7 @@ export default function MyTicketsPage() {
                         <div className="flex-1">
                           <h2 className="text-lg font-bold mb-1 text-gray-900">{event?.name}</h2>
                           <p className="text-purple-600 font-medium text-sm">
-                            {event && new Date(event.start_date).toLocaleDateString('en-IN', {
+                            {event && new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
                               weekday: 'long',
                               year: 'numeric',
                               month: 'long',

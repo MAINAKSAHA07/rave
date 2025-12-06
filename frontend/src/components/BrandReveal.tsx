@@ -47,7 +47,7 @@ export default function BrandReveal() {
 
     const animate = (currentTime: number) => {
       if (!ctx) return;
-      
+
       const deltaTime = currentTime - lastTime;
       lastTime = currentTime;
 
@@ -88,7 +88,7 @@ export default function BrandReveal() {
           const prevZ = Math.max(0.1, safeZ + speedMultiplier * 10);
           const prevX = (star.x - canvas.width / 2) * (600 / prevZ) + canvas.width / 2;
           const prevY = (star.y - canvas.height / 2) * (600 / prevZ) + canvas.height / 2;
-          
+
           ctx.strokeStyle = `rgba(255, 255, 255, ${Math.max(0, Math.min(1, 0.3 * (1 - safeZ / 1000)))})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
@@ -216,7 +216,7 @@ export default function BrandReveal() {
       // Slow down starfield gradually
       .to({}, {
         duration: 2.0,
-        onUpdate: function() {
+        onUpdate: function () {
           animationSpeed = gsap.utils.interpolate(10, 0, this.progress());
         },
       }, '-=1.0');
