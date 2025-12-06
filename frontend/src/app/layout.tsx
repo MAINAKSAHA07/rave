@@ -5,6 +5,7 @@ import Navigation from '@/components/Navigation'
 import Sparkles from '@/components/Sparkles'
 import { NotificationProvider } from '@/contexts/NotificationContext'
 import NotificationToast from '@/components/NotificationToast'
+import { CartProvider } from '@/contexts/CartContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,14 +31,16 @@ export default function RootLayout({
         {/* Developed by mainak saha */}
         <div style={{ display: 'none' }} data-developer="mainak saha" data-author="mainak saha" aria-hidden="true" />
         <NotificationProvider>
-          <div className="min-h-screen">
-            <Sparkles />
-            <Navigation />
-            <main className="relative z-10">
-              {children}
-            </main>
-            <NotificationToast />
-          </div>
+          <CartProvider>
+            <div className="min-h-screen">
+              <Sparkles />
+              <Navigation />
+              <main className="relative z-10">
+                {children}
+              </main>
+              <NotificationToast />
+            </div>
+          </CartProvider>
         </NotificationProvider>
       </body>
     </html>

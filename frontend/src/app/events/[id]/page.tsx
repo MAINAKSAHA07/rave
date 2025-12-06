@@ -5,9 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getPocketBase } from '@/lib/pocketbase';
 import { ordersApi, seatsApi, seatReservationsApi, tablesApi, tableReservationsApi } from '@/lib/api';
 import { useNotificationHelpers } from '@/lib/notifications';
-import Script from 'next/script';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useCart } from '@/contexts/CartContext';
 import FloorPlanView from '@/components/FloorPlanView';
 import TableFloorPlanView from '@/components/TableFloorPlanView';
 import Loading from '@/components/Loading';
@@ -82,6 +80,7 @@ export default function EventDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { notifySuccess, notifyError, notifyInfo, notifyWarning } = useNotificationHelpers();
+  const { addToCart } = useCart();
   const eventId = params.id as string;
   const [event, setEvent] = useState<Event | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -96,19 +95,11 @@ export default function EventDetailsPage() {
   const [reservedTables, setReservedTables] = useState<Set<string>>(new Set());
   const [reservationTimer, setReservationTimer] = useState<NodeJS.Timeout | null>(null);
   const [tableReservationTimer, setTableReservationTimer] = useState<NodeJS.Timeout | null>(null);
-  const [checkoutTimer, setCheckoutTimer] = useState<number | null>(null); // Time remaining in seconds
-  const checkoutTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Table selection state
   const [selectedTables, setSelectedTables] = useState<Record<string, string[]>>({}); // ticketTypeId -> tableIds[]
   const [availableTables, setAvailableTables] = useState<any[]>([]);
   const [showTableSelection, setShowTableSelection] = useState<Record<string, boolean>>({});
-  const [attendeeDetails, setAttendeeDetails] = useState({
-    name: '',
-    email: '',
-    phone: '',
-  });
-  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cash'>('razorpay');
   const [loading, setLoading] = useState(true);
   const reservationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -534,11 +525,6 @@ export default function EventDetailsPage() {
       if (tableReservationTimer) {
         clearTimeout(tableReservationTimer);
       }
-      if (checkoutTimerIntervalRef.current) {
-        clearInterval(checkoutTimerIntervalRef.current);
-        checkoutTimerIntervalRef.current = null;
-      }
-
       // Release all reservations when component unmounts
       const allSelectedSeatIds = Object.values(selectedSeats).flat();
       if (allSelectedSeatIds.length > 0) {
@@ -552,366 +538,96 @@ export default function EventDetailsPage() {
     };
   }, [selectedSeats, selectedTables, tableReservationTimer]);
 
-  const handleCheckoutTimerExpiry = useCallback(async () => {
-    const allSelectedTableIds = Object.values(selectedTables).flat();
-    if (allSelectedTableIds.length > 0) {
-      alert('⏱️ Your table reservation has expired (5 minutes). Please select a table again to proceed with checkout.');
-      
-      // Release table reservations
-      try {
-        await tableReservationsApi.release(allSelectedTableIds);
-        setReservedTables((prev) => {
-          const newSet = new Set(prev);
-          allSelectedTableIds.forEach((id) => newSet.delete(id));
-          return newSet;
-        });
-        setSelectedTables({});
-      } catch (error) {
-        console.error('Failed to release table reservations:', error);
-      }
-    }
-  }, [selectedTables]);
-
-  // Start checkout timer when tables are selected and user is ready for checkout
-  useEffect(() => {
-    if (isGATable) {
-      const allSelectedTableIds = Object.values(selectedTables).flat();
-      const hasRequiredDetails = attendeeDetails.name && attendeeDetails.email && attendeeDetails.phone;
-      
-      // Start timer when tables are selected and user has filled in details (ready for checkout)
-      if (allSelectedTableIds.length > 0 && hasRequiredDetails && checkoutTimer === null) {
-        console.log('[CheckoutTimer] Starting 5-minute checkout timer...');
-        // Start 5-minute (300 seconds) checkout timer
-        setCheckoutTimer(300);
-        
-        // Clear any existing interval
-        if (checkoutTimerIntervalRef.current) {
-          clearInterval(checkoutTimerIntervalRef.current);
-          checkoutTimerIntervalRef.current = null;
-        }
-        
-        const interval = setInterval(() => {
-          setCheckoutTimer((prev) => {
-            if (prev === null || prev <= 1) {
-              clearInterval(interval);
-              checkoutTimerIntervalRef.current = null;
-              // Timer expired - release tables
-              handleCheckoutTimerExpiry();
-              return null;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-        
-        checkoutTimerIntervalRef.current = interval;
-        console.log('[CheckoutTimer] Timer started, interval ID:', interval);
-      } else if ((allSelectedTableIds.length === 0 || !hasRequiredDetails) && checkoutTimer !== null) {
-        // No tables selected or details missing - clear timer
-        if (checkoutTimerIntervalRef.current) {
-          clearInterval(checkoutTimerIntervalRef.current);
-          checkoutTimerIntervalRef.current = null;
-        }
-        setCheckoutTimer(null);
-      }
-    }
-    
-    return () => {
-      if (checkoutTimerIntervalRef.current) {
-        clearInterval(checkoutTimerIntervalRef.current);
-        checkoutTimerIntervalRef.current = null;
-      }
-    };
-  }, [selectedTables, isGATable, attendeeDetails.name, attendeeDetails.email, attendeeDetails.phone, handleCheckoutTimerExpiry, checkoutTimer]);
-
-  async function handleCheckout() {
-    const pb = getPocketBase();
-    const user = pb.authStore.model;
-
-    if (!user) {
-      if (confirm('You need to login to purchase tickets. Redirect to login page?')) {
-        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
-      }
+  async function handleAddToCart(ticketTypeId: string) {
+    const quantity = selectedTickets[ticketTypeId] || 0;
+    if (quantity === 0) {
+      notifyError('Please select at least one ticket');
       return;
     }
 
-    // Clear checkout timer when checkout starts
-    if (checkoutTimerIntervalRef.current) {
-      clearInterval(checkoutTimerIntervalRef.current);
-      checkoutTimerIntervalRef.current = null;
+    const ticketType = ticketTypes.find(tt => tt.id === ticketTypeId);
+    if (!ticketType) {
+      notifyError('Ticket type not found');
+      return;
     }
-    setCheckoutTimer(null);
 
     // Validate seat selection for seated events
     if (isSeated) {
-      for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
-        if (quantity > 0) {
-          const selectedSeatIds = selectedSeats[ticketTypeId] || [];
-          if (selectedSeatIds.length !== quantity) {
-            alert(`Please select exactly ${quantity} seat(s) for ${ticketTypes.find(tt => tt.id === ticketTypeId)?.name || 'this ticket type'}`);
-            return;
-          }
-        }
-      }
-
-      // Ensure all selected seats are still reserved
-      const allSelectedSeatIds = Object.values(selectedSeats).flat();
-      if (allSelectedSeatIds.length > 0) {
-        try {
-          const checkResponse = await seatReservationsApi.check(allSelectedSeatIds, eventId, user.id);
-          const unavailableSeats: string[] = [];
-          for (const [seatId, isReserved] of Object.entries((checkResponse.data as any)?.status || {})) {
-            if (!isReserved && !reservedSeats.has(seatId)) {
-              unavailableSeats.push(seatId);
-            }
-          }
-          if (unavailableSeats.length > 0) {
-            alert('Some of your selected seats are no longer available. Please select different seats.');
-            await loadSeats();
-            return;
-          }
-        } catch (error) {
-          console.error('Failed to check seat availability:', error);
-        }
-      }
-    }
-
-    // Validate table selection for GA_TABLE events - only for TABLE category ticket types
-    if (isGATable) {
-      for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
-        if (quantity > 0) {
-          const ticketType = ticketTypes.find(tt => tt.id === ticketTypeId);
-          // Only require table selection for TABLE category ticket types
-          if (ticketType?.ticket_type_category === 'TABLE') {
-            const selectedTableIds = selectedTables[ticketTypeId] || [];
-            if (selectedTableIds.length === 0) {
-              alert(`Please select at least one table for ${ticketType.name || 'this ticket type'}`);
-              return;
-            }
-            if (selectedTableIds.length !== quantity) {
-              alert(`Please select exactly ${quantity} table(s) for ${ticketType.name || 'this ticket type'}. Currently selected: ${selectedTableIds.length}`);
-              return;
-            }
-          }
-        }
-      }
-
-      // Ensure all selected tables are still available
-      const allSelectedTableIds = Object.values(selectedTables).flat();
-      if (allSelectedTableIds.length > 0) {
-        try {
-          const checkResponse = await tableReservationsApi.check(allSelectedTableIds, eventId, user.id);
-          console.log('[Checkout] Table availability check response:', checkResponse);
-          // tableReservationsApi.check returns response.data directly, which is { available, unavailable }
-          // Handle both formats: direct { unavailable } or nested { data: { unavailable } }
-          const unavailable = (checkResponse && checkResponse.unavailable) || 
-                             (checkResponse.data && checkResponse.data.unavailable) || 
-                             [];
-          console.log('[Checkout] Unavailable tables:', unavailable);
-          if (unavailable.length > 0) {
-            alert('Some of your selected tables are no longer available. Please select different tables.');
-            await loadTables();
-            return;
-          }
-        } catch (error) {
-          console.error('Failed to check table availability:', error);
-          // Don't block checkout if check fails - just log the error
-        }
-      }
-    }
-
-    const ticketItems = Object.entries(selectedTickets)
-      .filter(([_, qty]) => qty > 0)
-      .map(([ticketTypeId, quantity]) => ({
-        ticketTypeId,
-        quantity,
-        seatIds: isSeated ? (selectedSeats[ticketTypeId] || []) : undefined,
-        tableIds: isGATable ? (selectedTables[ticketTypeId] || []) : undefined,
-      }));
-
-    if (ticketItems.length === 0) {
-      alert('Please select at least one ticket');
-      return;
-    }
-
-    try {
-      const response = await ordersApi.create({
-        userId: user.id,
-        eventId,
-        ticketItems,
-        paymentMethod,
-        attendeeName: attendeeDetails.name || undefined,
-        attendeeEmail: attendeeDetails.email || undefined,
-        attendeePhone: attendeeDetails.phone || undefined,
-      });
-
-      const { razorpayOrder, order } = response.data;
-
-      // Release seat reservations on successful order creation (they'll be confirmed when payment completes)
-      if (isSeated) {
-        const allSelectedSeatIds = Object.values(selectedSeats).flat();
-        if (allSelectedSeatIds.length > 0) {
-          // Don't release yet - wait for payment confirmation
-          // Reservations will be released when order is confirmed
-        }
-      }
-
-      // Handle cash payments
-      if (paymentMethod === 'cash') {
-        notifySuccess(
-          'Order Created Successfully!',
-          `Order #${order.order_number} created. Please pay cash at the venue.`
-        );
-        setTimeout(() => {
-          window.location.href = '/my-tickets';
-        }, 2000);
+      const selectedSeatIds = selectedSeats[ticketTypeId] || [];
+      if (selectedSeatIds.length !== quantity) {
+        notifyError(`Please select exactly ${quantity} seat(s) for this ticket type`);
         return;
       }
-
-      // Handle Razorpay payments
-      if (!razorpayOrder) {
-        throw new Error('Razorpay order not created');
-      }
-
-      // Initialize Razorpay Checkout
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-        name: 'Powerglide Ticketing',
-        description: event?.name,
-        order_id: razorpayOrder.id,
-        handler: async function (response: any) {
-          try {
-            // Confirm payment on backend
-            await ordersApi.confirmRazorpay(
-              order.id,
-              response.razorpay_order_id,
-              response.razorpay_payment_id,
-              response.razorpay_signature
-            );
-
-            // Release seat reservations (they're now confirmed as tickets)
-            if (isSeated) {
-              const allSelectedSeatIds = Object.values(selectedSeats).flat();
-              if (allSelectedSeatIds.length > 0) {
-                try {
-                  await seatReservationsApi.release(allSelectedSeatIds);
-                } catch (error) {
-                  console.error('Failed to release seat reservations:', error);
-                }
-              }
-            }
-
-            // Release table reservations (they're now confirmed as tickets)
-            if (isGATable) {
-              const allSelectedTableIds = Object.values(selectedTables).flat();
-              if (allSelectedTableIds.length > 0) {
-                try {
-                  await tableReservationsApi.release(allSelectedTableIds);
-                } catch (error) {
-                  console.error('Failed to release table reservations:', error);
-                }
-              }
-            }
-
-            // Clear checkout timer
-            if (checkoutTimerIntervalRef.current) {
-              clearInterval(checkoutTimerIntervalRef.current);
-              checkoutTimerIntervalRef.current = null;
-            }
-            setCheckoutTimer(null);
-
-            notifySuccess(
-              'Payment Successful!',
-              'Your tickets have been issued. Check your email for tickets with QR codes.'
-            );
-            setTimeout(() => {
-              window.location.href = '/my-tickets';
-            }, 2000);
-          } catch (error: any) {
-            console.error('Failed to confirm payment:', error);
-            notifyWarning(
-              'Payment Received',
-              'Payment successful but confirmation pending. Your tickets will be issued shortly via webhook. Check your email.'
-            );
-            setTimeout(() => {
-              window.location.href = '/my-tickets';
-            }, 2000);
-          }
-        },
-        prefill: {
-          name: user.name,
-          email: user.email,
-          contact: user.phone,
-        },
-        theme: {
-          color: '#3399cc',
-        },
-      };
-
-      const razorpay = new (window as any).Razorpay(options);
-      razorpay.open();
-    } catch (error: any) {
-      console.error('Checkout failed:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      if (error.response?.data?.error) {
-        const errorMessage = error.response.data.error;
-        console.error('Error message:', errorMessage);
-        alert(`Checkout failed: ${errorMessage}\n\nPlease check the ticket type sales dates in the backoffice.`);
-      } else {
-        alert(`Checkout failed: ${error.message || 'Unknown error'}`);
-      }
-
-      // Release seat reservations on checkout failure
-      if (isSeated) {
-        const allSelectedSeatIds = Object.values(selectedSeats).flat();
-        if (allSelectedSeatIds.length > 0) {
-          try {
-            await seatReservationsApi.release(allSelectedSeatIds);
-            setReservedSeats((prev) => {
-              const newSet = new Set(prev);
-              allSelectedSeatIds.forEach((id) => newSet.delete(id));
-              return newSet;
-            });
-            setSelectedSeats({});
-          } catch (releaseError) {
-            console.error('Failed to release seat reservations:', releaseError);
-          }
-        }
-      }
-
-      // Release table reservations on checkout failure
-      if (isGATable) {
-        const allSelectedTableIds = Object.values(selectedTables).flat();
-        if (allSelectedTableIds.length > 0) {
-          try {
-            await tableReservationsApi.release(allSelectedTableIds);
-            setReservedTables((prev) => {
-              const newSet = new Set(prev);
-              allSelectedTableIds.forEach((id) => newSet.delete(id));
-              return newSet;
-            });
-            setSelectedTables({});
-          } catch (releaseError) {
-            console.error('Failed to release table reservations:', releaseError);
-          }
-        }
-      }
-
-      // Clear checkout timer
-      if (checkoutTimerIntervalRef.current) {
-        clearInterval(checkoutTimerIntervalRef.current);
-        checkoutTimerIntervalRef.current = null;
-      }
-      setCheckoutTimer(null);
-
-      notifyError(
-        'Checkout Failed',
-        error.response?.data?.error || error.message || 'Unable to process checkout. Please try again.'
-      );
     }
+
+    // Validate table selection for TABLE category tickets
+    if (isGATable && ticketType.ticket_type_category === 'TABLE') {
+      const selectedTableIds = selectedTables[ticketTypeId] || [];
+      if (selectedTableIds.length === 0) {
+        notifyError(`Please select at least one table for ${ticketType.name}`);
+        return;
+      }
+      if (selectedTableIds.length !== quantity) {
+        notifyError(`Please select exactly ${quantity} table(s) for ${ticketType.name}. Currently selected: ${selectedTableIds.length}`);
+        return;
+      }
+    }
+
+    // Add to cart
+    addToCart({
+      eventId: eventId,
+      eventName: event.name,
+      ticketTypeId: ticketTypeId,
+      ticketTypeName: ticketType.name,
+      quantity: quantity,
+      price: ticketType.final_price_minor,
+      currency: ticketType.currency,
+      ticketTypeCategory: ticketType.ticket_type_category,
+      selectedSeats: isSeated ? (selectedSeats[ticketTypeId] || []) : undefined,
+      selectedTables: isGATable ? (selectedTables[ticketTypeId] || []) : undefined,
+    });
+
+    notifySuccess(`${quantity} ${ticketType.name} ticket(s) added to cart`);
+    
+    // Clear selections for this ticket type
+    setSelectedTickets({ ...selectedTickets, [ticketTypeId]: 0 });
+    if (isSeated) {
+      const seatIds = selectedSeats[ticketTypeId] || [];
+      if (seatIds.length > 0) {
+        try {
+          await seatReservationsApi.release(seatIds);
+          setReservedSeats((prev) => {
+            const newSet = new Set(prev);
+            seatIds.forEach((id) => newSet.delete(id));
+            return newSet;
+          });
+        } catch (error) {
+          console.error('Failed to release seat reservations:', error);
+        }
+      }
+      setSelectedSeats({ ...selectedSeats, [ticketTypeId]: [] });
+    }
+    if (isGATable) {
+      const tableIds = selectedTables[ticketTypeId] || [];
+      if (tableIds.length > 0) {
+        try {
+          await tableReservationsApi.release(tableIds);
+          setReservedTables((prev) => {
+            const newSet = new Set(prev);
+            tableIds.forEach((id) => newSet.delete(id));
+            return newSet;
+          });
+        } catch (error) {
+          console.error('Failed to release table reservations:', error);
+        }
+      }
+      setSelectedTables({ ...selectedTables, [ticketTypeId]: [] });
+    }
+
+    // Navigate to cart
+    router.push('/cart');
   }
+
 
   if (loading) {
     return <Loading />;
@@ -921,19 +637,8 @@ export default function EventDetailsPage() {
     return <div className="p-8">Event not found</div>;
   }
 
-  // Calculate totals
-  const totalAmount = ticketTypes.reduce((sum, tt) => {
-    const qty = selectedTickets[tt.id] || 0;
-    return sum + tt.final_price_minor * qty;
-  }, 0);
-  
-  // Calculate base amount (without GST) - assuming 18% GST
-  const baseAmount = totalAmount / 1.18;
-  const gstAmount = totalAmount - baseAmount;
-
   return (
     <>
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
       <div className="min-h-screen pb-20 bg-gray-50">
         <div className="max-w-[428px] mx-auto bg-white min-h-screen">
@@ -1340,147 +1045,23 @@ export default function EventDetailsPage() {
                         })()}
                       </div>
                     )}
+
+                    {/* Add to Cart Button */}
+                    {(selectedTickets[tt.id] || 0) > 0 && (
+                      <div className="mt-4 border-t pt-4">
+                        <button
+                          onClick={() => handleAddToCart(tt.id)}
+                          className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold text-base hover:bg-teal-700 transition-all shadow-lg"
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
-
-          {/* Attendee Details Form */}
-          {totalAmount > 0 && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-4 text-gray-900">Attendee Details</h2>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <Label htmlFor="attendeeName" className="text-gray-700 mb-2 block">Name *</Label>
-                  <Input
-                    id="attendeeName"
-                    value={attendeeDetails.name}
-                    onChange={(e) => setAttendeeDetails({ ...attendeeDetails, name: e.target.value })}
-                    placeholder="Full name"
-                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="attendeeEmail" className="text-gray-700 mb-2 block">Email *</Label>
-                  <Input
-                    id="attendeeEmail"
-                    type="email"
-                    value={attendeeDetails.email}
-                    onChange={(e) => setAttendeeDetails({ ...attendeeDetails, email: e.target.value })}
-                    placeholder="email@example.com"
-                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="attendeePhone" className="text-gray-700 mb-2 block">Phone *</Label>
-                  <Input
-                    id="attendeePhone"
-                    type="tel"
-                    value={attendeeDetails.phone}
-                    onChange={(e) => setAttendeeDetails({ ...attendeeDetails, phone: e.target.value })}
-                    placeholder="+91 1234567890"
-                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {totalAmount > 0 && (
-            <div className="sticky bottom-20 bg-white border-t-2 border-gray-200 p-4 rounded-t-2xl shadow-2xl">
-              <div className="mb-4 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Subtotal</span>
-                  <span className="text-base font-semibold text-gray-700">₹{(baseAmount / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">GST (18%)</span>
-                  <span className="text-base font-semibold text-gray-700">₹{(gstAmount / 100).toFixed(2)}</span>
-                </div>
-                <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
-                  <span className="text-base font-semibold text-gray-700">Total Amount</span>
-                  <span className="text-2xl font-bold text-teal-600">₹{(totalAmount / 100).toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Payment Method Selection */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2 text-gray-700">Payment Method</label>
-                <div className="flex flex-col gap-2">
-                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'razorpay' ? 'bg-teal-50 border-teal-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="razorpay"
-                      checked={paymentMethod === 'razorpay'}
-                      onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                      className="w-4 h-4 accent-teal-600"
-                    />
-                    <span className="text-gray-700">Razorpay (Online)</span>
-                  </label>
-                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'cash' ? 'bg-teal-50 border-teal-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="cash"
-                      checked={paymentMethod === 'cash'}
-                      onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                      className="w-4 h-4 accent-teal-600"
-                    />
-                    <span className="text-gray-700">Cash (At Venue)</span>
-                  </label>
-                </div>
-              </div>
-
-              {(!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone) && (
-                <p className="text-sm text-red-600 mb-3 flex items-center gap-2">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                  Please fill in all attendee details above
-                </p>
-              )}
-
-              {/* Checkout Timer for GA_TABLE events */}
-              {isGATable && checkoutTimer !== null && checkoutTimer > 0 && (
-                <div className={`mb-3 p-3 rounded-lg border-2 ${
-                  checkoutTimer <= 60 
-                    ? 'bg-red-50 border-red-300' 
-                    : checkoutTimer <= 120 
-                      ? 'bg-yellow-50 border-yellow-300' 
-                      : 'bg-blue-50 border-blue-300'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">⏱️</span>
-                      <span className={`font-semibold ${
-                        checkoutTimer <= 60 
-                          ? 'text-red-700' 
-                          : checkoutTimer <= 120 
-                            ? 'text-yellow-700' 
-                            : 'text-blue-700'
-                      }`}>
-                        Complete checkout in: {Math.floor(checkoutTimer / 60)}:{(checkoutTimer % 60).toString().padStart(2, '0')}
-                      </span>
-                    </div>
-                    {checkoutTimer <= 60 && (
-                      <span className="text-xs text-red-600 font-medium">⚠️ Hurry!</span>
-                    )}
-                  </div>
-                  <p className="text-xs mt-1 text-gray-600">
-                    Your table reservation will expire if checkout is not completed in time.
-                  </p>
-                </div>
-              )}
-
-              <button
-                onClick={handleCheckout}
-                disabled={!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone || (isGATable && checkoutTimer === 0)}
-                className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold text-base hover:bg-teal-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all shadow-lg"
-              >
-                {paymentMethod === 'cash' ? 'Create Order (Pay at Venue)' : 'Proceed to Checkout'}
-              </button>
-            </div>
-          )}
           </div>
         </div>
       </div>
