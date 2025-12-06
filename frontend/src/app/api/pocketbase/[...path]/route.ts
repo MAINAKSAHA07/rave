@@ -134,24 +134,34 @@ export async function GET(
       } else if (pathParts.length === 5 && pathParts[3] === 'records') {
         // Get single record: api/collections/{collection}/records/{id}
         const recordId = pathParts[4];
-        const expand = searchParams.get('expand') || undefined;
+        const expandParam = searchParams.get('expand');
 
         const options: any = {};
-        if (expand) {
-          options.expand = expand;
+        if (expandParam && expandParam !== 'undefined' && expandParam !== 'null') {
+          // Expand can be comma-separated string or array
+          options.expand = expandParam;
         }
         
         try {
+          console.log(`[Proxy] Fetching ${collectionName}/${recordId}`, { expand: options.expand });
           const result = await pb.collection(collectionName).getOne(recordId, options);
+          console.log(`[Proxy] Successfully fetched ${collectionName}/${recordId}`);
           return NextResponse.json(result);
         } catch (error: any) {
           // If record not found, return proper 404
-          if (error.status === 404) {
+          if (error.status === 404 || error.response?.status === 404) {
+            console.error(`[Proxy] 404 - ${collectionName}/${recordId} not found`);
             return NextResponse.json(
               { code: 404, message: "The requested resource wasn't found.", data: {} },
               { status: 404 }
             );
           }
+          // Log other errors for debugging
+          console.error(`[Proxy] Error fetching ${collectionName}/${recordId}:`, {
+            message: error.message,
+            status: error.status || error.response?.status,
+            data: error.response?.data,
+          });
           // Re-throw other errors to be handled by outer catch
           throw error;
         }

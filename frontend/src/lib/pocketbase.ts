@@ -119,10 +119,15 @@ class ProxyPocketBase {
         const params = new URLSearchParams({
           page: page.toString(),
           perPage: perPage.toString(),
-          ...(options.filter && { filter: options.filter }),
-          ...(options.sort && { sort: options.sort }),
-          ...(options.expand && { expand: options.expand }),
         });
+        if (options.filter) params.set('filter', options.filter);
+        if (options.sort) params.set('sort', options.sort);
+        if (options.expand) {
+          const expandValue = Array.isArray(options.expand) 
+            ? options.expand.join(',') 
+            : options.expand;
+          if (expandValue) params.set('expand', expandValue);
+        }
 
         const makeRequest = async (token: string | null) => {
           return fetch(`/api/pocketbase/api/collections/${name}?${params}`, {
@@ -149,10 +154,15 @@ class ProxyPocketBase {
         // Get all items by making multiple requests if needed
         const params = new URLSearchParams({
           perPage: '500',
-          ...(options.filter && { filter: options.filter }),
-          ...(options.sort && { sort: options.sort }),
-          ...(options.expand && { expand: options.expand }),
         });
+        if (options.filter) params.set('filter', options.filter);
+        if (options.sort) params.set('sort', options.sort);
+        if (options.expand) {
+          const expandValue = Array.isArray(options.expand) 
+            ? options.expand.join(',') 
+            : options.expand;
+          if (expandValue) params.set('expand', expandValue);
+        }
 
         const makeRequest = async (token: string | null) => {
           return fetch(`/api/pocketbase/api/collections/${name}?${params}`, {
@@ -182,12 +192,20 @@ class ProxyPocketBase {
         return data.items || [];
       },
       getOne: async (id: string | number, options: any = {}) => {
-        const params = new URLSearchParams(
-          options.expand ? { expand: options.expand } : {}
-        );
+        const params = new URLSearchParams();
+        // Handle expand parameter - can be string or array
+        if (options.expand) {
+          const expandValue = Array.isArray(options.expand) 
+            ? options.expand.join(',') 
+            : options.expand;
+          if (expandValue) {
+            params.set('expand', expandValue);
+          }
+        }
 
         const makeRequest = async (token: string | null) => {
-          return fetch(`/api/pocketbase/api/collections/${name}/records/${String(id)}?${params}`, {
+          const url = `/api/pocketbase/api/collections/${name}/records/${String(id)}${params.toString() ? `?${params.toString()}` : ''}`;
+          return fetch(url, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
         };

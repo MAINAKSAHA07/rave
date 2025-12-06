@@ -53,8 +53,8 @@ async function fixAccessRules() {
             },
             {
                 name: 'organizers',
-                listRule: `${adminAccess} || @request.auth.id != ""`,
-                viewRule: `${adminAccess} || @request.auth.id != ""`,
+                listRule: "", // Public - needed for published events
+                viewRule: "", // Public - needed for published events
                 createRule: `${adminAccess} || @request.auth.id != ""`,
                 updateRule: `${adminAccess} || @collection.organizer_staff.user_id ?= @request.auth.id`,
                 deleteRule: adminAccess,
@@ -77,8 +77,8 @@ async function fixAccessRules() {
             },
             {
                 name: 'venues',
-                listRule: `${adminAccess} || @request.auth.id != ""`,
-                viewRule: `${adminAccess} || @request.auth.id != ""`,
+                listRule: "", // Public - needed for published events
+                viewRule: "", // Public - needed for published events
                 createRule: `${adminAccess} || @request.auth.id != ""`,
                 updateRule: `${adminAccess} || @request.auth.id != ""`, // Simplified - admins have full access
                 deleteRule: adminAccess,
@@ -93,8 +93,8 @@ async function fixAccessRules() {
             },
             {
                 name: 'ticket_types',
-                listRule: `${adminAccess} || @request.auth.id != ""`,
-                viewRule: `${adminAccess} || @request.auth.id != ""`,
+                listRule: "", // Public - needed for published events
+                viewRule: "", // Public - needed for published events
                 createRule: `${adminAccess} || @request.auth.id != ""`,
                 updateRule: `${adminAccess} || @request.auth.id != ""`, // Simplified - admins have full access
                 deleteRule: adminAccess,
@@ -147,6 +147,22 @@ async function fixAccessRules() {
                 updateRule: `${adminAccess} || @request.auth.id != ""`, // Simplified - admins have full access
                 deleteRule: adminAccess,
             },
+            {
+                name: 'seats',
+                listRule: `${adminAccess} || @request.auth.id != ""`,
+                viewRule: `${adminAccess} || @request.auth.id != ""`,
+                createRule: `${adminAccess} || @request.auth.id != ""`,
+                updateRule: `${adminAccess} || @request.auth.id != ""`,
+                deleteRule: adminAccess,
+            },
+            {
+                name: 'tables',
+                listRule: `${adminAccess} || @request.auth.id != ""`,
+                viewRule: `${adminAccess} || @request.auth.id != ""`,
+                createRule: `${adminAccess} || @request.auth.id != ""`,
+                updateRule: `${adminAccess} || @request.auth.id != ""`,
+                deleteRule: adminAccess,
+            },
         ];
 
         console.log('📝 Updating access rules for all collections...\n');
@@ -184,7 +200,8 @@ async function fixAccessRules() {
         console.log('\n📋 Summary:');
         console.log('   - super_admin and admin roles now have full access to all collections');
         console.log('   - Regular users have access based on ownership/relations');
-        console.log('   - Public access is limited to published events and signup');
+        console.log('   - Public access: venues, organizers, and ticket_types are publicly readable');
+        console.log('   - Published events are publicly readable');
 
     } catch (error) {
         console.error('\n❌ Failed to update access rules:', error.message);

@@ -37,12 +37,14 @@ interface Event {
       address?: string;
       city?: string;
       layout_image?: string;
+      [key: string]: any; // Allow additional properties
     };
     organizer_id?: {
       id: string;
       name: string;
       email?: string;
       phone?: string;
+      [key: string]: any; // Allow additional properties
     };
   };
 }
@@ -84,7 +86,7 @@ export default function EventDetailsPage() {
   const [seatViewMode, setSeatViewMode] = useState<Record<string, 'list' | 'map'>>({}); // 'list' or 'map'
   const [reservedSeats, setReservedSeats] = useState<Set<string>>(new Set());
   const [reservationTimer, setReservationTimer] = useState<NodeJS.Timeout | null>(null);
-
+  
   // Table selection state
   const [selectedTables, setSelectedTables] = useState<Record<string, string[]>>({}); // ticketTypeId -> tableIds[]
   const [availableTables, setAvailableTables] = useState<any[]>([]);
@@ -106,12 +108,19 @@ export default function EventDetailsPage() {
   async function loadEvent() {
     try {
       const pb = getPocketBase();
+      console.log('[Event] Loading event:', eventId);
       const eventData = await pb.collection('events').getOne(eventId, {
         expand: 'venue_id,organizer_id',
       });
       setEvent(eventData as any);
-      console.log('Event expanded venue:', eventData.expand?.venue_id);
-      console.log('Event expanded organizer:', eventData.expand?.organizer_id);
+      console.log('[Event] Event loaded:', {
+        id: eventData.id,
+        name: eventData.name,
+        venue_id: eventData.venue_id,
+        organizer_id: eventData.organizer_id,
+        expanded_venue: eventData.expand?.venue_id ? 'present' : 'missing',
+        expanded_organizer: eventData.expand?.organizer_id ? 'present' : 'missing',
+      });
 
       try {
         const ticketTypesData = await pb.collection('ticket_types').getFullList({
@@ -125,34 +134,34 @@ export default function EventDetailsPage() {
       }
 
       // Check if venue is SEATED and load available seats
-      // Check if venue is SEATED and load available seats
       let venue = eventData.expand?.venue_id;
       if (!venue && eventData.venue_id) {
+        console.log('[Event] Venue not expanded, fetching manually:', eventData.venue_id);
         try {
           venue = await pb.collection('venues').getOne(eventData.venue_id);
-          // If we successfully fetched the venue manually, update the eventData expansion
-          // so the UI can display it
-          if (venue) {
-            if (!eventData.expand) {
-              eventData.expand = {};
-            }
-            eventData.expand.venue_id = venue;
-          }
+          console.log('[Event] Venue fetched successfully:', venue?.name);
         } catch (venueError: any) {
-          if (venueError.status === 404) {
-            console.info('Venue record not found (possibly deleted). Displaying event without venue details.');
-          } else {
-            console.warn('Failed to load venue:', venueError);
-          }
+          console.error('[Event] Failed to load venue:', {
+            venue_id: eventData.venue_id,
+            error: venueError.message,
+            status: venueError.status || venueError.response?.status,
+          });
           // Venue might not exist or user might not have access - continue without venue data
+          venue = null;
         }
+      } else if (venue) {
+        console.log('[Event] Venue from expansion:', venue.name);
       }
-      if (venue && venue.layout_type === 'SEATED') {
-        setIsSeated(true);
-        await loadSeats();
-      } else if (venue && venue.layout_type === 'GA_TABLE') {
-        setIsGATable(true);
-        await loadTables();
+      
+      // Only proceed with seat/table loading if we have venue data
+      if (venue) {
+        if (venue.layout_type === 'SEATED') {
+          setIsSeated(true);
+          await loadSeats();
+        } else if (venue.layout_type === 'GA_TABLE') {
+          setIsGATable(true);
+          await loadTables();
+        }
       }
 
       // Load user details for attendee form
@@ -184,7 +193,7 @@ export default function EventDetailsPage() {
         });
       }
     }
-
+    
     // For GA_TABLE events, clear table selection if quantity is reduced to 0
     if (isGATable && selectedTables[ticketTypeId] && quantity === 0) {
       setSelectedTables({
@@ -755,19 +764,21 @@ export default function EventDetailsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'list' })}
-                                className={`px-3 py-1 text-xs rounded border ${(seatViewMode[tt.id] || 'list') === 'list'
-                                  ? 'bg-blue-600 text-white border-blue-600'
-                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                  }`}
+                                className={`px-3 py-1 text-xs rounded border ${
+                                  (seatViewMode[tt.id] || 'list') === 'list'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
                               >
                                 List View
                               </button>
                               <button
                                 onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'map' })}
-                                className={`px-3 py-1 text-xs rounded border ${seatViewMode[tt.id] === 'map'
-                                  ? 'bg-blue-600 text-white border-blue-600'
-                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                  }`}
+                                className={`px-3 py-1 text-xs rounded border ${
+                                  seatViewMode[tt.id] === 'map'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
                               >
                                 Map View
                               </button>
@@ -779,7 +790,7 @@ export default function EventDetailsPage() {
                             <p className="text-sm text-gray-600 mb-2">
                               Select {selectedTickets[tt.id]} seat(s). Selected: {(selectedSeats[tt.id] || []).length}
                             </p>
-
+                            
                             {/* Map View */}
                             {(seatViewMode[tt.id] || 'list') === 'map' ? (
                               <FloorPlanView
@@ -789,7 +800,7 @@ export default function EventDetailsPage() {
                                 onSeatClick={(seatId) => handleSeatToggle(tt.id, seatId)}
                                 maxSelections={selectedTickets[tt.id] || 0}
                                 ticketTypeId={tt.id}
-                                floorPlanImageUrl={event.expand?.venue_id?.layout_image ? getPocketBase().files.getUrl(event.expand.venue_id, event.expand.venue_id.layout_image) : undefined}
+                                floorPlanImageUrl={event.expand?.venue_id?.layout_image ? getPocketBase().files.getUrl(event.expand.venue_id as any, (event.expand.venue_id as any).layout_image) : undefined}
                               />
                             ) : (
                               /* List View */
@@ -854,19 +865,21 @@ export default function EventDetailsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setTableViewMode({ ...tableViewMode, [tt.id]: 'list' })}
-                                className={`px-3 py-1 text-xs rounded border ${(tableViewMode[tt.id] || 'list') === 'list'
-                                  ? 'bg-purple-600 text-white border-purple-600'
-                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                  }`}
+                                className={`px-3 py-1 text-xs rounded border ${
+                                  (tableViewMode[tt.id] || 'list') === 'list'
+                                    ? 'bg-purple-600 text-white border-purple-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
                               >
                                 List View
                               </button>
                               <button
                                 onClick={() => setTableViewMode({ ...tableViewMode, [tt.id]: 'map' })}
-                                className={`px-3 py-1 text-xs rounded border ${tableViewMode[tt.id] === 'map'
-                                  ? 'bg-purple-600 text-white border-purple-600'
-                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                  }`}
+                                className={`px-3 py-1 text-xs rounded border ${
+                                  tableViewMode[tt.id] === 'map'
+                                    ? 'bg-purple-600 text-white border-purple-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
                               >
                                 Map View
                               </button>
@@ -878,7 +891,7 @@ export default function EventDetailsPage() {
                             <p className="text-sm text-gray-600 mb-2">
                               Select 1 table for {selectedTickets[tt.id]} ticket(s). Selected: {(selectedTables[tt.id] || []).length > 0 ? '1' : '0'}
                             </p>
-
+                            
                             {/* Map View */}
                             {(tableViewMode[tt.id] || 'list') === 'map' ? (
                               <div className="border rounded p-4 bg-gray-50">
@@ -901,12 +914,13 @@ export default function EventDetailsPage() {
                                           key={table.id}
                                           onClick={() => handleTableToggle(tt.id, table.id)}
                                           disabled={isUnavailable}
-                                          className={`px-3 py-2 text-sm rounded border-2 ${isSelected
-                                            ? 'bg-purple-600 text-white border-purple-700'
-                                            : isUnavailable
-                                              ? 'bg-red-100 text-gray-400 border-red-300 cursor-not-allowed'
-                                              : 'bg-white hover:bg-purple-50 border-purple-300 text-gray-700'
-                                            }`}
+                                          className={`px-3 py-2 text-sm rounded border-2 ${
+                                            isSelected
+                                              ? 'bg-purple-600 text-white border-purple-700'
+                                              : isUnavailable
+                                                ? 'bg-red-100 text-gray-400 border-red-300 cursor-not-allowed'
+                                                : 'bg-white hover:bg-purple-50 border-purple-300 text-gray-700'
+                                          }`}
                                           title={
                                             isSelected
                                               ? `Selected: ${table.name} (Capacity: ${table.capacity})`
