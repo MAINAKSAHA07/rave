@@ -62,33 +62,40 @@ export default function BrandReveal() {
         // Move star toward viewer
         star.z -= speedMultiplier * (deltaTime / 16);
 
-        // Reset if star passed viewer
+        // Reset if star passed viewer (check before calculations to prevent negative values)
         if (star.z <= 0) {
           star.x = Math.random() * canvas.width;
           star.y = Math.random() * canvas.height;
           star.z = 1000;
         }
 
+        // Ensure z is positive for calculations
+        const safeZ = Math.max(0.1, star.z);
+
         // Calculate position
-        const x = (star.x - canvas.width / 2) * (600 / star.z) + canvas.width / 2;
-        const y = (star.y - canvas.height / 2) * (600 / star.z) + canvas.height / 2;
-        const size = (1 - star.z / 1000) * 2;
+        const x = (star.x - canvas.width / 2) * (600 / safeZ) + canvas.width / 2;
+        const y = (star.y - canvas.height / 2) * (600 / safeZ) + canvas.height / 2;
+        const size = Math.max(0, (1 - safeZ / 1000) * 2);
 
-        // Draw star
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fill();
+        // Only draw if size is valid and position is within canvas bounds
+        if (size > 0 && x >= -50 && x <= canvas.width + 50 && y >= -50 && y <= canvas.height + 50) {
+          // Draw star
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
 
-        // Draw speed line
-        const prevX = (star.x - canvas.width / 2) * (600 / (star.z + speedMultiplier * 10)) + canvas.width / 2;
-        const prevY = (star.y - canvas.height / 2) * (600 / (star.z + speedMultiplier * 10)) + canvas.height / 2;
-        
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * (1 - star.z / 1000)})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(prevX, prevY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
+          // Draw speed line
+          const prevZ = Math.max(0.1, safeZ + speedMultiplier * 10);
+          const prevX = (star.x - canvas.width / 2) * (600 / prevZ) + canvas.width / 2;
+          const prevY = (star.y - canvas.height / 2) * (600 / prevZ) + canvas.height / 2;
+          
+          ctx.strokeStyle = `rgba(255, 255, 255, ${Math.max(0, Math.min(1, 0.3 * (1 - safeZ / 1000)))})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(prevX, prevY);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
       });
 
       requestAnimationFrame(animate);
@@ -312,3 +319,4 @@ export default function BrandReveal() {
     </div>
   );
 }
+
