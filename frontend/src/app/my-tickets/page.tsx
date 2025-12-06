@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getPocketBase, getCurrentUser } from '@/lib/pocketbase';
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import Loading from '@/components/Loading';
+import BottomNavigation from '@/components/BottomNavigation';
 
 interface Ticket {
   id: string;
@@ -27,10 +28,12 @@ interface Order {
 }
 
 export default function MyTicketsPage() {
+  const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [orders, setOrders] = useState<Record<string, Order>>({});
   const [events, setEvents] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
 
   useEffect(() => {
     loadTickets();
@@ -40,7 +43,7 @@ export default function MyTicketsPage() {
     try {
       const user = getCurrentUser();
       if (!user) {
-        window.location.href = '/login';
+        router.push('/login');
         return;
       }
 
@@ -76,6 +79,110 @@ export default function MyTicketsPage() {
     }
   }
 
+  function downloadTicket(ticket: Ticket) {
+    // Only allow download for issued or checked_in tickets
+    if (ticket.status !== 'issued' && ticket.status !== 'checked_in') {
+      alert('Ticket can only be downloaded after payment is confirmed and ticket is issued.');
+      return;
+    }
+
+    // Create a printable/downloadable version of the ticket
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const event = events[ticket.event_id];
+    const order = orders[ticket.order_id];
+    const frontendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:3000';
+    const qrUrl = `${frontendUrl}/t/${ticket.ticket_code}`;
+    
+    // Only show QR code for issued or checked_in tickets
+    const showQrCode = ticket.status === 'issued' || ticket.status === 'checked_in';
+    const isPending = ticket.status === 'pending';
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Ticket - ${event?.name || 'Event'}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .ticket { border: 2px solid #14b8a6; border-radius: 16px; padding: 20px; max-width: 400px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .qr-code { text-align: center; margin: 20px 0; }
+            .details { margin: 15px 0; }
+            .detail-row { display: flex; justify-content: space-between; margin: 10px 0; }
+            .label { font-weight: bold; color: #666; }
+            .value { color: #333; }
+            .pending-notice { background: #fef3c7; border: 2px solid #fbbf24; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
+            .pending-notice p { margin: 5px 0; }
+            .pending-title { color: #92400e; font-weight: bold; font-size: 16px; }
+            .pending-text { color: #78350f; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="ticket">
+            <div class="header">
+              <h1>${event?.name || 'Event Ticket'}</h1>
+            </div>
+            <div class="details">
+              <div class="detail-row">
+                <span class="label">Name:</span>
+                <span class="value">${getCurrentUser()?.name || getCurrentUser()?.email || 'Guest'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Gate:</span>
+                <span class="value">A21</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Time:</span>
+                <span class="value">${event?.start_date ? new Date(event.start_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'TBD'} - ${event?.end_date ? new Date(event.end_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'TBD'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Date:</span>
+                <span class="value">${event?.event_date || event?.start_date ? new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Place:</span>
+                <span class="value">${event?.venue_id?.name || 'Venue TBD'}, ${event?.city || ''}</span>
+              </div>
+            </div>
+            ${showQrCode ? `
+            <div class="qr-code">
+              <p>Scan this QR code or show this ticket at the event</p>
+              <div id="qr"></div>
+            </div>
+            ` : isPending ? `
+            <div class="pending-notice">
+              <p class="pending-title">⏳ Payment Pending</p>
+              <p class="pending-text">Your ticket will be issued once payment is confirmed. The QR code will be available after payment processing.</p>
+            </div>
+            ` : `
+            <div class="pending-notice" style="background: #f3f4f6; border-color: #9ca3af;">
+              <p class="pending-title" style="color: #374151;">Ticket Status: ${ticket.status.toUpperCase().replace('_', ' ')}</p>
+              <p class="pending-text" style="color: #6b7280;">QR code is only available for issued tickets.</p>
+            </div>
+            `}
+            <div style="text-align: center; margin-top: 20px;">
+              <p><strong>Ticket ID: ${ticket.ticket_code}</strong></p>
+              <p>Order #${order?.order_number || 'N/A'}</p>
+            </div>
+          </div>
+          <script>
+            ${showQrCode ? `
+            // Generate QR code for issued tickets
+            // Note: QR code generation would need to be handled by a library
+            // For now, we'll show a placeholder or use the URL
+            ` : ''}
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }
+
   if (loading) {
     return <Loading />;
   }
@@ -83,109 +190,182 @@ export default function MyTicketsPage() {
   const frontendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:3000';
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="w-full space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            My Tickets
-          </h1>
-          <p className="text-gray-600 mt-1 text-sm">View and manage your event tickets</p>
+    <div className="min-h-screen pb-20 bg-gray-50">
+      <div className="max-w-[428px] mx-auto bg-white min-h-screen">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center gap-4">
+          <button onClick={() => router.back()} className="text-gray-700 text-xl">
+            ←
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">My Ticket</h1>
         </div>
 
         {tickets.length === 0 ? (
-          <Card className="bg-white border border-gray-200 shadow-sm p-8 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-3xl">
-                🎟️
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">No tickets yet</h3>
-              <p className="text-gray-600 max-w-sm text-sm">
-                You haven't purchased any tickets yet. Browse our events to find your next experience.
-              </p>
-              <Link href="/events">
-                <Button className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
-                  Browse Events
-                </Button>
-              </Link>
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center text-3xl mx-auto mb-4">
+              🎟️
             </div>
-          </Card>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tickets yet</h3>
+            <p className="text-gray-600 max-w-sm text-sm mb-6">
+              You haven't purchased any tickets yet. Browse our events to find your next experience.
+            </p>
+            <Link href="/events">
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+                Browse Events
+              </Button>
+            </Link>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="p-4 space-y-6">
             {tickets.map((ticket) => {
               const order = orders[ticket.order_id];
               const event = events[ticket.event_id];
               const qrUrl = `${frontendUrl}/t/${ticket.ticket_code}`;
+              const isSelected = selectedTicket === ticket.id;
 
               return (
-                <Card key={ticket.id} className="bg-white border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="flex flex-col">
-                    {/* Event Image */}
-                    <div className="relative h-48">
-                      {event?.cover_image ? (
-                        <img
-                          src={getPocketBase().files.getUrl(event, event.cover_image)}
-                          alt={event.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                          <span className="text-gray-400">No image</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Ticket Details */}
-                    <div className="p-4 flex flex-col gap-4">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <h2 className="text-lg font-bold mb-1 text-gray-900">{event?.name}</h2>
-                          <p className="text-purple-600 font-medium text-sm">
-                            {event && new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
+                <div
+                  key={ticket.id}
+                  className="bg-white border-2 border-teal-500 rounded-3xl overflow-hidden shadow-lg"
+                >
+                  {/* Event Banner */}
+                  <div className="relative bg-gradient-to-br from-teal-500 to-emerald-500 p-6">
+                    {event?.cover_image ? (
+                      <img
+                        src={getPocketBase().files.getUrl(event, event.cover_image)}
+                        alt={event.name}
+                        className="absolute inset-0 w-full h-full object-cover opacity-30"
+                      />
+                    ) : null}
+                    <div className="relative z-10">
+                      <h2 className="text-xl font-bold text-white mb-2">{event?.name || 'Event'}</h2>
+                      <p className="text-teal-100 text-sm">
+                        {event?.event_date || event?.start_date
+                          ? new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
                               day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {event?.venue_id?.name || 'Venue TBD'} • {event?.city}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium border ${ticket.status === 'issued'
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : ticket.status === 'checked_in'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : 'bg-gray-50 text-gray-700 border-gray-200'
-                            }`}
-                        >
-                          {ticket.status.toUpperCase().replace('_', ' ')}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col justify-between items-start gap-4 pt-2 border-t border-gray-100">
-                        <div className="space-y-1">
-                          <p className="text-xs text-gray-600">Order #{order?.order_number}</p>
-                          <p className="text-xs font-mono text-gray-700">Code: {ticket.ticket_code}</p>
-                        </div>
-
-                        {ticket.status === 'issued' && (
-                          <div className="bg-white p-2 rounded-lg border border-gray-200">
-                            <QRCodeSVG value={qrUrl} size={80} />
-                          </div>
-                        )}
-                      </div>
+                              month: 'long',
+                              year: 'numeric',
+                            }).toUpperCase()
+                          : 'DATE TBD'}
+                      </p>
                     </div>
                   </div>
-                </Card>
+
+                  {/* Ticket Details */}
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Name</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {getCurrentUser()?.name || getCurrentUser()?.email?.split('@')[0] || 'Guest'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Gate</p>
+                        <p className="text-sm font-semibold text-gray-900">A21</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Time</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {event?.start_date
+                            ? new Date(event.start_date).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : 'TBD'}{' '}
+                          -{' '}
+                          {event?.end_date
+                            ? new Date(event.end_date).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : 'TBD'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Date</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {event?.event_date || event?.start_date
+                            ? new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                              })
+                            : 'TBD'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-500 mb-1">Place</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {event?.venue_id?.name || 'Venue TBD'}, {event?.city || ''}
+                      </p>
+                    </div>
+
+                    {/* QR Code Section - Only show for issued or checked_in tickets */}
+                    {ticket.status === 'issued' || ticket.status === 'checked_in' ? (
+                      <div className="bg-gray-50 rounded-2xl p-4 mb-4 text-center">
+                        <p className="text-xs text-gray-600 mb-3">
+                          Scan this QR code or show this ticket at the event
+                        </p>
+                        <div className="flex justify-center mb-3">
+                          <div className="bg-white p-3 rounded-xl">
+                            <QRCodeSVG value={qrUrl} size={120} />
+                          </div>
+                        </div>
+                        <p className="text-xs font-mono text-gray-700">
+                          <strong>Ticket ID: {ticket.ticket_code}</strong>
+                        </p>
+                      </div>
+                    ) : ticket.status === 'pending' ? (
+                      <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 mb-4 text-center">
+                        <div className="flex items-center justify-center mb-2">
+                          <span className="text-2xl mr-2">⏳</span>
+                          <p className="text-sm font-semibold text-yellow-800">Payment Pending</p>
+                        </div>
+                        <p className="text-xs text-yellow-700 mb-2">
+                          Your ticket will be issued once payment is confirmed.
+                        </p>
+                        <p className="text-xs font-mono text-gray-700">
+                          <strong>Ticket ID: {ticket.ticket_code}</strong>
+                        </p>
+                        {order?.status === 'pending' && order?.payment_method === 'cash' && (
+                          <p className="text-xs text-yellow-600 mt-2">
+                            Waiting for cash payment confirmation at venue
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 mb-4 text-center">
+                        <p className="text-xs text-gray-600 mb-2">
+                          Ticket Status: <span className="font-semibold uppercase">{ticket.status.replace('_', ' ')}</span>
+                        </p>
+                        <p className="text-xs font-mono text-gray-700">
+                          <strong>Ticket ID: {ticket.ticket_code}</strong>
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Download Button - Only show for issued or checked_in tickets */}
+                    {(ticket.status === 'issued' || ticket.status === 'checked_in') && (
+                      <Button
+                        onClick={() => downloadTicket(ticket)}
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"
+                      >
+                        <span>📥</span>
+                        Download Ticket
+                      </Button>
+                    )}
+                  </div>
+                </div>
               );
             })}
           </div>
         )}
       </div>
+
+      <BottomNavigation />
     </div>
   );
 }
-

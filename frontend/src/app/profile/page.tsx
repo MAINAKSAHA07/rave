@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getPocketBase, getCurrentUser, logout } from '@/lib/pocketbase';
+import { useNotificationHelpers } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Loading from '@/components/Loading';
+import BottomNavigation from '@/components/BottomNavigation';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { notifySuccess, notifyError } = useNotificationHelpers();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,7 +105,7 @@ export default function ProfilePage() {
       // Update profile
       await pb.collection('customers').update(user.id, updateData);
 
-      alert('Profile updated successfully!');
+      notifySuccess('Profile Updated', 'Your profile has been updated successfully!');
       setFormData({
         ...formData,
         currentPassword: '',
@@ -112,7 +115,10 @@ export default function ProfilePage() {
       await loadProfile();
     } catch (error: any) {
       console.error('Failed to update profile:', error);
-      alert(`Error: ${error.response?.data?.message || error.message || 'Failed to update profile'}`);
+      notifyError(
+        'Update Failed',
+        error.response?.data?.message || error.message || 'Failed to update profile. Please try again.'
+      );
     } finally {
       setSaving(false);
     }
@@ -132,67 +138,78 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="w-full space-y-6">
-        <div className="flex flex-col justify-between items-start gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              My Profile
-            </h1>
-            <p className="text-gray-600 mt-1 text-sm">Manage your account settings</p>
+    <div className="min-h-screen pb-20 bg-gray-50">
+      <div className="max-w-[428px] mx-auto bg-white min-h-screen">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900">My Profile</h1>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="text-red-600 border-red-200 hover:bg-red-50 text-sm"
+            >
+              Sign Out
+            </Button>
           </div>
-          <Button
-            variant="destructive"
-            onClick={handleLogout}
-            className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-          >
-            Sign Out
-          </Button>
         </div>
 
-        <div className="grid gap-4">
-          <Card className="bg-white border border-gray-200 shadow-sm">
+        <div className="p-4 space-y-6">
+          {/* Profile Header */}
+          <div className="bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-6 text-center">
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold text-teal-600">
+              {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+            </div>
+            <h2 className="text-xl font-bold text-white mb-1">{user?.name || 'User'}</h2>
+            <p className="text-teal-100 text-sm">{user?.email}</p>
+          </div>
+
+          {/* Personal Information Card */}
+          <Card className="bg-white rounded-2xl border border-gray-200">
             <CardHeader>
-            <CardTitle className="text-lg">Personal Information</CardTitle>
-            <CardDescription className="text-gray-600">Update your contact details</CardDescription>
+              <CardTitle className="text-lg font-bold text-gray-900">Personal Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name" className="text-gray-700">Full Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  placeholder="Enter your full name"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="text-gray-700">Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  placeholder="Enter your email"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone" className="text-gray-700">Phone Number *</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
+                  placeholder="Enter your phone number"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border border-gray-200 shadow-sm">
+          {/* Security Card */}
+          <Card className="bg-white rounded-2xl border border-gray-200">
             <CardHeader>
-              <CardTitle className="text-lg">Security</CardTitle>
-              <CardDescription className="text-gray-600">Change your password</CardDescription>
+              <CardTitle className="text-lg font-bold text-gray-900">Security</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">Change your password</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -202,8 +219,8 @@ export default function ProfilePage() {
                   type="password"
                   value={formData.currentPassword}
                   onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                  placeholder="••••••••"
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  placeholder="Enter current password"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
                 />
               </div>
               <div className="space-y-2">
@@ -213,8 +230,8 @@ export default function ProfilePage() {
                   type="password"
                   value={formData.newPassword}
                   onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                  placeholder="••••••••"
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  placeholder="Enter new password"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
                 />
               </div>
               <div className="space-y-2">
@@ -224,25 +241,27 @@ export default function ProfilePage() {
                   type="password"
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  placeholder="••••••••"
-                  className="bg-white border-gray-300 focus:border-purple-500"
+                  placeholder="Confirm new password"
+                  className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
                 />
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSaveProfile}
-            disabled={saving}
-            size="default"
-            className="bg-purple-600 hover:bg-purple-700 text-white min-w-[120px]"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          {/* Save Button */}
+          <div className="pb-4">
+            <Button
+              onClick={handleSaveProfile}
+              disabled={saving}
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
         </div>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 }

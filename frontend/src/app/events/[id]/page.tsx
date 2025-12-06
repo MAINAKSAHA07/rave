@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { getPocketBase } from '@/lib/pocketbase';
 import { ordersApi, seatsApi, seatReservationsApi, tablesApi, tableReservationsApi } from '@/lib/api';
+import { useNotificationHelpers } from '@/lib/notifications';
 import Script from 'next/script';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import FloorPlanView from '@/components/FloorPlanView';
 import Loading from '@/components/Loading';
+import BottomNavigation from '@/components/BottomNavigation';
 
 interface Event {
   id: string;
@@ -75,6 +77,8 @@ interface Seat {
 
 export default function EventDetailsPage() {
   const params = useParams();
+  const router = useRouter();
+  const { notifySuccess, notifyError, notifyInfo, notifyWarning } = useNotificationHelpers();
   const eventId = params.id as string;
   const [event, setEvent] = useState<Event | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -669,8 +673,13 @@ export default function EventDetailsPage() {
 
       // Handle cash payments
       if (paymentMethod === 'cash') {
-        alert('Order created successfully! Please pay cash at the venue. Your order number is: ' + order.order_number);
-        window.location.href = '/my-tickets';
+        notifySuccess(
+          'Order Created Successfully!',
+          `Order #${order.order_number} created. Please pay cash at the venue.`
+        );
+        setTimeout(() => {
+          window.location.href = '/my-tickets';
+        }, 2000);
         return;
       }
 
@@ -728,12 +737,22 @@ export default function EventDetailsPage() {
             }
             setCheckoutTimer(null);
 
-            alert('Payment successful! Check your email for tickets with QR codes.');
-            window.location.href = '/my-tickets';
+            notifySuccess(
+              'Payment Successful!',
+              'Your tickets have been issued. Check your email for tickets with QR codes.'
+            );
+            setTimeout(() => {
+              window.location.href = '/my-tickets';
+            }, 2000);
           } catch (error: any) {
             console.error('Failed to confirm payment:', error);
-            alert('Payment successful but confirmation failed. Your tickets will be issued shortly via webhook. Check your email.');
-            window.location.href = '/my-tickets';
+            notifyWarning(
+              'Payment Received',
+              'Payment successful but confirmation pending. Your tickets will be issued shortly via webhook. Check your email.'
+            );
+            setTimeout(() => {
+              window.location.href = '/my-tickets';
+            }, 2000);
           }
         },
         prefill: {
@@ -794,7 +813,10 @@ export default function EventDetailsPage() {
       }
       setCheckoutTimer(null);
 
-      alert(error.response?.data?.error || error.message || 'Checkout failed');
+      notifyError(
+        'Checkout Failed',
+        error.response?.data?.error || error.message || 'Unable to process checkout. Please try again.'
+      );
     }
   }
 
@@ -806,145 +828,176 @@ export default function EventDetailsPage() {
     return <div className="p-8">Event not found</div>;
   }
 
+  // Calculate totals
   const totalAmount = ticketTypes.reduce((sum, tt) => {
     const qty = selectedTickets[tt.id] || 0;
     return sum + tt.final_price_minor * qty;
   }, 0);
+  
+  // Calculate base amount (without GST) - assuming 18% GST
+  const baseAmount = totalAmount / 1.18;
+  const gstAmount = totalAmount - baseAmount;
 
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
-      <div className="min-h-screen p-4 pb-20">
-        <div className="w-full">
+      <div className="min-h-screen pb-20 bg-gray-50">
+        <div className="max-w-[428px] mx-auto bg-white min-h-screen">
+          {/* Header */}
+          <div className="sticky top-0 z-20 bg-white border-b border-gray-200 p-4 flex items-center gap-4">
+            <button onClick={() => router.back()} className="text-gray-700 text-xl">
+              ←
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 flex-1 truncate">{event.name}</h1>
+            <button className="text-red-500 text-xl">❤️</button>
+          </div>
+
+          {/* Cover Image */}
           {event.cover_image && (
-            <img
-              src={event.cover_image ? getPocketBase().files.getUrl(event as any, event.cover_image) : ''}
-              alt={event.name}
-              className="w-full h-48 object-cover rounded-xl mb-4"
-            />
+            <div className="relative w-full h-64 overflow-hidden">
+              <img
+                src={event.cover_image ? getPocketBase().files.getUrl(event as any, event.cover_image) : ''}
+                alt={event.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-3 py-1 bg-teal-500 text-white rounded-full text-xs font-semibold capitalize">
+                    {event.category}
+                  </span>
+                  <span className="text-white text-xs">📍 {event.city}</span>
+                </div>
+                <h2 className="text-white font-bold text-xl mb-1">{event.name}</h2>
+                <p className="text-white text-sm">
+                  {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+            </div>
           )}
 
-          <h1 className="text-2xl font-bold mb-2 text-gray-900">{event.name}</h1>
-          <p className="text-gray-600 mb-2 text-sm">{event.category} • {event.city}</p>
-          <p className="mb-4 text-gray-700 text-sm">
-            {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </p>
+          <div className="p-4 space-y-6">
 
           {event.description && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">Description</h2>
-              <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.description}</p>
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">Description</h2>
+              <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.description}</p>
             </div>
           )}
 
           {event.about && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">About the Event</h2>
-              <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.about}</p>
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">About the Event</h2>
+              <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.about}</p>
             </div>
           )}
 
           {event.overview && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">Overview</h2>
-              <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.overview}</p>
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">Overview</h2>
+              <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.overview}</p>
             </div>
           )}
 
           {event.things_to_carry && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">Things to Carry</h2>
-              <div className="text-gray-700 text-sm">
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">Things to Carry</h2>
+              <div className="text-gray-700 text-sm space-y-2">
                 {event.things_to_carry.split('\n').map((item: string, idx: number) => (
-                  <div key={idx} className="mb-1">
-                    {item.trim() && (
-                      <>
-                        <span className="mr-2">•</span>
-                        {item.trim()}
-                      </>
-                    )}
-                  </div>
+                  item.trim() && (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="text-teal-600 mt-1">•</span>
+                      <span>{item.trim()}</span>
+                    </div>
+                  )
                 ))}
               </div>
             </div>
           )}
 
           {event.inclusions && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">Inclusions</h2>
-              <div className="text-gray-700 text-sm">
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">Inclusions</h2>
+              <div className="text-gray-700 text-sm space-y-2">
                 {event.inclusions.split('\n').map((item: string, idx: number) => (
-                  <div key={idx} className="mb-1">
-                    {item.trim() && (
-                      <>
-                        <span className="mr-2">✓</span>
-                        {item.trim()}
-                      </>
-                    )}
-                  </div>
+                  item.trim() && (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="text-teal-600 mt-1">✓</span>
+                      <span>{item.trim()}</span>
+                    </div>
+                  )
                 ))}
               </div>
             </div>
           )}
 
           {event.terms_and_conditions && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">Terms & Conditions</h2>
-              <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.terms_and_conditions}</p>
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">Terms & Conditions</h2>
+              <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.terms_and_conditions}</p>
             </div>
           )}
 
           {event.expand?.venue_id && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">Venue Details</h2>
-              <div className="text-gray-700 text-sm space-y-1">
-                <p><strong>Venue:</strong> {event.expand.venue_id.name}</p>
-                {event.expand.venue_id.address && (
-                  <p><strong>Address:</strong> {event.expand.venue_id.address}</p>
-                )}
-                {event.expand.venue_id.city && (
-                  <p><strong>City:</strong> {event.expand.venue_id.city}</p>
-                )}
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">Venue Details</h2>
+              <div className="text-gray-700 text-sm space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-teal-600 font-semibold">📍</span>
+                  <div>
+                    <p className="font-semibold">{event.expand.venue_id.name}</p>
+                    {event.expand.venue_id.address && (
+                      <p className="text-gray-600">{event.expand.venue_id.address}</p>
+                    )}
+                    {event.expand.venue_id.city && (
+                      <p className="text-gray-600">{event.expand.venue_id.city}</p>
+                    )}
+                  </div>
+                </div>
               </div>
               {event.venue_details && (
-                <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.venue_details}</p>
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.venue_details}</p>
                 </div>
               )}
             </div>
           )}
 
           {event.expand?.organizer_id && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">Organizer Information</h2>
-              <div className="text-gray-700 text-sm space-y-1">
-                <p><strong>Organizer:</strong> {event.expand.organizer_id.name}</p>
-                {event.expand.organizer_id.email && (
-                  <p><strong>Email:</strong> {event.expand.organizer_id.email}</p>
-                )}
-                {event.expand.organizer_id.phone && (
-                  <p><strong>Phone:</strong> {event.expand.organizer_id.phone}</p>
-                )}
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">Organizer Information</h2>
+              <div className="text-gray-700 text-sm space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-teal-600 font-semibold">👤</span>
+                  <div>
+                    <p className="font-semibold">{event.expand.organizer_id.name}</p>
+                    {event.expand.organizer_id.email && (
+                      <p className="text-gray-600">✉️ {event.expand.organizer_id.email}</p>
+                    )}
+                    {event.expand.organizer_id.phone && (
+                      <p className="text-gray-600">📞 {event.expand.organizer_id.phone}</p>
+                    )}
+                  </div>
+                </div>
               </div>
               {event.organizer_info && (
-                <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="whitespace-pre-wrap text-gray-700 text-sm">{event.organizer_info}</p>
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.organizer_info}</p>
                 </div>
               )}
             </div>
           )}
 
           {event.tags && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2 text-gray-900">Tags</h2>
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-3 text-gray-900">Tags</h2>
               <div className="flex flex-wrap gap-2">
                 {(Array.isArray(event.tags) ? event.tags : typeof event.tags === 'string' ? (() => {
                   try {
@@ -955,7 +1008,7 @@ export default function EventDetailsPage() {
                 })() : []).map((tag: string, idx: number) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
+                    className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-medium"
                   >
                     {tag}
                   </span>
@@ -964,57 +1017,61 @@ export default function EventDetailsPage() {
             </div>
           )}
 
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-3 text-gray-900">Tickets</h2>
+          <div className="bg-white rounded-2xl p-4 border border-gray-200">
+            <h2 className="text-lg font-bold mb-4 text-gray-900">Tickets</h2>
             {ticketTypes.length === 0 ? (
               <div className="border border-gray-200 rounded-xl p-6 text-center bg-gray-50">
                 <p className="text-gray-600 mb-2">No tickets available for this event yet.</p>
                 <p className="text-xs text-gray-500">Please check back later or contact the organizer.</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {ticketTypes.map((tt) => (
-                  <div key={tt.id} className="border border-gray-200 rounded-xl p-4 bg-white">
+                  <div key={tt.id} className="border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-teal-300 transition-colors">
                     <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold">{tt.name}</h3>
-                        {tt.description && <p className="text-sm text-gray-600">{tt.description}</p>}
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 text-base">{tt.name}</h3>
+                        {tt.description && <p className="text-sm text-gray-700 mt-1">{tt.description}</p>}
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          ₹{(tt.final_price_minor / 100).toFixed(2)} <span className="text-xs text-gray-500">(incl. GST)</span>
+                      <div className="text-right ml-4">
+                        <p className="font-bold text-lg text-teal-600">
+                          ₹{((tt.final_price_minor / 1.18) / 100).toFixed(2)}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs text-gray-700 font-medium">+ GST</p>
+                        <p className="text-sm text-gray-700 mt-1">
                           {tt.remaining_quantity} available
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() =>
-                          handleTicketChange(tt.id, Math.max(0, (selectedTickets[tt.id] || 0) - 1))
-                        }
-                        className="px-3 py-1 border rounded"
-                        disabled={(selectedTickets[tt.id] || 0) === 0}
-                      >
-                        -
-                      </button>
-                      <span>{selectedTickets[tt.id] || 0}</span>
-                      <button
-                        onClick={() =>
-                          handleTicketChange(
-                            tt.id,
-                            Math.min(tt.remaining_quantity, (selectedTickets[tt.id] || 0) + 1)
-                          )
-                        }
-                        className="px-3 py-1 border rounded"
-                        disabled={
-                          (selectedTickets[tt.id] || 0) >= tt.remaining_quantity ||
-                          (selectedTickets[tt.id] || 0) >= tt.max_per_order
-                        }
-                      >
-                        +
-                      </button>
+                    <div className="flex items-center justify-between mt-4">
+                      <span className="text-sm font-medium text-gray-900">Quantity</span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() =>
+                            handleTicketChange(tt.id, Math.max(0, (selectedTickets[tt.id] || 0) - 1))
+                          }
+                          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          disabled={(selectedTickets[tt.id] || 0) === 0}
+                        >
+                          −
+                        </button>
+                        <span className="text-lg font-semibold w-8 text-center">{selectedTickets[tt.id] || 0}</span>
+                        <button
+                          onClick={() =>
+                            handleTicketChange(
+                              tt.id,
+                              Math.min(tt.remaining_quantity, (selectedTickets[tt.id] || 0) + 1)
+                            )
+                          }
+                          className="w-10 h-10 rounded-full border-2 border-teal-500 bg-teal-500 text-white flex items-center justify-center hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          disabled={
+                            (selectedTickets[tt.id] || 0) >= tt.remaining_quantity ||
+                            (selectedTickets[tt.id] || 0) >= tt.max_per_order
+                          }
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
 
                     {/* Seat Selection for Seated Events */}
@@ -1023,7 +1080,7 @@ export default function EventDetailsPage() {
                         <div className="flex justify-between items-center mb-2">
                           <button
                             onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
-                            className="text-sm text-blue-600 hover:underline"
+                            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
                           >
                             {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
                           </button>
@@ -1031,9 +1088,9 @@ export default function EventDetailsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'list' })}
-                                className={`px-3 py-1 text-xs rounded border ${
+                                className={`px-3 py-1 text-xs rounded-lg border-2 transition-all ${
                                   (seatViewMode[tt.id] || 'list') === 'list'
-                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    ? 'bg-teal-600 text-white border-teal-600'
                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                 }`}
                               >
@@ -1041,9 +1098,9 @@ export default function EventDetailsPage() {
                               </button>
                               <button
                                 onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'map' })}
-                                className={`px-3 py-1 text-xs rounded border ${
+                                className={`px-3 py-1 text-xs rounded-lg border-2 transition-all ${
                                   seatViewMode[tt.id] === 'map'
-                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    ? 'bg-teal-600 text-white border-teal-600'
                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                 }`}
                               >
@@ -1086,13 +1143,13 @@ export default function EventDetailsPage() {
                                           key={seat.id}
                                           onClick={() => handleSeatToggle(tt.id, seat.id)}
                                           disabled={isUnavailable}
-                                          className={`px-2 py-1 text-xs rounded ${isSelected
-                                            ? 'bg-blue-600 text-white'
+                                          className={`px-2 py-1 text-xs rounded-lg transition-all ${isSelected
+                                            ? 'bg-teal-600 text-white border-2 border-teal-700'
                                             : isReserved
-                                              ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                                              ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
                                               : seat.available && !seat.sold
-                                                ? 'bg-gray-100 hover:bg-gray-200'
-                                                : 'bg-red-100 text-gray-400 cursor-not-allowed'
+                                                ? 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-300'
+                                                : 'bg-red-100 text-gray-400 border-2 border-red-300 cursor-not-allowed'
                                             }`}
                                           title={
                                             isSelected
@@ -1124,7 +1181,7 @@ export default function EventDetailsPage() {
                         <div className="flex justify-between items-center mb-2">
                           <button
                             onClick={() => setShowTableSelection({ ...showTableSelection, [tt.id]: !showTableSelection[tt.id] })}
-                            className="text-sm text-purple-600 hover:underline"
+                            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
                           >
                             {showTableSelection[tt.id] ? 'Hide Table Selection' : 'Select Table'}
                           </button>
@@ -1132,9 +1189,9 @@ export default function EventDetailsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setTableViewMode({ ...tableViewMode, [tt.id]: 'list' })}
-                                className={`px-3 py-1 text-xs rounded border ${
+                                className={`px-3 py-1 text-xs rounded-lg border-2 transition-all ${
                                   (tableViewMode[tt.id] || 'list') === 'list'
-                                    ? 'bg-purple-600 text-white border-purple-600'
+                                    ? 'bg-teal-600 text-white border-teal-600'
                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                 }`}
                               >
@@ -1142,9 +1199,9 @@ export default function EventDetailsPage() {
                               </button>
                               <button
                                 onClick={() => setTableViewMode({ ...tableViewMode, [tt.id]: 'map' })}
-                                className={`px-3 py-1 text-xs rounded border ${
+                                className={`px-3 py-1 text-xs rounded-lg border-2 transition-all ${
                                   tableViewMode[tt.id] === 'map'
-                                    ? 'bg-purple-600 text-white border-purple-600'
+                                    ? 'bg-teal-600 text-white border-teal-600'
                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                 }`}
                               >
@@ -1182,14 +1239,14 @@ export default function EventDetailsPage() {
                                           key={table.id}
                                           onClick={() => handleTableToggle(tt.id, table.id)}
                                           disabled={isUnavailable}
-                                          className={`px-3 py-2 text-sm rounded border-2 ${
+                                          className={`px-3 py-2 text-sm rounded-lg border-2 transition-all ${
                                             isSelected
-                                              ? 'bg-purple-600 text-white border-purple-700'
+                                              ? 'bg-teal-600 text-white border-teal-700'
                                               : isReserved
                                                 ? 'bg-yellow-100 text-yellow-800 border-yellow-300 cursor-not-allowed'
                                                 : isUnavailable
                                                   ? 'bg-red-100 text-gray-400 border-red-300 cursor-not-allowed'
-                                                  : 'bg-white hover:bg-purple-50 border-purple-300 text-gray-700'
+                                                  : 'bg-white hover:bg-teal-50 border-teal-300 text-gray-700'
                                           }`}
                                           title={
                                             isSelected
@@ -1228,39 +1285,39 @@ export default function EventDetailsPage() {
 
           {/* Attendee Details Form */}
           {totalAmount > 0 && (
-            <div className="mb-6 border border-gray-200 rounded-xl p-4 bg-white">
-              <h2 className="text-lg font-semibold mb-3 text-gray-900">Attendee Details</h2>
-              <div className="grid grid-cols-1 gap-3">
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <h2 className="text-lg font-bold mb-4 text-gray-900">Attendee Details</h2>
+              <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <Label htmlFor="attendeeName" className="text-gray-700">Name *</Label>
+                  <Label htmlFor="attendeeName" className="text-gray-700 mb-2 block">Name *</Label>
                   <Input
                     id="attendeeName"
                     value={attendeeDetails.name}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, name: e.target.value })}
                     placeholder="Full name"
-                    className="bg-white border-gray-300 focus:border-purple-500"
+                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="attendeeEmail" className="text-gray-700">Email *</Label>
+                  <Label htmlFor="attendeeEmail" className="text-gray-700 mb-2 block">Email *</Label>
                   <Input
                     id="attendeeEmail"
                     type="email"
                     value={attendeeDetails.email}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, email: e.target.value })}
                     placeholder="email@example.com"
-                    className="bg-white border-gray-300 focus:border-purple-500"
+                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="attendeePhone" className="text-gray-700">Phone *</Label>
+                  <Label htmlFor="attendeePhone" className="text-gray-700 mb-2 block">Phone *</Label>
                   <Input
                     id="attendeePhone"
                     type="tel"
                     value={attendeeDetails.phone}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, phone: e.target.value })}
                     placeholder="+91 1234567890"
-                    className="bg-white border-gray-300 focus:border-purple-500"
+                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl"
                   />
                 </div>
               </div>
@@ -1268,35 +1325,45 @@ export default function EventDetailsPage() {
           )}
 
           {totalAmount > 0 && (
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 rounded-t-xl shadow-lg">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-base font-semibold text-gray-700">Total Amount</span>
-                <span className="text-2xl font-bold text-gray-900">₹{(totalAmount / 100).toFixed(2)}</span>
+            <div className="sticky bottom-20 bg-white border-t-2 border-gray-200 p-4 rounded-t-2xl shadow-2xl">
+              <div className="mb-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Subtotal</span>
+                  <span className="text-base font-semibold text-gray-700">₹{(baseAmount / 100).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">GST (18%)</span>
+                  <span className="text-base font-semibold text-gray-700">₹{(gstAmount / 100).toFixed(2)}</span>
+                </div>
+                <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
+                  <span className="text-base font-semibold text-gray-700">Total Amount</span>
+                  <span className="text-2xl font-bold text-teal-600">₹{(totalAmount / 100).toFixed(2)}</span>
+                </div>
               </div>
 
               {/* Payment Method Selection */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2 text-gray-700">Payment Method</label>
                 <div className="flex flex-col gap-2">
-                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${paymentMethod === 'razorpay' ? 'bg-purple-50 border-purple-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
+                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'razorpay' ? 'bg-teal-50 border-teal-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="razorpay"
                       checked={paymentMethod === 'razorpay'}
                       onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                      className="w-4 h-4 accent-purple-600"
+                      className="w-4 h-4 accent-teal-600"
                     />
                     <span className="text-gray-700">Razorpay (Online)</span>
                   </label>
-                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${paymentMethod === 'cash' ? 'bg-purple-50 border-purple-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
+                  <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'cash' ? 'bg-teal-50 border-teal-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="cash"
                       checked={paymentMethod === 'cash'}
                       onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                      className="w-4 h-4 accent-purple-600"
+                      className="w-4 h-4 accent-teal-600"
                     />
                     <span className="text-gray-700">Cash (At Venue)</span>
                   </label>
@@ -1345,14 +1412,17 @@ export default function EventDetailsPage() {
               <button
                 onClick={handleCheckout}
                 disabled={!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone || (isGATable && checkoutTimer === 0)}
-                className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-base hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
+                className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold text-base hover:bg-teal-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all shadow-lg"
               >
                 {paymentMethod === 'cash' ? 'Create Order (Pay at Venue)' : 'Proceed to Checkout'}
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
+
+      <BottomNavigation />
     </>
   );
 }

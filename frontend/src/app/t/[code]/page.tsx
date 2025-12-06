@@ -58,11 +58,33 @@ export default function TicketPage() {
           <p className="text-gray-600">{ticket.ticket_code}</p>
         </div>
 
-        <div className="flex justify-center mb-8">
-          <div className="bg-white p-6 rounded border-2 border-dashed">
-            <QRCodeSVG value={qrUrl} size={300} />
+        {/* QR Code - Only show for issued or checked_in tickets */}
+        {(ticket.status === 'issued' || ticket.status === 'checked_in') ? (
+          <div className="flex justify-center mb-8">
+            <div className="bg-white p-6 rounded border-2 border-dashed">
+              <QRCodeSVG value={qrUrl} size={300} />
+            </div>
           </div>
-        </div>
+        ) : ticket.status === 'pending' ? (
+          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-8 text-center">
+            <div className="flex items-center justify-center mb-2">
+              <span className="text-3xl mr-2">⏳</span>
+              <p className="text-lg font-semibold text-yellow-800">Payment Pending</p>
+            </div>
+            <p className="text-sm text-yellow-700">
+              Your ticket will be issued once payment is confirmed. The QR code will be available after payment processing.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 mb-8 text-center">
+            <p className="text-sm text-gray-600 mb-2">
+              Ticket Status: <span className="font-semibold uppercase">{ticket.status.replace('_', ' ')}</span>
+            </p>
+            <p className="text-xs text-gray-500">
+              QR code is only available for issued tickets.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-4">
           <div>
@@ -77,7 +99,14 @@ export default function TicketPage() {
 
           <div>
             <p className="text-sm text-gray-600">Status</p>
-            <p className="font-semibold capitalize">{ticket.status}</p>
+            <p className={`font-semibold capitalize ${
+              ticket.status === 'issued' ? 'text-green-600' :
+              ticket.status === 'checked_in' ? 'text-blue-600' :
+              ticket.status === 'pending' ? 'text-yellow-600' :
+              'text-gray-600'
+            }`}>
+              {ticket.status.replace('_', ' ')}
+            </p>
           </div>
         </div>
       </div>

@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import Sparkles from '@/components/Sparkles'
+import { NotificationProvider } from '@/contexts/NotificationContext'
+import NotificationToast from '@/components/NotificationToast'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,15 +29,16 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen`} suppressHydrationWarning>
         {/* Developed by mainak saha */}
         <div style={{ display: 'none' }} data-developer="mainak saha" data-author="mainak saha" aria-hidden="true" />
-        <div className="min-h-screen py-4 px-4">
-          <div className="mobile-container bg-white text-gray-900 relative">
+        <NotificationProvider>
+          <div className="min-h-screen">
             <Sparkles />
             <Navigation />
             <main className="relative z-10">
               {children}
             </main>
+            <NotificationToast />
           </div>
-        </div>
+        </NotificationProvider>
       </body>
     </html>
   )
