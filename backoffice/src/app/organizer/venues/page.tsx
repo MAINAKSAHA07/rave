@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Loading from '@/components/Loading';
 
 export default function OrganizerVenuesPage() {
   const [user, setUser] = useState<any>(null);
@@ -82,7 +83,7 @@ export default function OrganizerVenuesPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   if (!organizer) {
@@ -100,7 +101,7 @@ export default function OrganizerVenuesPage() {
     }
 
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
+      <div className="min-h-screen p-4 md:p-8 flex items-center justify-center">
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="text-red-600">Access Denied</CardTitle>
@@ -119,7 +120,7 @@ export default function OrganizerVenuesPage() {
   }
 
   return (
-    <div className="min-h-screen p-8 space-y-8">
+    <div className="min-h-screen p-4 md:p-8 space-y-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>

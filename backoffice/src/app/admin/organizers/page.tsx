@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getCurrentUser, getPocketBase } from '@/lib/pocketbase';
 import { adminApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Loading from '@/components/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -94,11 +95,11 @@ export default function AdminOrganizersPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   return (
-    <div className="min-h-screen p-8 space-y-8">
+    <div className="min-h-screen p-4 md:p-8 space-y-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Loading from '@/components/Loading';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -114,7 +115,7 @@ export default function EventDetailPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   if (!event) {
@@ -129,7 +130,7 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="min-h-screen p-8 space-y-8">
+    <div className="min-h-screen p-4 md:p-8 space-y-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>

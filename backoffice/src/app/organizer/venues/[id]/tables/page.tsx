@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
+import Loading from '@/components/Loading';
 
 export default function VenueTablesPage() {
   const params = useParams();
@@ -43,18 +44,132 @@ export default function VenueTablesPage() {
       }
 
       const pb = getPocketBase();
+      console.log('[Tables] Loading venue:', venueId);
       const venueData = await pb.collection('venues').getOne(venueId);
       setVenue(venueData);
+      console.log('[Tables] Venue loaded:', { id: venueData.id, name: venueData.name, layout_type: venueData.layout_type });
 
       if (venueData.layout_type === 'GA_TABLE') {
-        const tablesData = await pb.collection('tables').getFullList({
-          filter: `venue_id="${venueId}"`,
-          sort: 'section,name',
-        });
-        setTables(tablesData as any);
+        console.log('[Tables] Loading tables for venue:', venueId);
+        try {
+          // Try multiple filter formats to handle both string and relation venue_id
+          let tablesData: any[] = [];
+          
+          // First try: Direct venue_id match (for string IDs)
+          try {
+            tablesData = await pb.collection('tables').getFullList({
+              filter: `venue_id="${venueId}"`,
+              sort: 'section,name',
+            });
+            console.log('[Tables] Loaded with venue_id filter:', tablesData.length);
+          } catch (filterError) {
+            console.log('[Tables] Direct filter failed, trying relation filter');
+          }
+          
+          // If no results, try relation filter format
+          if (tablesData.length === 0) {
+            try {
+              tablesData = await pb.collection('tables').getFullList({
+                filter: `venue_id.id="${venueId}"`,
+                sort: 'section,name',
+              });
+              console.log('[Tables] Loaded with venue_id.id filter:', tablesData.length);
+            } catch (relError) {
+              console.log('[Tables] Relation filter also failed');
+            }
+          }
+          
+          // If still no results, get all and filter manually
+          if (tablesData.length === 0) {
+            console.log('[Tables] No results with filters, fetching all and filtering manually...');
+            const allTables = await pb.collection('tables').getFullList({
+              sort: 'section,name',
+            });
+            console.log('[Tables] Total tables in database:', allTables.length);
+            
+            // Filter manually by comparing venue_id values
+            tablesData = allTables.filter((t: any) => {
+              const tableVenueId = typeof t.venue_id === 'string' 
+                ? t.venue_id 
+                : (t.venue_id?.id || t.venue_id || '');
+              const matches = tableVenueId === venueId;
+              if (!matches && allTables.length <= 5) {
+                console.log('[Tables] Table venue_id mismatch:', {
+                  tableId: t.id,
+                  tableName: t.name,
+                  tableVenueId: tableVenueId,
+                  expectedVenueId: venueId,
+                  venueIdType: typeof t.venue_id,
+                });
+              }
+              return matches;
+            });
+            console.log('[Tables] Filtered tables manually:', tablesData.length);
+          }
+          
+          console.log('[Tables] Final tables count:', tablesData.length);
+          setTables(tablesData as any);
+          
+          // If no tables found, try without filter to see if there are any tables at all
+          if (tablesData.length === 0) {
+            console.log('[Tables] No tables found with filter, checking all tables...');
+            try {
+              const allTables = await pb.collection('tables').getFullList({
+                sort: 'section,name',
+              });
+              console.log('[Tables] Total tables in database:', allTables.length);
+              console.log('[Tables] Sample table data:', allTables.slice(0, 2));
+              console.log('[Tables] Current venue ID:', venueId);
+              console.log('[Tables] Venue IDs in tables:', allTables.map((t: any) => ({ id: t.id, venue_id: t.venue_id, name: t.name })));
+              
+              // Try alternative filter formats
+              console.log('[Tables] Trying alternative filters...');
+              try {
+                // Try with relation syntax
+                const tablesWithRelation = await pb.collection('tables').getFullList({
+                  filter: `venue_id.id="${venueId}"`,
+                  sort: 'section,name',
+                });
+                console.log('[Tables] Found with venue_id.id filter:', tablesWithRelation.length);
+                if (tablesWithRelation.length > 0) {
+                  setTables(tablesWithRelation as any);
+                  return;
+                }
+              } catch (relError) {
+                console.log('[Tables] venue_id.id filter failed:', relError);
+              }
+              
+              // Check if any tables match by comparing venue_id values
+              const matchingTables = allTables.filter((t: any) => {
+                const tableVenueId = typeof t.venue_id === 'string' ? t.venue_id : t.venue_id?.id || t.venue_id;
+                return tableVenueId === venueId;
+              });
+              console.log('[Tables] Matching tables found:', matchingTables.length);
+              if (matchingTables.length > 0) {
+                setTables(matchingTables as any);
+                return;
+              }
+            } catch (checkError) {
+              console.error('[Tables] Failed to check all tables:', checkError);
+            }
+          }
+        } catch (tablesError: any) {
+          console.error('[Tables] Failed to load tables:', {
+            error: tablesError.message,
+            status: tablesError.status || tablesError.response?.status,
+            response: tablesError.response?.data,
+          });
+          setTables([]);
+        }
+      } else {
+        console.log('[Tables] Venue is not GA_TABLE, skipping table load');
+        setTables([]);
       }
-    } catch (error) {
-      console.error('Failed to load data:', error);
+    } catch (error: any) {
+      console.error('[Tables] Failed to load data:', {
+        error: error.message,
+        status: error.status || error.response?.status,
+      });
     } finally {
       setLoading(false);
     }
@@ -108,7 +223,7 @@ export default function VenueTablesPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   if (!venue) {
@@ -217,7 +332,10 @@ export default function VenueTablesPage() {
             {tables.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">No tables created yet.</p>
-                <Button onClick={() => setShowCreateDialog(true)}>Create Table</Button>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={() => setShowCreateDialog(true)}>Create Table</Button>
+                  <Button variant="outline" onClick={loadData}>Refresh</Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-6">
@@ -259,3 +377,4 @@ export default function VenueTablesPage() {
     </div>
   );
 }
+

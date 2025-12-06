@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/pocketbase';
 import { adminApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Loading from '@/components/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -68,7 +69,7 @@ export default function AdminTicketsPage() {
   };
 
   if (loading) {
-    return <div className="p-8">Loading tickets...</div>;
+    return <Loading />;
   }
 
   return (

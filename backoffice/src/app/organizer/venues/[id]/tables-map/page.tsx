@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Loading from '@/components/Loading';
 
 interface Table {
   id: string;
@@ -62,10 +63,53 @@ export default function TableMapEditorPage() {
       setVenue(venueData);
 
       if (venueData.layout_type === 'GA_TABLE') {
-        const tablesData = await pb.collection('tables').getFullList({
-          filter: `venue_id="${venueId}"`,
-          sort: 'section,name',
-        });
+        console.log('[TableMap] Loading tables for venue:', venueId);
+        // Try multiple filter formats to handle both string and relation venue_id
+        let tablesData: any[] = [];
+        
+        // First try: Direct venue_id match (for string IDs)
+        try {
+          tablesData = await pb.collection('tables').getFullList({
+            filter: `venue_id="${venueId}"`,
+            sort: 'section,name',
+          });
+          console.log('[TableMap] Loaded with venue_id filter:', tablesData.length);
+        } catch (filterError) {
+          console.log('[TableMap] Direct filter failed, trying relation filter');
+        }
+        
+        // If no results, try relation filter format
+        if (tablesData.length === 0) {
+          try {
+            tablesData = await pb.collection('tables').getFullList({
+              filter: `venue_id.id="${venueId}"`,
+              sort: 'section,name',
+            });
+            console.log('[TableMap] Loaded with venue_id.id filter:', tablesData.length);
+          } catch (relError) {
+            console.log('[TableMap] Relation filter also failed');
+          }
+        }
+        
+        // If still no results, get all and filter manually
+        if (tablesData.length === 0) {
+          console.log('[TableMap] No results with filters, fetching all and filtering manually...');
+          const allTables = await pb.collection('tables').getFullList({
+            sort: 'section,name',
+          });
+          console.log('[TableMap] Total tables in database:', allTables.length);
+          
+          // Filter manually by comparing venue_id values
+          tablesData = allTables.filter((t: any) => {
+            const tableVenueId = typeof t.venue_id === 'string' 
+              ? t.venue_id 
+              : (t.venue_id?.id || t.venue_id || '');
+            return tableVenueId === venueId;
+          });
+          console.log('[TableMap] Filtered tables manually:', tablesData.length);
+        }
+        
+        console.log('[TableMap] Final tables count:', tablesData.length);
         setTables(tablesData as any);
       }
     } catch (error) {
@@ -219,7 +263,7 @@ export default function TableMapEditorPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   if (!venue) {
@@ -446,3 +490,4 @@ export default function TableMapEditorPage() {
     </div>
   );
 }
+

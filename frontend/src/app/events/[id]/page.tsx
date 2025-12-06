@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { getPocketBase } from '@/lib/pocketbase';
-import { ordersApi, seatsApi, seatReservationsApi, tablesApi } from '@/lib/api';
+import { ordersApi, seatsApi, seatReservationsApi, tablesApi, tableReservationsApi } from '@/lib/api';
 import Script from 'next/script';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,7 +85,11 @@ export default function EventDetailsPage() {
   const [showSeatSelection, setShowSeatSelection] = useState<Record<string, boolean>>({});
   const [seatViewMode, setSeatViewMode] = useState<Record<string, 'list' | 'map'>>({}); // 'list' or 'map'
   const [reservedSeats, setReservedSeats] = useState<Set<string>>(new Set());
+  const [reservedTables, setReservedTables] = useState<Set<string>>(new Set());
   const [reservationTimer, setReservationTimer] = useState<NodeJS.Timeout | null>(null);
+  const [tableReservationTimer, setTableReservationTimer] = useState<NodeJS.Timeout | null>(null);
+  const [checkoutTimer, setCheckoutTimer] = useState<number | null>(null); // Time remaining in seconds
+  const checkoutTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Table selection state
   const [selectedTables, setSelectedTables] = useState<Record<string, string[]>>({}); // ticketTypeId -> tableIds[]
@@ -223,6 +227,13 @@ export default function EventDetailsPage() {
     try {
       const tablesResponse = await tablesApi.getAvailableTables(eventId);
       setAvailableTables(tablesResponse.data.tables || []);
+
+      // Load reserved tables
+      const user = getPocketBase().authStore.model;
+      if (user) {
+        const reservedResponse = await tableReservationsApi.getReserved(eventId, user.id);
+        setReservedTables(new Set((reservedResponse.data as any)?.reserved || []));
+      }
     } catch (error) {
       console.error('Failed to load tables:', error);
     }
@@ -232,22 +243,99 @@ export default function EventDetailsPage() {
     const currentTables = selectedTables[ticketTypeId] || [];
     const quantity = selectedTickets[ticketTypeId] || 0;
     const table = availableTables.find(t => t.id === tableId);
+    const user = getPocketBase().authStore.model;
 
     if (!table) return;
 
+    if (!user) {
+      alert('Please login to select tables');
+      return;
+    }
+
     if (currentTables.includes(tableId)) {
-      // Deselect table
+      // Deselect table - release reservation
+      const newTables = currentTables.filter((id) => id !== tableId);
       setSelectedTables({
         ...selectedTables,
-        [ticketTypeId]: currentTables.filter((id) => id !== tableId),
+        [ticketTypeId]: newTables,
       });
+
+      // Release reservation
+      try {
+        await tableReservationsApi.release([tableId]);
+        setReservedTables((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(tableId);
+          return newSet;
+        });
+      } catch (error) {
+        console.error('Failed to release table reservation:', error);
+      }
     } else {
       // Select table (one table per ticket type for GA_TABLE)
       if (quantity > 0) {
-        setSelectedTables({
-          ...selectedTables,
-          [ticketTypeId]: [tableId],
-        });
+        // Check if table is available
+        if (table.sold) {
+          alert('This table is already sold');
+          return;
+        }
+
+        // Check if table is reserved by another user
+        if (reservedTables.has(tableId) && !currentTables.includes(tableId)) {
+          alert('This table is currently reserved by another user. Please try another table.');
+          return;
+        }
+
+        // Reserve the table
+        try {
+          const reserveResponse = await tableReservationsApi.reserve([tableId], user.id, eventId);
+
+          // Check for conflicts
+          if (reserveResponse.data.conflicts && reserveResponse.data.conflicts.length > 0) {
+            alert(`This table was just selected by another user. Please choose a different table.`);
+            // Refresh table availability
+            await loadTables();
+            return;
+          }
+
+          if (reserveResponse.data.reserved && reserveResponse.data.reserved.includes(tableId)) {
+            setSelectedTables({
+              ...selectedTables,
+              [ticketTypeId]: [tableId], // Only one table per ticket type
+            });
+
+            setReservedTables((prev) => {
+              const newSet = new Set(prev);
+              newSet.add(tableId);
+              return newSet;
+            });
+
+            // Set timeout to release reservation after 10 minutes
+            if (tableReservationTimer) {
+              clearTimeout(tableReservationTimer);
+            }
+            setTableReservationTimer(setTimeout(() => {
+              tableReservationsApi.release([tableId]).catch(console.error);
+              setReservedTables((prev) => {
+                const newSet = new Set(prev);
+                newSet.delete(tableId);
+                return newSet;
+              });
+              alert('Your table reservation has expired. Please select a table again.');
+            }, 10 * 60 * 1000)); // 10 minutes
+          } else {
+            alert('Failed to reserve table. Please try again.');
+          }
+        } catch (error: any) {
+          console.error('Failed to reserve table:', error);
+          if (error.response?.data?.conflicts) {
+            alert('This table was just selected by another user. Please choose a different table.');
+          } else {
+            alert(`Error: ${error.message || 'Failed to reserve table'}`);
+          }
+          // Refresh table availability
+          await loadTables();
+        }
       } else {
         alert('Please select ticket quantity first');
       }
@@ -348,11 +436,37 @@ export default function EventDetailsPage() {
     return () => clearInterval(interval);
   }, [isSeated, eventId]);
 
+  // Periodically refresh table reservations for GA_TABLE events
+  useEffect(() => {
+    if (!isGATable || !eventId) return;
+
+    const user = getPocketBase().authStore.model;
+    if (!user) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const reservedResponse = await tableReservationsApi.getReserved(eventId, user.id);
+        setReservedTables(new Set((reservedResponse.data as any)?.reserved || []));
+      } catch (error) {
+        console.error('Failed to refresh reserved tables:', error);
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isGATable, eventId]);
+
   // Cleanup reservations on unmount or page navigation
   useEffect(() => {
     return () => {
       if (reservationTimeoutRef.current) {
         clearTimeout(reservationTimeoutRef.current);
+      }
+      if (tableReservationTimer) {
+        clearTimeout(tableReservationTimer);
+      }
+      if (checkoutTimerIntervalRef.current) {
+        clearInterval(checkoutTimerIntervalRef.current);
+        checkoutTimerIntervalRef.current = null;
       }
 
       // Release all reservations when component unmounts
@@ -360,8 +474,81 @@ export default function EventDetailsPage() {
       if (allSelectedSeatIds.length > 0) {
         seatReservationsApi.release(allSelectedSeatIds).catch(console.error);
       }
+
+      const allSelectedTableIds = Object.values(selectedTables).flat();
+      if (allSelectedTableIds.length > 0) {
+        tableReservationsApi.release(allSelectedTableIds).catch(console.error);
+      }
     };
-  }, [selectedSeats]);
+  }, [selectedSeats, selectedTables, tableReservationTimer]);
+
+  const handleCheckoutTimerExpiry = useCallback(async () => {
+    const allSelectedTableIds = Object.values(selectedTables).flat();
+    if (allSelectedTableIds.length > 0) {
+      alert('⏱️ Your table reservation has expired (5 minutes). Please select a table again to proceed with checkout.');
+      
+      // Release table reservations
+      try {
+        await tableReservationsApi.release(allSelectedTableIds);
+        setReservedTables((prev) => {
+          const newSet = new Set(prev);
+          allSelectedTableIds.forEach((id) => newSet.delete(id));
+          return newSet;
+        });
+        setSelectedTables({});
+      } catch (error) {
+        console.error('Failed to release table reservations:', error);
+      }
+    }
+  }, [selectedTables]);
+
+  // Start checkout timer when tables are selected and user is ready for checkout
+  useEffect(() => {
+    if (isGATable) {
+      const allSelectedTableIds = Object.values(selectedTables).flat();
+      const hasRequiredDetails = attendeeDetails.name && attendeeDetails.email && attendeeDetails.phone;
+      
+      // Start timer when tables are selected and user has filled in details (ready for checkout)
+      if (allSelectedTableIds.length > 0 && hasRequiredDetails && checkoutTimer === null) {
+        // Start 5-minute (300 seconds) checkout timer
+        setCheckoutTimer(300);
+        
+        // Clear any existing interval
+        if (checkoutTimerIntervalRef.current) {
+          clearInterval(checkoutTimerIntervalRef.current);
+        }
+        
+        const interval = setInterval(() => {
+          setCheckoutTimer((prev) => {
+            if (prev === null || prev <= 1) {
+              clearInterval(interval);
+              checkoutTimerIntervalRef.current = null;
+              // Timer expired - release tables
+              handleCheckoutTimerExpiry();
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
+        checkoutTimerIntervalRef.current = interval;
+      } else if ((allSelectedTableIds.length === 0 || !hasRequiredDetails) && checkoutTimer !== null) {
+        // No tables selected or details missing - clear timer
+        if (checkoutTimerIntervalRef.current) {
+          clearInterval(checkoutTimerIntervalRef.current);
+          checkoutTimerIntervalRef.current = null;
+        }
+        setCheckoutTimer(null);
+      }
+    }
+    
+    return () => {
+      if (checkoutTimerIntervalRef.current) {
+        clearInterval(checkoutTimerIntervalRef.current);
+        checkoutTimerIntervalRef.current = null;
+      }
+    };
+  }, [selectedTables, isGATable, attendeeDetails.name, attendeeDetails.email, attendeeDetails.phone, handleCheckoutTimerExpiry, checkoutTimer]);
 
   async function handleCheckout() {
     const pb = getPocketBase();
@@ -373,6 +560,13 @@ export default function EventDetailsPage() {
       }
       return;
     }
+
+    // Clear checkout timer when checkout starts
+    if (checkoutTimerIntervalRef.current) {
+      clearInterval(checkoutTimerIntervalRef.current);
+      checkoutTimerIntervalRef.current = null;
+    }
+    setCheckoutTimer(null);
 
     // Validate seat selection for seated events
     if (isSeated) {
@@ -404,6 +598,34 @@ export default function EventDetailsPage() {
           }
         } catch (error) {
           console.error('Failed to check seat availability:', error);
+        }
+      }
+    }
+
+    // Validate table selection for GA_TABLE events
+    if (isGATable) {
+      for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
+        if (quantity > 0) {
+          const selectedTableIds = selectedTables[ticketTypeId] || [];
+          if (selectedTableIds.length === 0) {
+            alert(`Please select a table for ${ticketTypes.find(tt => tt.id === ticketTypeId)?.name || 'this ticket type'}`);
+            return;
+          }
+        }
+      }
+
+      // Ensure all selected tables are still available
+      const allSelectedTableIds = Object.values(selectedTables).flat();
+      if (allSelectedTableIds.length > 0) {
+        try {
+          const checkResponse = await tableReservationsApi.check(allSelectedTableIds, eventId, user.id);
+          if (checkResponse.data.unavailable && checkResponse.data.unavailable.length > 0) {
+            alert('Some of your selected tables are no longer available. Please select different tables.');
+            await loadTables();
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to check table availability:', error);
         }
       }
     }
@@ -481,10 +703,29 @@ export default function EventDetailsPage() {
                 try {
                   await seatReservationsApi.release(allSelectedSeatIds);
                 } catch (error) {
-                  console.error('Failed to release reservations:', error);
+                  console.error('Failed to release seat reservations:', error);
                 }
               }
             }
+
+            // Release table reservations (they're now confirmed as tickets)
+            if (isGATable) {
+              const allSelectedTableIds = Object.values(selectedTables).flat();
+              if (allSelectedTableIds.length > 0) {
+                try {
+                  await tableReservationsApi.release(allSelectedTableIds);
+                } catch (error) {
+                  console.error('Failed to release table reservations:', error);
+                }
+              }
+            }
+
+            // Clear checkout timer
+            if (checkoutTimerIntervalRef.current) {
+              clearInterval(checkoutTimerIntervalRef.current);
+              checkoutTimerIntervalRef.current = null;
+            }
+            setCheckoutTimer(null);
 
             alert('Payment successful! Check your email for tickets with QR codes.');
             window.location.href = '/my-tickets';
@@ -526,6 +767,31 @@ export default function EventDetailsPage() {
           }
         }
       }
+
+      // Release table reservations on checkout failure
+      if (isGATable) {
+        const allSelectedTableIds = Object.values(selectedTables).flat();
+        if (allSelectedTableIds.length > 0) {
+          try {
+            await tableReservationsApi.release(allSelectedTableIds);
+            setReservedTables((prev) => {
+              const newSet = new Set(prev);
+              allSelectedTableIds.forEach((id) => newSet.delete(id));
+              return newSet;
+            });
+            setSelectedTables({});
+          } catch (releaseError) {
+            console.error('Failed to release table reservations:', releaseError);
+          }
+        }
+      }
+
+      // Clear checkout timer
+      if (checkoutTimerIntervalRef.current) {
+        clearInterval(checkoutTimerIntervalRef.current);
+        checkoutTimerIntervalRef.current = null;
+      }
+      setCheckoutTimer(null);
 
       alert(error.response?.data?.error || error.message || 'Checkout failed');
     }
@@ -907,7 +1173,8 @@ export default function EventDetailsPage() {
                                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                     {availableTables.map((table) => {
                                       const isSelected = (selectedTables[tt.id] || []).includes(table.id);
-                                      const isUnavailable = !table.available || table.sold;
+                                      const isReserved = reservedTables.has(table.id) && !isSelected;
+                                      const isUnavailable = !table.available || table.sold || isReserved;
 
                                       return (
                                         <button
@@ -917,16 +1184,20 @@ export default function EventDetailsPage() {
                                           className={`px-3 py-2 text-sm rounded border-2 ${
                                             isSelected
                                               ? 'bg-purple-600 text-white border-purple-700'
-                                              : isUnavailable
-                                                ? 'bg-red-100 text-gray-400 border-red-300 cursor-not-allowed'
-                                                : 'bg-white hover:bg-purple-50 border-purple-300 text-gray-700'
+                                              : isReserved
+                                                ? 'bg-yellow-100 text-yellow-800 border-yellow-300 cursor-not-allowed'
+                                                : isUnavailable
+                                                  ? 'bg-red-100 text-gray-400 border-red-300 cursor-not-allowed'
+                                                  : 'bg-white hover:bg-purple-50 border-purple-300 text-gray-700'
                                           }`}
                                           title={
                                             isSelected
                                               ? `Selected: ${table.name} (Capacity: ${table.capacity})`
-                                              : isUnavailable
-                                                ? 'Sold/Unavailable'
-                                                : `${table.name} - Capacity: ${table.capacity} ${table.capacity === 1 ? 'person' : 'people'}${table.section ? ` (${table.section})` : ''}`
+                                              : isReserved
+                                                ? `Reserved by another user: ${table.name} (Capacity: ${table.capacity})`
+                                                : table.sold
+                                                  ? 'Sold'
+                                                  : `${table.name} - Capacity: ${table.capacity} ${table.capacity === 1 ? 'person' : 'people'}${table.section ? ` (${table.section})` : ''}`
                                           }
                                         >
                                           <div className="text-center">
@@ -935,6 +1206,7 @@ export default function EventDetailsPage() {
                                             {table.section && (
                                               <div className="text-xs text-gray-500">{table.section}</div>
                                             )}
+                                            {isReserved && <span className="text-xs mt-1 block">⏱️ Reserved</span>}
                                           </div>
                                         </button>
                                       );
@@ -1036,9 +1308,42 @@ export default function EventDetailsPage() {
                   Please fill in all attendee details above
                 </p>
               )}
+
+              {/* Checkout Timer for GA_TABLE events */}
+              {isGATable && checkoutTimer !== null && checkoutTimer > 0 && (
+                <div className={`mb-3 p-3 rounded-lg border-2 ${
+                  checkoutTimer <= 60 
+                    ? 'bg-red-50 border-red-300' 
+                    : checkoutTimer <= 120 
+                      ? 'bg-yellow-50 border-yellow-300' 
+                      : 'bg-blue-50 border-blue-300'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">⏱️</span>
+                      <span className={`font-semibold ${
+                        checkoutTimer <= 60 
+                          ? 'text-red-700' 
+                          : checkoutTimer <= 120 
+                            ? 'text-yellow-700' 
+                            : 'text-blue-700'
+                      }`}>
+                        Complete checkout in: {Math.floor(checkoutTimer / 60)}:{(checkoutTimer % 60).toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                    {checkoutTimer <= 60 && (
+                      <span className="text-xs text-red-600 font-medium">⚠️ Hurry!</span>
+                    )}
+                  </div>
+                  <p className="text-xs mt-1 text-gray-600">
+                    Your table reservation will expire if checkout is not completed in time.
+                  </p>
+                </div>
+              )}
+
               <button
                 onClick={handleCheckout}
-                disabled={!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone}
+                disabled={!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone || (isGATable && checkoutTimer === 0)}
                 className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-base hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
               >
                 {paymentMethod === 'cash' ? 'Create Order (Pay at Venue)' : 'Proceed to Checkout'}

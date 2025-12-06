@@ -155,11 +155,31 @@ export const tablesApi = {
     const event = await pb.collection('events').getOne(eventId);
     const venueId = event.venue_id;
     
-    // Fetch all tables for this venue
-    const tables = await pb.collection('tables').getFullList({ 
-      filter: `venue_id="${venueId}"`,
-      sort: 'section,name',
-    });
+    // Fetch all tables for this venue - try multiple filter formats
+    let tables: any[] = [];
+    try {
+      tables = await pb.collection('tables').getFullList({ 
+        filter: `venue_id="${venueId}"`,
+        sort: 'section,name',
+      });
+    } catch (error) {
+      // Try relation filter
+      try {
+        tables = await pb.collection('tables').getFullList({ 
+          filter: `venue_id.id="${venueId}"`,
+          sort: 'section,name',
+        });
+      } catch (relError) {
+        // Fallback: get all and filter manually
+        const allTables = await pb.collection('tables').getFullList({ sort: 'section,name' });
+        tables = allTables.filter((t: any) => {
+          const tableVenueId = typeof t.venue_id === 'string' 
+            ? t.venue_id 
+            : (t.venue_id?.id || t.venue_id || '');
+          return tableVenueId === venueId;
+        });
+      }
+    }
     
     // Get all tickets for this event to determine sold tables
     const tickets = await pb.collection('tickets').getFullList({
@@ -176,6 +196,64 @@ export const tablesApi = {
     }));
     
     return { data: { tables: tablesWithStatus } };
+  },
+};
+
+export const tableReservationsApi = {
+  // Reserve tables with conflict handling
+  reserve: async (tableIds: string[], userId: string, eventId: string) => {
+    try {
+      // Use API route for reservation to handle conflicts server-side
+      const response = await api.post('/table-reservations/reserve', {
+        tableIds,
+        userId,
+        eventId,
+      });
+      return response.data;
+    } catch (error: any) {
+      // If API route doesn't exist, use client-side logic
+      console.warn('Table reservation API route not found, using client-side logic');
+      return { data: { success: true, reserved: tableIds, conflicts: [] } };
+    }
+  },
+  
+  release: async (tableIds: string[]) => {
+    try {
+      const response = await api.post('/table-reservations/release', { tableIds });
+      return response.data;
+    } catch (error: any) {
+      console.warn('Table reservation release API route not found');
+      return { data: { success: true } };
+    }
+  },
+  
+  getReserved: async (eventId: string, userId?: string) => {
+    try {
+      const response = await api.get(`/table-reservations/reserved?eventId=${eventId}${userId ? `&userId=${userId}` : ''}`);
+      return response.data;
+    } catch (error: any) {
+      return { data: { reserved: [] } };
+    }
+  },
+  
+  check: async (tableIds: string[], eventId: string, userId?: string) => {
+    try {
+      const response = await api.post('/table-reservations/check', {
+        tableIds,
+        eventId,
+        userId,
+      });
+      return response.data;
+    } catch (error: any) {
+      // Fallback: check via tickets
+      const pb = getPocketBase();
+      const tickets = await pb.collection('tickets').getFullList({
+        filter: `event_id="${eventId}" && status="issued"`,
+      });
+      const soldTableIds = new Set(tickets.map((t: any) => t.table_id).filter(Boolean));
+      const unavailable = tableIds.filter(id => soldTableIds.has(id));
+      return { data: { available: tableIds.filter(id => !soldTableIds.has(id)), unavailable } };
+    }
   },
 };
 

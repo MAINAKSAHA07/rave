@@ -58,9 +58,13 @@ export async function GET(
     if (token) {
       try {
         pb.authStore.save(token, null);
-      } catch {
+        console.log(`[Proxy] Auth token set for request to ${path}`);
+      } catch (e) {
         // If token is invalid, continue without auth
+        console.warn(`[Proxy] Invalid token, continuing as guest:`, e);
       }
+    } else {
+      console.log(`[Proxy] No auth token provided for request to ${path}`);
     }
 
     // Parse the path to determine collection and action
@@ -113,14 +117,42 @@ export async function GET(
             options.expand = expandParam.split(',');
           }
 
-          const result = await pb.collection(collectionName).getFullList(options);
-          return NextResponse.json({
-            items: result,
-            totalItems: result.length,
-            page: 1,
-            perPage: result.length,
-            totalPages: 1,
-          });
+          try {
+            console.log(`[Proxy] getFullList for ${collectionName}`, { 
+              filter: options.filter, 
+              sort: options.sort,
+              expand: options.expand,
+              hasAuth: !!token,
+            });
+            const result = await pb.collection(collectionName).getFullList(options);
+            console.log(`[Proxy] getFullList success for ${collectionName}: ${result.length} items`);
+            return NextResponse.json({
+              items: result,
+              totalItems: result.length,
+              page: 1,
+              perPage: result.length,
+              totalPages: 1,
+            });
+          } catch (error: any) {
+            console.error(`[Proxy] getFullList error for ${collectionName}:`, {
+              message: error.message,
+              status: error.status || error.response?.status,
+              data: error.response?.data,
+              filter: options.filter,
+            });
+            // Return empty array instead of error to prevent UI crashes
+            return NextResponse.json(
+              { 
+                error: error.message || 'Request failed', 
+                items: [], 
+                totalItems: 0, 
+                page: 1, 
+                perPage: 0, 
+                totalPages: 1 
+              },
+              { status: error.status || 500 }
+            );
+          }
         }
       } else if (pathParts.length === 5 && pathParts[3] === 'records') {
         // Get single record: api/collections/{collection}/records/{id}

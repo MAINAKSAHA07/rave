@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCurrentUser, getPocketBase } from '@/lib/pocketbase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Loading from '@/components/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -112,11 +113,11 @@ export default function AdminRefundsPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <div className="min-h-screen p-4 md:p-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>

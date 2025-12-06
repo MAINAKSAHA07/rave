@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import Loading from '@/components/Loading';
 
 export default function EventRemindersPage() {
   const params = useParams();
@@ -143,7 +144,7 @@ export default function EventRemindersPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   if (!event) {
@@ -153,7 +154,7 @@ export default function EventRemindersPage() {
   const eventStart = new Date(event.start_date);
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <div className="min-h-screen p-4 md:p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>

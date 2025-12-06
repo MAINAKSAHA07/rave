@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
+import Loading from '@/components/Loading';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Event name is required'),
@@ -236,11 +237,11 @@ export default function EditEventPage() {
   }
 
   if (!event) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <div className="min-h-screen p-4 md:p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>

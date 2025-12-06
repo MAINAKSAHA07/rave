@@ -2,6 +2,8 @@
   "name": "rave-backoffice",
   "version": "1.0.0",
   "private": true,
+  "author": "mainak saha",
+  "developer": "mainak saha",
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",

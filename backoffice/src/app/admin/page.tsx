@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutDashboard, Users, Calendar, Receipt, BarChart3 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Loading from '@/components/Loading';
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
@@ -172,11 +173,11 @@ export default function AdminPage() {
   }
 
   if (!user) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   return (
-    <div className="min-h-screen p-8 space-y-8">
+    <div className="min-h-screen p-4 md:p-8 space-y-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">Admin Console</h1>
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/pocketbase';
 import { adminApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Loading from '@/components/Loading';
 
 export default function AdminStatsPage() {
   const [stats, setStats] = useState<any>(null);
@@ -31,7 +32,7 @@ export default function AdminStatsPage() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading stats...</div>;
+    return <Loading />;
   }
 
   if (!stats) {
@@ -46,7 +47,7 @@ export default function AdminStatsPage() {
   };
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">Platform Statistics</h1>
 

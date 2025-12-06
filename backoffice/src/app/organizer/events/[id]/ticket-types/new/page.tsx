@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
+import Loading from '@/components/Loading';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Ticket type name is required'),
@@ -137,7 +138,7 @@ export default function CreateTicketTypePage() {
   }
 
   if (!event) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   // Calculate preview values
@@ -147,7 +148,7 @@ export default function CreateTicketTypePage() {
   const finalPrice = basePrice + gstAmount;
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <div className="min-h-screen p-4 md:p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>

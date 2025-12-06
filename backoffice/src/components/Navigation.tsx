@@ -1,4 +1,5 @@
 'use client';
+// Developed by mainak saha
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -36,8 +37,7 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Powerglide" className="h-8 w-auto" />
-              <span className="text-xl font-bold">Powerglide Backoffice</span>
+              <img src="/Powerglide_final-logo.png" alt="Powerglide" className="h-8 w-auto" />
             </Link>
             <div className="flex space-x-4">
               {(user?.backoffice_access || user?.role === 'admin' || user?.role === 'super_admin') && (

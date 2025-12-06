@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/pocketbase';
 import { adminApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Loading from '@/components/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -70,7 +71,7 @@ export default function AdminOrdersPage() {
   };
 
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   const totalRevenue = filteredOrders
@@ -78,7 +79,7 @@ export default function AdminOrdersPage() {
     .reduce((sum, o) => sum + (o.total_amount_minor || 0), 0);
 
   return (
-    <div className="min-h-screen p-8 space-y-8">
+    <div className="min-h-screen p-4 md:p-8 space-y-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>

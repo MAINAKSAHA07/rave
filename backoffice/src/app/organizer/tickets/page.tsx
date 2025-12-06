@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Loading from '@/components/Loading';
 
 export default function OrganizerTicketsPage() {
   const [user, setUser] = useState<any>(null);
@@ -131,11 +132,11 @@ export default function OrganizerTicketsPage() {
   };
 
   if (loading) {
-    return <div className="p-8">Loading tickets...</div>;
+    return <Loading />;
   }
 
   return (
-    <div className="min-h-screen p-8 space-y-8">
+    <div className="min-h-screen p-4 md:p-8 space-y-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>

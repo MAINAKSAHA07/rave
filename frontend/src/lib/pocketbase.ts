@@ -1,3 +1,4 @@
+// Developed by mainak saha
 import PocketBase from 'pocketbase';
 
 function getPocketBaseUrl(): string {

@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
+import Loading from '@/components/Loading';
 
 const venueFormSchema = z.object({
   name: z.string().min(1, 'Venue name is required'),
@@ -30,6 +31,7 @@ export default function CreateVenuePage() {
   const [organizer, setOrganizer] = useState<any>(null);
   const [organizers, setOrganizers] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [layoutImage, setLayoutImage] = useState<File | null>(null);
 
   const form = useForm<z.infer<typeof venueFormSchema>>({
     resolver: zodResolver(venueFormSchema),
@@ -117,19 +119,37 @@ export default function CreateVenuePage() {
         organizerId = staff.organizer_id;
       }
 
-      const record = await pb.collection('venues').create({
-        organizer_id: organizerId,
-        name: values.name,
-        address: values.address,
-        city: values.city,
-        state: values.state,
-        pincode: values.pincode,
-        capacity: parseInt(values.capacity),
-        layout_type: values.layout_type,
-      });
+      // Create FormData if we have a layout image, otherwise use regular object
+      if (layoutImage) {
+        const formData = new FormData();
+        formData.append('organizer_id', organizerId);
+        formData.append('name', values.name);
+        formData.append('address', values.address);
+        formData.append('city', values.city);
+        formData.append('state', values.state);
+        formData.append('pincode', values.pincode);
+        formData.append('capacity', values.capacity);
+        formData.append('layout_type', values.layout_type);
+        formData.append('layout_image', layoutImage);
+        
+        const record = await pb.collection('venues').create(formData);
+        alert('Venue created successfully!');
+        router.push(`/organizer/venues/${record.id}`);
+      } else {
+        const record = await pb.collection('venues').create({
+          organizer_id: organizerId,
+          name: values.name,
+          address: values.address,
+          city: values.city,
+          state: values.state,
+          pincode: values.pincode,
+          capacity: parseInt(values.capacity),
+          layout_type: values.layout_type,
+        });
+        alert('Venue created successfully!');
+        router.push(`/organizer/venues/${record.id}`);
+      }
 
-      alert('Venue created successfully!');
-      router.push(`/organizer/venues/${record.id}`);
     } catch (error: any) {
       console.error('Failed to create venue:', error);
       alert(`Error: ${error.message || 'Failed to create venue'}`);
@@ -139,11 +159,11 @@ export default function CreateVenuePage() {
   }
 
   if (!isAdmin && !organizer) {
-    return <div className="p-8">Loading...</div>;
+    return <Loading />;
   }
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <div className="min-h-screen p-4 md:p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-4xl font-bold">Create New Venue</h1>
@@ -268,7 +288,7 @@ export default function CreateVenuePage() {
                   <Label htmlFor="layout_type">Layout Type *</Label>
                   <Select
                     value={form.watch('layout_type')}
-                    onValueChange={(value) => form.setValue('layout_type', value as 'GA' | 'SEATED')}
+                    onValueChange={(value) => form.setValue('layout_type', value as 'GA' | 'SEATED' | 'GA_TABLE')}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select layout type" />
@@ -283,6 +303,27 @@ export default function CreateVenuePage() {
                     <p className="text-sm text-red-600">{form.formState.errors.layout_type.message}</p>
                   )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="layout_image">Layout Image (Optional)</Label>
+                <Input
+                  id="layout_image"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setLayoutImage(file);
+                  }}
+                />
+                <p className="text-sm text-gray-500">
+                  Upload a floor plan or layout image for this venue (max 10MB, JPEG/PNG/WebP)
+                </p>
+                {layoutImage && (
+                  <div className="mt-2">
+                    <p className="text-sm text-green-600">Selected: {layoutImage.name}</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-4">

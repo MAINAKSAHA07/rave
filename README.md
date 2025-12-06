@@ -2,6 +2,8 @@
 
 A modern event ticketing platform for India with multi-currency support, built with PocketBase, Node.js, and Next.js.
 
+<!-- Developed by mainak saha -->
+
 ## Architecture
 
 - **Backend Database & Auth**: PocketBase (Port 8092)

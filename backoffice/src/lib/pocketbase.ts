@@ -1,3 +1,4 @@
+// Developed by mainak saha
 import PocketBase from 'pocketbase';
 
 function getPocketBaseUrl(): string {
@@ -156,21 +157,41 @@ class ProxyPocketBase {
         // Get all items by making multiple requests if needed
         const params = new URLSearchParams({
           perPage: '500',
-          ...(options.filter && { filter: options.filter }),
-          ...(options.sort && { sort: options.sort }),
-          ...(options.expand && { expand: options.expand }),
         });
+        if (options.filter) params.set('filter', options.filter);
+        if (options.sort) params.set('sort', options.sort);
+        if (options.expand) {
+          const expandValue = Array.isArray(options.expand) 
+            ? options.expand.join(',') 
+            : options.expand;
+          if (expandValue) params.set('expand', expandValue);
+        }
 
-        const response = await fetch(`/api/pocketbase/api/collections/${name}?${params}`, {
-          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
-        });
+        const makeRequest = async (token: string | null) => {
+          return fetch(`/api/pocketbase/api/collections/${name}?${params}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+        };
+
+        let response = await makeRequest(this.token);
+
+        if (response.status === 401 && this.token) {
+          // Token invalid/expired - clear it and retry as guest
+          this.authStore.clear();
+          response = await makeRequest(null);
+        }
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.message || 'Request failed');
+          console.error(`[PocketBase] getFullList error for ${name}:`, error);
+          throw new Error(error.message || error.error || 'Request failed');
         }
 
         const data = await response.json();
+        // Handle both direct array response and paginated response
+        if (Array.isArray(data)) {
+          return data;
+        }
         return data.items || [];
       },
       getOne: async (id: string, options: any = {}) => {
