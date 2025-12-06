@@ -60,6 +60,13 @@ export default function TableMapEditorPage() {
 
       const pb = getPocketBase();
       const venueData = await pb.collection('venues').getOne(venueId);
+      console.log('[TableMap] Venue data loaded:', {
+        id: venueData.id,
+        name: venueData.name,
+        layout_image: venueData.layout_image,
+        layout_image_type: typeof venueData.layout_image,
+        layout_image_is_array: Array.isArray(venueData.layout_image),
+      });
       setVenue(venueData);
 
       if (venueData.layout_type === 'GA_TABLE') {
@@ -336,6 +343,17 @@ export default function TableMapEditorPage() {
                       src={getPocketBaseFileUrl(venue, venue.layout_image)}
                       alt="Floor Plan"
                       className="max-h-48 object-contain"
+                      onError={(e) => {
+                        console.error('[TableMap] Failed to load floor plan image:', {
+                          layout_image: venue.layout_image,
+                          venue_id: venue.id,
+                          venue_record: venue,
+                          error: e,
+                        });
+                      }}
+                      onLoad={() => {
+                        console.log('[TableMap] Floor plan image loaded successfully');
+                      }}
                     />
                   </div>
                   <Button
@@ -402,6 +420,17 @@ export default function TableMapEditorPage() {
                   alt="Floor Plan Background"
                   className="absolute inset-0 w-full h-full object-contain z-0"
                   style={{ opacity: 0.3 }}
+                  onError={(e) => {
+                    console.error('[TableMap] Failed to load floor plan background image:', {
+                      layout_image: venue.layout_image,
+                      venue_id: venue.id,
+                      venue_record: venue,
+                      error: e,
+                    });
+                  }}
+                  onLoad={() => {
+                    console.log('[TableMap] Floor plan background image loaded successfully');
+                  }}
                 />
               )}
               

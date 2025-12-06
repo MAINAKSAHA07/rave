@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Loading from '@/components/Loading';
 
 interface Seat {
   id: string;
@@ -61,6 +60,13 @@ export default function SeatMapEditorPage() {
 
       const pb = getPocketBase();
       const venueData = await pb.collection('venues').getOne(venueId);
+      console.log('[SeatMap] Venue data loaded:', {
+        id: venueData.id,
+        name: venueData.name,
+        layout_image: venueData.layout_image,
+        layout_image_type: typeof venueData.layout_image,
+        layout_image_is_array: Array.isArray(venueData.layout_image),
+      });
       setVenue(venueData);
 
       if (venueData.layout_type === 'SEATED') {
@@ -236,7 +242,7 @@ export default function SeatMapEditorPage() {
   }
 
   if (loading) {
-    return <Loading />;
+    return <div className="p-8">Loading...</div>;
   }
 
   if (!venue) {
@@ -270,7 +276,7 @@ export default function SeatMapEditorPage() {
   });
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-gray-50">
+    <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -308,6 +314,17 @@ export default function SeatMapEditorPage() {
                       src={getPocketBaseFileUrl(venue, venue.layout_image)}
                       alt="Floor Plan"
                       className="max-h-48 object-contain"
+                      onError={(e) => {
+                        console.error('[SeatMap] Failed to load floor plan image:', {
+                          layout_image: venue.layout_image,
+                          venue_id: venue.id,
+                          venue_record: venue,
+                          error: e,
+                        });
+                      }}
+                      onLoad={() => {
+                        console.log('[SeatMap] Floor plan image loaded successfully');
+                      }}
                     />
                   </div>
                   <Button
@@ -374,6 +391,17 @@ export default function SeatMapEditorPage() {
                   alt="Floor Plan Background"
                   className="absolute inset-0 w-full h-full object-contain z-0"
                   style={{ opacity: 0.3 }}
+                  onError={(e) => {
+                    console.error('[SeatMap] Failed to load floor plan background image:', {
+                      layout_image: venue.layout_image,
+                      venue_id: venue.id,
+                      venue_record: venue,
+                      error: e,
+                    });
+                  }}
+                  onLoad={() => {
+                    console.log('[SeatMap] Floor plan background image loaded successfully');
+                  }}
                 />
               )}
               
