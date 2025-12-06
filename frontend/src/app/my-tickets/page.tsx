@@ -25,6 +25,7 @@ interface Order {
   total_amount_minor: number;
   currency: string;
   event_id: string;
+  payment_method?: string;
 }
 
 export default function MyTicketsPage() {
@@ -95,9 +96,7 @@ export default function MyTicketsPage() {
     const frontendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:3000';
     const qrUrl = `${frontendUrl}/t/${ticket.ticket_code}`;
     
-    // Only show QR code for issued or checked_in tickets
-    const showQrCode = ticket.status === 'issued' || ticket.status === 'checked_in';
-    const isPending = ticket.status === 'pending';
+    // Note: At this point, ticket.status is guaranteed to be 'issued' or 'checked_in' due to early return above
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -146,33 +145,19 @@ export default function MyTicketsPage() {
                 <span class="value">${event?.venue_id?.name || 'Venue TBD'}, ${event?.city || ''}</span>
               </div>
             </div>
-            ${showQrCode ? `
             <div class="qr-code">
               <p>Scan this QR code or show this ticket at the event</p>
               <div id="qr"></div>
             </div>
-            ` : isPending ? `
-            <div class="pending-notice">
-              <p class="pending-title">⏳ Payment Pending</p>
-              <p class="pending-text">Your ticket will be issued once payment is confirmed. The QR code will be available after payment processing.</p>
-            </div>
-            ` : `
-            <div class="pending-notice" style="background: #f3f4f6; border-color: #9ca3af;">
-              <p class="pending-title" style="color: #374151;">Ticket Status: ${ticket.status.toUpperCase().replace('_', ' ')}</p>
-              <p class="pending-text" style="color: #6b7280;">QR code is only available for issued tickets.</p>
-            </div>
-            `}
             <div style="text-align: center; margin-top: 20px;">
               <p><strong>Ticket ID: ${ticket.ticket_code}</strong></p>
               <p>Order #${order?.order_number || 'N/A'}</p>
             </div>
           </div>
           <script>
-            ${showQrCode ? `
             // Generate QR code for issued tickets
             // Note: QR code generation would need to be handled by a library
             // For now, we'll show a placeholder or use the URL
-            ` : ''}
             window.onload = function() {
               window.print();
             };
