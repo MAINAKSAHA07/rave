@@ -185,16 +185,6 @@ export default function EventDetailsPage() {
           await loadTables();
         }
       }
-
-      // Load user details for attendee form
-      const user = pb.authStore.model;
-      if (user) {
-        setAttendeeDetails({
-          name: user.name || '',
-          email: user.email || '',
-          phone: user.phone || '',
-        });
-      }
     } catch (error) {
       console.error('Failed to load event:', error);
     } finally {
@@ -539,6 +529,11 @@ export default function EventDetailsPage() {
   }, [selectedSeats, selectedTables, tableReservationTimer]);
 
   async function handleAddToCart(ticketTypeId: string) {
+    if (!event) {
+      notifyError('Event not loaded');
+      return;
+    }
+
     const quantity = selectedTickets[ticketTypeId] || 0;
     if (quantity === 0) {
       notifyError('Please select at least one ticket');
