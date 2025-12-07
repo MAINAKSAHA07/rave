@@ -212,7 +212,12 @@ export default function MyTicketsPage() {
   const frontendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:3000';
 
   return (
-    <div className="min-h-screen pb-20">
+    <div 
+      className="min-h-screen pb-20"
+      style={{
+        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+      }}
+    >
       <div className="max-w-[428px] mx-auto min-h-screen">
         {/* Header */}
         <div className="sticky top-0 z-10 backdrop-blur-md bg-black/30 border-b border-white/10 p-4 flex items-center gap-4">

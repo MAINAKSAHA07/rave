@@ -233,7 +233,12 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <>
-        <div className="min-h-screen pb-20">
+        <div 
+          className="min-h-screen pb-20"
+          style={{
+            background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+          }}
+        >
           <div className="max-w-[428px] mx-auto min-h-screen">
             <div className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10 p-4">
               <h1 className="text-2xl font-bold text-white">Cart</h1>
@@ -259,7 +264,12 @@ export default function CartPage() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="min-h-screen pb-20">
+      <div 
+        className="min-h-screen pb-20"
+        style={{
+          background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+        }}
+      >
         <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Header */}
           <div className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10 p-4">

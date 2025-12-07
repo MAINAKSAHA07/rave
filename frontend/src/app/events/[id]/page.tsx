@@ -713,7 +713,7 @@ export default function EventDetailsPage() {
 
   return (
     <>
-      <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #000000 0%, #111111 100%)' }}>
+      <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)' }}>
         <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Event Images Section - Cover + Gallery */}
           {images.length > 0 && (
@@ -728,7 +728,7 @@ export default function EventDetailsPage() {
           <div 
             className="sticky top-0 z-20 px-4 pt-4 pb-2"
             style={{ 
-              background: 'linear-gradient(180deg, #050505 0%, #101010 100%)',
+              background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
             }}
           >
             <div className="flex items-center justify-between">
