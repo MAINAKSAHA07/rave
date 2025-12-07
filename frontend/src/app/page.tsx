@@ -253,18 +253,14 @@ export default function HomePage() {
         <BrandReveal />
       </div>
       {/* Main Content */}
-      <div className={`min-h-screen transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`} style={{ background: '#0C0C0C' }}>
+      <div className={`min-h-screen transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`} style={{ 
+        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)'
+      }}>
         <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Top Header Bar */}
           <div className="sticky top-0 z-50">
-            <div
-              className="max-w-[428px] mx-auto border-b border-white/10 shadow-lg px-4 py-2 transition-[background-position] duration-600 ease-in-out hover:bg-right"
-              style={{
-                background: 'linear-gradient(90deg, #13161D, #1E222B, #13161D)',
-                backgroundSize: '200% 100%',
-              }}
-            >
-              <div className="flex justify-between items-center h-12 gap-3">
+            <div className="max-w-[428px] mx-auto glass-shimmer px-4 py-2" style={{ borderRadius: '0 0 20px 20px' }}>
+              <div className="flex justify-between items-center h-12 gap-3 relative z-10">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
                     <img src="/navbar_logo.png" alt="PG" className="h-6 w-auto object-contain" />
@@ -351,20 +347,69 @@ export default function HomePage() {
 
           {/* Welcome Banner */}
           <div
-            className="relative p-6 rounded-[28px] mb-6 mx-4"
+            className="glass-card-shimmer relative mb-6 mx-4"
             style={{
-              background: 'linear-gradient(160deg, #52C4A3 0%, #6AD3B8 100%)',
-              boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.1), 0 6px 16px rgba(0,0,0,0.12)',
+              background: 'linear-gradient(135deg, #1E4C55 0%, #4ABBB0 50%, #1E4C55 100%)',
+              padding: '28px',
             }}
           >
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start relative z-10">
               <div>
-                <p className="text-white/90 text-sm mb-2 leading-relaxed" style={{ fontSize: '14px' }}>Welcome back</p>
-                <h1 className="text-white font-bold leading-tight mb-2" style={{ fontSize: '26px' }}>Hero</h1>
-                <p className="text-white/90 text-sm leading-relaxed" style={{ fontSize: '14px' }}>Ready for your next experience?</p>
+                <p
+                  className="text-sm mb-2 leading-relaxed"
+                  style={{
+                    fontSize: '14px',
+                    color: 'rgba(255,255,255,0.7)',
+                    textShadow: '0 0 6px rgba(255,255,255,0.12)',
+                    marginBottom: '8px'
+                  }}
+                >
+                  Welcome back
+                </p>
+                <h1
+                  className="font-bold leading-tight mb-2"
+                  style={{
+                    fontSize: '26px',
+                    color: '#FFFFFF',
+                    textShadow: '0 0 6px rgba(255,255,255,0.12)',
+                    letterSpacing: '-0.02em',
+                    marginBottom: '8px'
+                  }}
+                >
+                  Hero
+                </h1>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{
+                    fontSize: '14px',
+                    color: 'rgba(255,255,255,0.85)',
+                    textShadow: '0 0 6px rgba(255,255,255,0.12)'
+                  }}
+                >
+                  Ready for your next experience?
+                </p>
               </div>
-              <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all hover:scale-105" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <Bell className="w-5 h-5 text-white" strokeWidth={1.5} />
+              <button
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-all relative z-10"
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  boxShadow: `
+                    inset 0 0 8px rgba(168, 255, 247, 0.25),
+                    0 0 12px #A8FFF7
+                  `,
+                  border: '1px solid rgba(255,255,255,0.3)'
+                }}
+              >
+                <Bell 
+                  className="w-5 h-5" 
+                  strokeWidth={1.5} 
+                  style={{ 
+                    color: '#DFFCFB',
+                    filter: 'drop-shadow(0 0 4px #A8FFF7)'
+                  }} 
+                />
               </button>
             </div>
           </div>

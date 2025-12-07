@@ -10,6 +10,9 @@ import FloorPlanView from '@/components/FloorPlanView';
 import TableFloorPlanView from '@/components/TableFloorPlanView';
 import Loading from '@/components/Loading';
 import BottomNavigation from '@/components/BottomNavigation';
+import CountdownTimer from '@/components/CountdownTimer';
+import { EventImages } from '@/components/EventImages';
+import { Users, TrendingUp, Share2, Clock, Tag, Mic, User, Info, DollarSign, Shield } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -20,6 +23,7 @@ interface Event {
   end_date: string;
   city: string;
   cover_image?: string;
+  images?: string | string[]; // Array of image URLs or comma-separated string
   event_date?: string;
   venue_id: string;
   organizer_id: string;
@@ -632,218 +636,345 @@ export default function EventDetailsPage() {
     return <div className="p-8">Event not found</div>;
   }
 
+  const eventDate = new Date(event.event_date || event.start_date);
+  const venueName = event.expand?.venue_id?.name || 'Venue';
+  const venueCity = event.expand?.venue_id?.city || event.city || '';
+  const venueLocality = event.expand?.venue_id?.address || '';
+  const organizerName = event.expand?.organizer_id?.name || 'Organizer';
+  
+  // Calculate interested count (mock data - replace with actual)
+  const interestedCount = 6317;
+  const popularity = 98;
+
+  // Prepare images array
+  const pb = getPocketBase();
+  const images: string[] = [];
+  
+  // Add cover image first
+  if (event.cover_image) {
+    images.push(pb.files.getUrl(event as any, event.cover_image));
+  }
+  
+  // Add additional images if available
+  if (event.images) {
+    if (Array.isArray(event.images)) {
+      event.images.forEach((img) => {
+        if (img && !images.includes(img)) {
+          // If it's a file reference, get URL, otherwise use as-is
+          if (typeof img === 'string' && img.startsWith('http')) {
+            images.push(img);
+          } else if (typeof img === 'string') {
+            try {
+              images.push(pb.files.getUrl(event as any, img));
+            } catch {
+              images.push(img);
+            }
+          }
+        }
+      });
+    } else if (typeof event.images === 'string') {
+      // Handle comma-separated string or JSON string
+      try {
+        const parsed = JSON.parse(event.images);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((img: string) => {
+            if (img && !images.includes(img)) {
+              if (img.startsWith('http')) {
+                images.push(img);
+              } else {
+                try {
+                  images.push(pb.files.getUrl(event as any, img));
+                } catch {
+                  images.push(img);
+                }
+              }
+            }
+          });
+        }
+      } catch {
+        // Not JSON, treat as comma-separated
+        event.images.split(',').forEach((img: string) => {
+          const trimmed = img.trim();
+          if (trimmed && !images.includes(trimmed)) {
+            if (trimmed.startsWith('http')) {
+              images.push(trimmed);
+            } else {
+              try {
+                images.push(pb.files.getUrl(event as any, trimmed));
+              } catch {
+                images.push(trimmed);
+              }
+            }
+          }
+        });
+      }
+    }
+  }
+
   return (
     <>
-
-      <div className="min-h-screen pb-20">
+      <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #000000 0%, #111111 100%)' }}>
         <div className="max-w-[428px] mx-auto min-h-screen">
-          {/* Header */}
-          <div className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10 p-4 flex items-center gap-4">
-            <button onClick={() => router.back()} className="text-white text-xl hover:text-gray-300 transition-colors">
-              ←
-            </button>
-            <h1 className="text-lg font-bold text-white flex-1 truncate">{event.name}</h1>
-            <button className="text-red-400 hover:text-red-300 text-xl transition-colors">❤️</button>
-          </div>
-
-          {/* Cover Image */}
-          {event.cover_image && (
-            <div className="relative w-full h-64 overflow-hidden">
-              <img
-                src={event.cover_image ? getPocketBase().files.getUrl(event as any, event.cover_image) : ''}
-                alt={event.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-3 py-1 bg-teal-500 text-white rounded-full text-xs font-semibold capitalize shadow-md">
-                    {event.category}
-                  </span>
-                  <span className="text-white text-xs font-medium drop-shadow-md">📍 {event.city}</span>
-                </div>
-                <h2 className="text-white font-bold text-xl mb-1 drop-shadow-lg">{event.name}</h2>
-                <p className="text-gray-200 text-sm drop-shadow-md">
-                  {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-            </div>
+          {/* Event Images Section - Cover + Gallery */}
+          {images.length > 0 && (
+            <EventImages
+              images={images}
+              title={event.name}
+              subtitle={`${venueName}${venueCity ? ` · ${venueCity}` : ''}`}
+            />
           )}
 
-          <div className="p-4 space-y-6">
+          {/* Header Section - Minimal with back and share buttons */}
+          <div 
+            className="sticky top-0 z-20 px-4 pt-4 pb-2"
+            style={{ 
+              background: 'linear-gradient(180deg, #050505 0%, #101010 100%)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <button 
+                onClick={() => router.back()} 
+                className="text-white text-xl hover:text-gray-300 transition-colors"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: event.name,
+                      text: `Check out ${event.name}`,
+                      url: window.location.href,
+                    }).catch(() => {});
+                  }
+                }}
+                className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:scale-95 transition-transform shadow-lg"
+              >
+                <Share2 className="w-5 h-5 text-gray-800" strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Bar */}
+          <div className="px-4 mb-6">
+            <div 
+              className="rounded-[20px] p-4"
+              style={{ 
+                background: '#151515',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+              }}
+            >
+              <div className="grid grid-cols-4 gap-4">
+                {/* Column 1: Interested */}
+                <div className="flex flex-col items-center">
+                  <Users className="w-5 h-5 text-white mb-2" strokeWidth={1.5} />
+                  <span className="text-white font-bold text-base mb-1">{interestedCount}+</span>
+                  <span className="text-[#9B9B9B] text-[10px] uppercase font-medium">Interested</span>
+                </div>
+
+                {/* Column 2: Countdown */}
+                <div className="flex flex-col items-center col-span-2">
+                  <CountdownTimer targetDate={eventDate} />
+                </div>
+
+                {/* Column 3: Popularity */}
+                <div className="flex flex-col items-center">
+                  <TrendingUp className="w-5 h-5 text-white mb-2" strokeWidth={1.5} />
+                  <span className="text-white font-bold text-base mb-1">{popularity}%</span>
+                  <span className="text-[#9B9B9B] text-[10px] uppercase font-medium">Popularity</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Look Section */}
+          <div className="px-4 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[#9B9B9B] text-xs font-bold uppercase">Quick Look</h2>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full" style={{ background: 'rgba(39, 209, 127, 0.15)' }}>
+                <Shield className="w-3 h-3" style={{ color: '#27D17F' }} strokeWidth={2} />
+                <span className="text-xs font-medium" style={{ color: '#27D17F' }}>Lowest Price Guaranteed</span>
+              </div>
+            </div>
+            
+            <div 
+              className="rounded-[20px] p-5 space-y-4"
+              style={{ 
+                background: '#141414',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+              }}
+            >
+              {/* Event Timings */}
+              <div className="flex gap-3">
+                <Clock className="w-4 h-4 text-[#9B9B9B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                <div className="flex-1">
+                  <p className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-1">Event Timings</p>
+                  <p className="text-white text-sm">
+                    {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Categories */}
+              <div className="flex gap-3">
+                <Tag className="w-4 h-4 text-[#9B9B9B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                <div className="flex-1">
+                  <p className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-1">Categories</p>
+                  <p className="text-white text-sm capitalize">{event.category || 'General'}</p>
+                </div>
+              </div>
+
+              {/* Artists (if available) */}
+              {event.tags && (
+                <div className="flex gap-3">
+                  <Mic className="w-4 h-4 text-[#9B9B9B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                  <div className="flex-1">
+                    <p className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-1">Artists</p>
+                    <p className="text-white text-sm">
+                      {Array.isArray(event.tags) 
+                        ? event.tags.join(', ') 
+                        : typeof event.tags === 'string' 
+                          ? (() => {
+                              try {
+                                return JSON.parse(event.tags).join(', ');
+                              } catch {
+                                return event.tags;
+                              }
+                            })()
+                          : 'TBA'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Organised By */}
+              <div className="flex gap-3">
+                <User className="w-4 h-4 text-[#9B9B9B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                <div className="flex-1">
+                  <p className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-1">Organised By</p>
+                  <p className="text-white text-sm">{organizerName}</p>
+                </div>
+              </div>
+
+              {/* Important Note */}
+              {event.terms_and_conditions && (
+                <div className="flex gap-3">
+                  <Info className="w-4 h-4 text-[#9B9B9B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                  <div className="flex-1">
+                    <p className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-1">Important Note</p>
+                    <p className="text-white text-sm line-clamp-2">{event.terms_and_conditions.substring(0, 100)}...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Price */}
+              {ticketTypes.length > 0 && (
+                <div className="flex gap-3">
+                  <DollarSign className="w-4 h-4 text-[#9B9B9B] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                  <div className="flex-1">
+                    <p className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-1">Price</p>
+                    <p className="text-white text-sm">
+                      ₹{Math.min(...ticketTypes.map(tt => (tt.final_price_minor / 1.18) / 100)).toFixed(0)} onwards
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="px-4 space-y-6">
 
             {event.description && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">Description</h2>
-                <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.description}</p>
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">Description</h2>
+                <p className="whitespace-pre-wrap text-[#9B9B9B] text-sm leading-relaxed">{event.description}</p>
               </div>
             )}
 
             {event.about && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">About the Event</h2>
-                <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.about}</p>
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">About the Event</h2>
+                <p className="whitespace-pre-wrap text-[#9B9B9B] text-sm leading-relaxed">{event.about}</p>
               </div>
             )}
 
-            {event.overview && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">Overview</h2>
-                <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.overview}</p>
-              </div>
-            )}
-
-            {event.things_to_carry && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">Things to Carry</h2>
-                <div className="text-gray-300 text-sm space-y-2">
-                  {event.things_to_carry.split('\n').map((item: string, idx: number) => (
-                    item.trim() && (
-                      <div key={idx} className="flex items-start gap-2">
-                        <span className="text-teal-400 mt-1">•</span>
-                        <span>{item.trim()}</span>
-                      </div>
-                    )
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {event.inclusions && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">Inclusions</h2>
-                <div className="text-gray-300 text-sm space-y-2">
-                  {event.inclusions.split('\n').map((item: string, idx: number) => (
-                    item.trim() && (
-                      <div key={idx} className="flex items-start gap-2">
-                        <span className="text-teal-400 mt-1">✓</span>
-                        <span>{item.trim()}</span>
-                      </div>
-                    )
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {event.terms_and_conditions && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">Terms & Conditions</h2>
-                <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.terms_and_conditions}</p>
-              </div>
-            )}
-
-            {event.expand?.venue_id && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">Venue Details</h2>
-                <div className="text-gray-300 text-sm space-y-2">
-                  <div className="flex items-start gap-2">
-                    <span className="text-teal-400 font-semibold">📍</span>
-                    <div>
-                      <p className="font-semibold text-white">{event.expand.venue_id.name}</p>
-                      {event.expand.venue_id.address && (
-                        <p className="text-gray-400">{event.expand.venue_id.address}</p>
-                      )}
-                      {event.expand.venue_id.city && (
-                        <p className="text-gray-400">{event.expand.venue_id.city}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {event.venue_details && (
-                  <div className="mt-3 pt-3 border-t border-white/10">
-                    <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.venue_details}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {event.expand?.organizer_id && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">Organizer Information</h2>
-                <div className="text-gray-300 text-sm space-y-2">
-                  <div className="flex items-start gap-2">
-                    <span className="text-teal-400 font-semibold">👤</span>
-                    <div>
-                      <p className="font-semibold text-white">{event.expand.organizer_id.name}</p>
-                      {event.expand.organizer_id.email && (
-                        <p className="text-gray-400">✉️ {event.expand.organizer_id.email}</p>
-                      )}
-                      {event.expand.organizer_id.phone && (
-                        <p className="text-gray-400">📞 {event.expand.organizer_id.phone}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {event.organizer_info && (
-                  <div className="mt-3 pt-3 border-t border-white/10">
-                    <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.organizer_info}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {event.tags && (
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-                <h2 className="text-lg font-bold mb-3 text-white">Tags</h2>
-                <div className="flex flex-wrap gap-2">
-                  {(Array.isArray(event.tags) ? event.tags : typeof event.tags === 'string' ? (() => {
-                    try {
-                      return JSON.parse(event.tags);
-                    } catch {
-                      return event.tags.split(',').map((t: string) => t.trim());
-                    }
-                  })() : []).map((tag: string, idx: number) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full text-xs font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
-              <h2 className="text-lg font-bold mb-4 text-white">Tickets</h2>
+            <div 
+              className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+              style={{ 
+                background: '#141414',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+              }}
+            >
+              <h2 className="text-white font-bold text-lg mb-4">Tickets</h2>
               {ticketTypes.length === 0 ? (
-                <div className="border border-white/10 rounded-xl p-6 text-center bg-white/5">
-                  <p className="text-gray-400 mb-2">No tickets available for this event yet.</p>
-                  <p className="text-xs text-gray-500">Please check back later or contact the organizer.</p>
+                <div 
+                  className="rounded-xl p-6 text-center"
+                  style={{ 
+                    background: '#1a1a1a',
+                    border: '1px solid rgba(255,255,255,0.05)'
+                  }}
+                >
+                  <p className="text-[#9B9B9B] mb-2">No tickets available for this event yet.</p>
+                  <p className="text-xs text-[#9B9B9B]">Please check back later or contact the organizer.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {ticketTypes.map((tt) => (
-                    <div key={tt.id} className="border border-white/20 rounded-xl p-4 bg-white/5 hover:bg-white/10 hover:border-teal-500/50 transition-all backdrop-blur-sm">
+                    <div 
+                      key={tt.id} 
+                      className="rounded-xl p-4 transition-all hover:scale-[1.01]"
+                      style={{ 
+                        background: '#1a1a1a',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                      }}
+                    >
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
                           <h3 className="font-semibold text-white text-base">{tt.name}</h3>
-                          {tt.description && <p className="text-sm text-gray-400 mt-1">{tt.description}</p>}
+                          {tt.description && <p className="text-sm text-[#9B9B9B] mt-1">{tt.description}</p>}
                         </div>
                         <div className="text-right ml-4">
-                          <p className="font-bold text-lg text-teal-400">
+                          <p className="font-bold text-lg" style={{ color: '#27D17F' }}>
                             ₹{((tt.final_price_minor / 1.18) / 100).toFixed(2)}
                           </p>
-                          <p className="text-xs text-gray-500 font-medium">+ GST</p>
-                          <p className="text-sm text-gray-400 mt-1">
+                          <p className="text-xs text-[#9B9B9B] font-medium">+ GST</p>
+                          <p className="text-sm text-[#9B9B9B] mt-1">
                             {tt.remaining_quantity} available
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between mt-4">
-                        <span className="text-sm font-medium text-gray-300">Quantity</span>
+                        <span className="text-sm font-medium text-[#9B9B9B]">Quantity</span>
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() =>
                               handleTicketChange(tt.id, Math.max(0, (selectedTickets[tt.id] || 0) - 1))
                             }
-                            className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:scale-95"
+                            style={{ 
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              background: '#1a1a1a'
+                            }}
                             disabled={(selectedTickets[tt.id] || 0) === 0}
                           >
                             −
@@ -856,7 +987,11 @@ export default function EventDetailsPage() {
                                 Math.min(tt.remaining_quantity, (selectedTickets[tt.id] || 0) + 1)
                               )
                             }
-                            className="w-10 h-10 rounded-full border border-teal-500 bg-teal-600 text-white flex items-center justify-center hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-teal-900/20"
+                            className="w-10 h-10 rounded-full text-white flex items-center justify-center hover:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            style={{ 
+                              background: '#27D17F',
+                              boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
+                            }}
                             disabled={
                               (selectedTickets[tt.id] || 0) >= tt.remaining_quantity ||
                               (selectedTickets[tt.id] || 0) >= tt.max_per_order
@@ -869,11 +1004,12 @@ export default function EventDetailsPage() {
 
                       {/* Seat Selection for Seated Events */}
                       {isSeated && (selectedTickets[tt.id] || 0) > 0 && (
-                        <div className="mt-4 border-t border-white/10 pt-4">
+                        <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                           <div className="flex justify-between items-center mb-2">
                             <button
                               onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
-                              className="text-sm text-teal-400 hover:text-teal-300 font-medium"
+                              className="text-sm font-medium transition-colors"
+                              style={{ color: '#27D17F' }}
                             >
                               {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
                             </button>
@@ -881,19 +1017,39 @@ export default function EventDetailsPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'list' })}
-                                  className={`px-3 py-1 text-xs rounded-lg border transition-all ${(seatViewMode[tt.id] || 'list') === 'list'
-                                      ? 'bg-teal-600 text-white border-teal-600'
-                                      : 'bg-white/5 text-gray-300 border-white/20 hover:bg-white/10'
+                                  className={`px-3 py-1 text-xs rounded-lg transition-all ${(seatViewMode[tt.id] || 'list') === 'list'
+                                      ? 'text-white'
+                                      : 'text-[#9B9B9B] hover:text-white'
                                     }`}
+                                  style={(seatViewMode[tt.id] || 'list') === 'list'
+                                    ? { 
+                                        background: '#27D17F',
+                                        border: '1px solid #27D17F'
+                                      }
+                                    : { 
+                                        background: '#1a1a1a',
+                                        border: '1px solid rgba(255,255,255,0.1)'
+                                      }
+                                  }
                                 >
                                   List View
                                 </button>
                                 <button
                                   onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'map' })}
-                                  className={`px-3 py-1 text-xs rounded-lg border transition-all ${seatViewMode[tt.id] === 'map'
-                                      ? 'bg-teal-600 text-white border-teal-600'
-                                      : 'bg-white/5 text-gray-300 border-white/20 hover:bg-white/10'
+                                  className={`px-3 py-1 text-xs rounded-lg transition-all ${seatViewMode[tt.id] === 'map'
+                                      ? 'text-white'
+                                      : 'text-[#9B9B9B] hover:text-white'
                                     }`}
+                                  style={seatViewMode[tt.id] === 'map'
+                                    ? { 
+                                        background: '#27D17F',
+                                        border: '1px solid #27D17F'
+                                      }
+                                    : { 
+                                        background: '#1a1a1a',
+                                        border: '1px solid rgba(255,255,255,0.1)'
+                                      }
+                                  }
                                 >
                                   Map View
                                 </button>
@@ -902,7 +1058,7 @@ export default function EventDetailsPage() {
                           </div>
                           {showSeatSelection[tt.id] && (
                             <div className="mt-2">
-                              <p className="text-sm text-gray-400 mb-2">
+                              <p className="text-sm text-[#9B9B9B] mb-2">
                                 Select {selectedTickets[tt.id]} seat(s). Selected: {(selectedSeats[tt.id] || []).length}
                               </p>
 
@@ -919,9 +1075,15 @@ export default function EventDetailsPage() {
                                 />
                               ) : (
                                 /* List View */
-                                <div className="max-h-64 overflow-y-auto border border-white/20 rounded-xl p-3 bg-black/20">
+                                <div 
+                                  className="max-h-64 overflow-y-auto rounded-xl p-3"
+                                  style={{ 
+                                    border: '1px solid rgba(255,255,255,0.05)',
+                                    background: '#1a1a1a'
+                                  }}
+                                >
                                   {availableSeats.length === 0 ? (
-                                    <p className="text-sm text-gray-500">Loading seats...</p>
+                                    <p className="text-sm text-[#9B9B9B]">Loading seats...</p>
                                   ) : (
                                     <div className="flex flex-wrap gap-2">
                                       {availableSeats.map((seat) => {
@@ -935,13 +1097,36 @@ export default function EventDetailsPage() {
                                             onClick={() => handleSeatToggle(tt.id, seat.id)}
                                             disabled={isUnavailable}
                                             className={`px-2 py-1 text-xs rounded-lg transition-all ${isSelected
-                                              ? 'bg-teal-600 text-white border border-teal-500 shadow-md shadow-teal-900/20'
+                                              ? 'text-white cursor-pointer'
                                               : isReserved
-                                                ? 'bg-yellow-500/20 text-yellow-200 border border-yellow-500/40 cursor-not-allowed'
+                                                ? 'cursor-not-allowed'
                                                 : seat.available && !seat.sold
-                                                  ? 'bg-white/10 hover:bg-white/20 border border-white/20 text-gray-300'
-                                                  : 'bg-red-500/10 text-gray-500 border border-red-500/20 cursor-not-allowed'
+                                                  ? 'text-[#9B9B9B] hover:text-white cursor-pointer'
+                                                  : 'cursor-not-allowed'
                                               }`}
+                                            style={isSelected
+                                              ? { 
+                                                  background: '#27D17F',
+                                                  border: '1px solid #27D17F',
+                                                  boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
+                                                }
+                                              : isReserved
+                                                ? { 
+                                                    background: 'rgba(255, 71, 71, 0.15)',
+                                                    color: '#FF4747',
+                                                    border: '1px solid rgba(255, 71, 71, 0.3)'
+                                                  }
+                                                : seat.available && !seat.sold
+                                                  ? { 
+                                                      background: '#1a1a1a',
+                                                      border: '1px solid rgba(255,255,255,0.1)'
+                                                    }
+                                                  : { 
+                                                      background: '#1a1a1a',
+                                                      color: '#9B9B9B',
+                                                      border: '1px solid rgba(255,255,255,0.05)'
+                                                    }
+                                            }
                                             title={
                                               isSelected
                                                 ? `Selected: ${seat.section} - Row ${seat.row} - ${seat.label}`
@@ -969,20 +1154,27 @@ export default function EventDetailsPage() {
                       {/* Table Selection for GA_TABLE Events - Only for TABLE category ticket types */}
                       {/* Show warning if GA_TABLE event but ticket type doesn't have category set */}
                       {isGATable && !tt.ticket_type_category && (selectedTickets[tt.id] || 0) > 0 && (
-                        <div className="mt-4 border-t border-white/10 pt-4">
-                          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-                            <p className="text-sm text-yellow-200">
+                        <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div 
+                            className="rounded-lg p-3"
+                            style={{ 
+                              background: 'rgba(255, 71, 71, 0.15)',
+                              border: '1px solid rgba(255, 71, 71, 0.3)'
+                            }}
+                          >
+                            <p className="text-sm" style={{ color: '#FF4747' }}>
                               ⚠️ This ticket type needs to be configured. Please contact the organizer to set up table selection for this ticket type.
                             </p>
                           </div>
                         </div>
                       )}
                       {isGATable && tt.ticket_type_category === 'TABLE' && (selectedTickets[tt.id] || 0) > 0 && (
-                        <div className="mt-4 border-t border-white/10 pt-4">
+                        <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                           <div className="flex justify-between items-center mb-2">
                             <button
                               onClick={() => setShowTableSelection({ ...showTableSelection, [tt.id]: !showTableSelection[tt.id] })}
-                              className="text-sm text-teal-400 hover:text-teal-300 font-medium"
+                              className="text-sm font-medium transition-colors"
+                              style={{ color: '#27D17F' }}
                             >
                               {showTableSelection[tt.id] ? 'Hide Table Selection' : 'Select Table'}
                             </button>
@@ -1011,18 +1203,30 @@ export default function EventDetailsPage() {
 
                             return (
                               <div className="mt-2">
-                                <div className="bg-teal-500/10 border border-teal-500/30 rounded-lg p-3 mb-3">
-                                  <p className="text-sm text-teal-100 font-medium">
+                                <div 
+                                  className="rounded-lg p-3 mb-3"
+                                  style={{ 
+                                    background: 'rgba(39, 209, 127, 0.15)',
+                                    border: '1px solid rgba(39, 209, 127, 0.3)'
+                                  }}
+                                >
+                                  <p className="text-sm font-medium" style={{ color: '#27D17F' }}>
                                     Select <span className="font-bold text-white">{selectedTickets[tt.id]}</span> table{selectedTickets[tt.id] !== 1 ? 's' : ''} for <span className="font-bold text-white">{selectedTickets[tt.id]}</span> ticket{selectedTickets[tt.id] !== 1 ? 's' : ''}
                                   </p>
-                                  <p className="text-xs text-teal-200 mt-1">
+                                  <p className="text-xs mt-1" style={{ color: '#27D17F' }}>
                                     Selected: <span className="font-semibold text-white">{(selectedTables[tt.id] || []).length}</span> of <span className="font-semibold text-white">{selectedTickets[tt.id]}</span>
                                   </p>
                                 </div>
 
                                 {filteredTables.length === 0 ? (
-                                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center">
-                                    <p className="text-sm text-yellow-200">
+                                  <div 
+                                    className="rounded-lg p-4 text-center"
+                                    style={{ 
+                                      background: 'rgba(255, 71, 71, 0.15)',
+                                      border: '1px solid rgba(255, 71, 71, 0.3)'
+                                    }}
+                                  >
+                                    <p className="text-sm" style={{ color: '#FF4747' }}>
                                       ⚠️ No tables available for this ticket type. Please contact the organizer or select a different ticket type.
                                     </p>
                                   </div>
@@ -1046,10 +1250,14 @@ export default function EventDetailsPage() {
 
                       {/* Add to Cart Button */}
                       {(selectedTickets[tt.id] || 0) > 0 && (
-                        <div className="mt-4 border-t border-white/10 pt-4">
+                        <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                           <button
                             onClick={() => handleAddToCart(tt.id)}
-                            className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold text-base hover:bg-teal-700 transition-all shadow-lg shadow-teal-900/20"
+                            className="w-full text-white py-3 rounded-xl font-bold text-base transition-all hover:scale-[1.01]"
+                            style={{ 
+                              background: '#27D17F',
+                              boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
+                            }}
                           >
                             Add to Cart
                           </button>
@@ -1060,6 +1268,171 @@ export default function EventDetailsPage() {
                 </div>
               )}
             </div>
+
+            {event.overview && (
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">Overview</h2>
+                <p className="whitespace-pre-wrap text-[#9B9B9B] text-sm leading-relaxed">{event.overview}</p>
+              </div>
+            )}
+
+            {event.things_to_carry && (
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">Things to Carry</h2>
+                <div className="text-[#9B9B9B] text-sm space-y-2">
+                  {event.things_to_carry.split('\n').map((item: string, idx: number) => (
+                    item.trim() && (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-[#27D17F] mt-1">•</span>
+                        <span>{item.trim()}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {event.inclusions && (
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">Inclusions</h2>
+                <div className="text-[#9B9B9B] text-sm space-y-2">
+                  {event.inclusions.split('\n').map((item: string, idx: number) => (
+                    item.trim() && (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-[#27D17F] mt-1">✓</span>
+                        <span>{item.trim()}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {event.terms_and_conditions && (
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">Terms & Conditions</h2>
+                <p className="whitespace-pre-wrap text-[#9B9B9B] text-sm leading-relaxed">{event.terms_and_conditions}</p>
+              </div>
+            )}
+
+            {event.expand?.venue_id && (
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">Venue Details</h2>
+                <div className="text-[#9B9B9B] text-sm space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#27D17F] font-semibold">📍</span>
+                    <div>
+                      <p className="font-semibold text-white">{event.expand.venue_id.name}</p>
+                      {event.expand.venue_id.address && (
+                        <p className="text-[#9B9B9B]">{event.expand.venue_id.address}</p>
+                      )}
+                      {event.expand.venue_id.city && (
+                        <p className="text-[#9B9B9B]">{event.expand.venue_id.city}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {event.venue_details && (
+                  <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <p className="whitespace-pre-wrap text-[#9B9B9B] text-sm leading-relaxed">{event.venue_details}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {event.expand?.organizer_id && (
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">Organizer Information</h2>
+                <div className="text-[#9B9B9B] text-sm space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#27D17F] font-semibold">👤</span>
+                    <div>
+                      <p className="font-semibold text-white">{event.expand.organizer_id.name}</p>
+                      {event.expand.organizer_id.email && (
+                        <p className="text-[#9B9B9B]">✉️ {event.expand.organizer_id.email}</p>
+                      )}
+                      {event.expand.organizer_id.phone && (
+                        <p className="text-[#9B9B9B]">📞 {event.expand.organizer_id.phone}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {event.organizer_info && (
+                  <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <p className="whitespace-pre-wrap text-[#9B9B9B] text-sm leading-relaxed">{event.organizer_info}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {event.tags && (
+              <div 
+                className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
+                style={{ 
+                  background: '#141414',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                }}
+              >
+                <h2 className="text-white font-bold text-lg mb-3">Tags</h2>
+                <div className="flex flex-wrap gap-2">
+                  {(Array.isArray(event.tags) ? event.tags : typeof event.tags === 'string' ? (() => {
+                    try {
+                      return JSON.parse(event.tags);
+                    } catch {
+                      return event.tags.split(',').map((t: string) => t.trim());
+                    }
+                  })() : []).map((tag: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 rounded-full text-xs font-medium"
+                      style={{ 
+                        background: 'rgba(39, 209, 127, 0.15)',
+                        color: '#27D17F',
+                        border: '1px solid rgba(39, 209, 127, 0.3)'
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

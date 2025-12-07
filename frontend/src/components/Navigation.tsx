@@ -113,8 +113,8 @@ export default function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50">
-      <div className="max-w-[428px] mx-auto bg-[#1C1C1E]/90 backdrop-blur-md border-b border-white/10 shadow-lg px-4 py-2">
-        <div className="flex justify-between items-center h-12 gap-3">
+      <div className="max-w-[428px] mx-auto glass-shimmer px-4 py-2" style={{ borderRadius: '0 0 20px 20px' }}>
+        <div className="flex justify-between items-center h-12 gap-3 relative z-10">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
               <img src="/navbar_logo.png" alt="Powerglide" className="h-6 w-auto object-contain" />
