@@ -233,18 +233,18 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <>
-        <div className="min-h-screen pb-20 bg-gray-50">
-          <div className="max-w-[428px] mx-auto bg-white min-h-screen">
-            <div className="sticky top-0 z-20 bg-white border-b border-gray-200 p-4">
-              <h1 className="text-2xl font-bold text-gray-900">Cart</h1>
+        <div className="min-h-screen pb-20">
+          <div className="max-w-[428px] mx-auto min-h-screen">
+            <div className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10 p-4">
+              <h1 className="text-2xl font-bold text-white">Cart</h1>
             </div>
-            <div className="p-8 text-center">
-              <div className="text-6xl mb-4">🛒</div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
-              <p className="text-gray-600 mb-6">Add tickets to your cart to get started</p>
+            <div className="p-8 text-center flex flex-col items-center justify-center h-[calc(100vh-80px)]">
+              <div className="text-6xl mb-4 grayscale opacity-80">🛒</div>
+              <h2 className="text-xl font-semibold text-white mb-2">Your cart is empty</h2>
+              <p className="text-gray-400 mb-6">Add tickets to your cart to get started</p>
               <Link
                 href="/events"
-                className="inline-block bg-teal-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-teal-700 transition-colors"
+                className="inline-block bg-teal-600 text-white px-8 py-3 rounded-full font-bold hover:bg-teal-500 transition-all shadow-lg hover:shadow-teal-500/30"
               >
                 Browse Events
               </Link>
@@ -410,19 +410,19 @@ export default function CartPage() {
             {/* Checkout Timer */}
             {checkoutTimer !== null && checkoutTimer > 0 && (
               <div className={`p-3 rounded-lg border-2 ${checkoutTimer <= 60
-                  ? 'bg-red-500/10 border-red-500/30'
-                  : checkoutTimer <= 120
-                    ? 'bg-yellow-500/10 border-yellow-500/30'
-                    : 'bg-blue-500/10 border-blue-500/30'
+                ? 'bg-red-500/10 border-red-500/30'
+                : checkoutTimer <= 120
+                  ? 'bg-yellow-500/10 border-yellow-500/30'
+                  : 'bg-blue-500/10 border-blue-500/30'
                 }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⏱️</span>
                     <span className={`font-semibold ${checkoutTimer <= 60
-                        ? 'text-red-400'
-                        : checkoutTimer <= 120
-                          ? 'text-yellow-400'
-                          : 'text-blue-400'
+                      ? 'text-red-400'
+                      : checkoutTimer <= 120
+                        ? 'text-yellow-400'
+                        : 'text-blue-400'
                       }`}>
                       Complete checkout in: {Math.floor(checkoutTimer / 60)}:{(checkoutTimer % 60).toString().padStart(2, '0')}
                     </span>

@@ -112,32 +112,32 @@ export default function Navigation() {
   const showLogout = pathname !== '/profile';
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-white/30 border-b border-gray-200/50 shadow-sm">
-      <div className="max-w-[428px] mx-auto px-4">
-        <div className="flex justify-between items-center h-14 gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+    <nav className="sticky top-0 z-50">
+      <div className="max-w-[428px] mx-auto bg-[#1C1C1E]/90 backdrop-blur-md border-b border-white/10 shadow-lg px-4 py-2">
+        <div className="flex justify-between items-center h-12 gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-              <img src="/logo.png" alt="Powerglide" className="h-8 w-auto" />
+              <img src="/navbar_logo.png" alt="Powerglide" className="h-6 w-auto object-contain" />
             </Link>
-            
+
             {/* Location Selector */}
             <div className="relative flex-1 max-w-[140px]">
               <button
                 onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                className="w-full px-3 py-1.5 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm text-sm text-gray-700 hover:bg-white/70 transition-all flex items-center justify-between gap-2"
+                className="w-full px-3 py-2 rounded-[12px] bg-[#2C2C2E] text-sm text-white hover:bg-[#3A3A3C] transition-all flex items-center justify-between gap-2 border border-white/5"
                 disabled={availableCities.length === 0}
               >
-                <span className="truncate">{selectedLocation || 'Select City'}</span>
-                <span className="text-gray-500 flex-shrink-0 text-xs">▼</span>
+                <span className="truncate text-[13px] font-medium">{selectedLocation || 'Select City'}</span>
+                <span className="text-gray-400 flex-shrink-0 text-[10px]">▼</span>
               </button>
-              
+
               {showLocationDropdown && (
                 <>
-                  <div 
-                    className="fixed inset-0 z-40" 
+                  <div
+                    className="fixed inset-0 z-40"
                     onClick={() => setShowLocationDropdown(false)}
                   />
-                  <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg z-50 max-h-48 overflow-y-auto">
+                  <div className="absolute top-full left-0 mt-2 w-full bg-[#2C2C2E] rounded-[16px] border border-white/10 shadow-xl z-50 max-h-48 overflow-y-auto overflow-hidden py-1">
                     {availableCities.length > 0 ? (
                       availableCities.map((location, index) => (
                         <button
@@ -147,15 +147,14 @@ export default function Navigation() {
                             localStorage.setItem('selectedLocation', location);
                             setShowLocationDropdown(false);
                           }}
-                          className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors ${
-                            selectedLocation === location ? 'bg-teal-50 text-teal-600 font-medium' : 'text-gray-700'
-                          } ${index === 0 ? 'rounded-t-lg' : ''} ${index === availableCities.length - 1 ? 'rounded-b-lg' : ''}`}
+                          className={`w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors ${selectedLocation === location ? 'text-[#7cffd6] font-medium bg-white/5' : 'text-gray-300'
+                            }`}
                         >
                           {location}
                         </button>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-sm text-gray-500 text-center">Loading cities...</div>
+                      <div className="px-3 py-2 text-sm text-gray-400 text-center">Loading cities...</div>
                     )}
                   </div>
                 </>
@@ -163,14 +162,14 @@ export default function Navigation() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0">
             {/* Search Button */}
             <button
               onClick={() => router.push('/events')}
-              className="w-9 h-9 rounded-full border border-gray-300 bg-white/50 backdrop-blur-sm hover:bg-white/70 flex items-center justify-center transition-all"
+              className="w-9 h-9 rounded-full bg-[#2C2C2E] hover:bg-[#3A3A3C] flex items-center justify-center transition-all border border-white/5 group"
               aria-label="Search"
             >
-              <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
@@ -178,7 +177,10 @@ export default function Navigation() {
             {user ? (
               <>
                 {showLogout && (
-                  <Button onClick={handleLogout} variant="outline" size="sm" className="border-red-500 text-red-600 bg-red-50 hover:bg-red-100 hover:border-red-600 text-xs">
+                  <Button
+                    onClick={handleLogout}
+                    className="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white text-xs font-medium px-4 h-9 rounded-[12px] border border-white/5 transition-all"
+                  >
                     Logout
                   </Button>
                 )}
@@ -186,7 +188,9 @@ export default function Navigation() {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                  <Button
+                    className="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white text-xs font-medium px-4 h-9 rounded-[12px] border border-white/5 transition-all"
+                  >
                     Login
                   </Button>
                 </Link>

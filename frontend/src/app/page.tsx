@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import BrandReveal from '@/components/BrandReveal';
 import BottomNavigation from '@/components/BottomNavigation';
 import NotificationBell from '@/components/NotificationBell';
+import { Bell, Music, Trophy, Utensils, Mic, Laugh, Moon, Heart, Users, User, Zap } from 'lucide-react';
 
 // Event Card Component
 function EventCard({ event }: { event: any }) {
@@ -35,55 +36,62 @@ function EventCard({ event }: { event: any }) {
     fetchPrice();
   }, [event.id]);
 
+  const eventDate = new Date(event.event_date || event.start_date);
+  const formattedDate = eventDate.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const categoryTag = event.category || 'Event';
+
   return (
     <Link
       href={`/events/${event.id}`}
-      className="block bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all"
+      className="block rounded-[22px] overflow-hidden transition-all hover:scale-[1.02] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)]"
+      style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
     >
-      <div className="relative">
-        <div className="aspect-[4/3] overflow-hidden">
+      <div className="relative h-full min-h-[180px] p-5 flex flex-col justify-between" style={{
+        background: 'linear-gradient(108deg, #0f1014 0%, #1a1b26 40%, #2E1065 100%)'
+      }}>
+        {/* Background Image Effect */}
+        <div className="absolute top-0 bottom-0 right-0 w-[55%] overflow-hidden pointer-events-none">
           {event.cover_image ? (
-            <img
-              src={getPocketBase().files.getUrl(event, event.cover_image)}
-              alt={event.name}
-              className="w-full h-full object-cover"
-            />
+            <>
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={getPocketBase().files.getUrl(event, event.cover_image)}
+                  alt={event.name}
+                  className="w-full h-full object-cover opacity-80"
+                  style={{ maskImage: 'linear-gradient(to right, transparent, black 40%)' }}
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-l from-[#2E1065]/40 to-transparent mix-blend-overlay" />
+            </>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-teal-100 to-emerald-100 flex items-center justify-center">
-              <span className="text-teal-600 text-4xl">🎵</span>
+            <div className="absolute inset-0 flex items-center justify-center opacity-20">
+              <div className="w-full h-full bg-gradient-to-br from-teal-500/20 to-purple-500/20" />
+              <Moon className="absolute right-4 w-24 h-24 text-white/10" />
             </div>
           )}
         </div>
-        <button
-          className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50"
-          onClick={(e) => {
-            e.preventDefault();
-            // Handle favorite
-          }}
-        >
-          <span className="text-red-500 text-lg">❤️</span>
-        </button>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-          <p className="text-white text-xs font-medium mb-1">
-            {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            }).toUpperCase()}
-          </p>
-          <h3 className="text-white font-bold text-lg">{event.name}</h3>
-        </div>
-      </div>
-      <div className="p-4">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">
-            {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })} - {event.city}
+
+        <div className="relative z-10 w-[65%]">
+          <span className="inline-block px-3 py-1 rounded-[8px] text-[#7cffd6] text-[11px] font-semibold tracking-wider mb-3" style={{ background: 'rgba(124, 255, 214, 0.1)', border: '1px solid rgba(124, 255, 214, 0.2)' }}>
+            {eventDate.getFullYear()} • {categoryTag.toUpperCase()}
           </span>
-          <span className="text-teal-600 font-bold">
+          <h3 className="text-white font-bold mb-1 leading-tight tracking-tight" style={{ fontSize: '22px' }}>{event.name}</h3>
+          <p className="text-gray-400 text-[13px] leading-relaxed mb-4 font-medium">
+            {event.description ? event.description.split('.')[0] : 'Join us for an amazing experience'}
+          </p>
+        </div>
+
+        <div className="relative z-10 flex items-end justify-between w-full mt-2">
+          <div className="flex items-center gap-2">
+            <p className="text-white/90 text-[13px] font-medium">
+              {formattedDate} • {event.city || 'Location'}
+            </p>
+          </div>
+          <span className="text-[#7cffd6] font-bold tracking-tight" style={{ fontSize: '20px', textShadow: '0 0 20px rgba(124, 255, 214, 0.3)' }}>
             ₹{minPrice ? minPrice.toFixed(0) : 'TBD'}
           </span>
         </div>
@@ -92,20 +100,13 @@ function EventCard({ event }: { event: any }) {
   );
 }
 
-import MusicIcon3D from '@/components/icons/3d/MusicIcon3D';
-import SportIcon3D from '@/components/icons/3d/SportIcon3D';
-import FoodIcon3D from '@/components/icons/3d/FoodIcon3D';
-import ConcertIcon3D from '@/components/icons/3d/ConcertIcon3D';
-import ComedyIcon3D from '@/components/icons/3d/ComedyIcon3D';
-import NightlifeIcon3D from '@/components/icons/3d/NightlifeIcon3D';
-
 const CATEGORIES = [
-  { id: 'music', name: 'Music', Component: MusicIcon3D },
-  { id: 'sports', name: 'Sport', Component: SportIcon3D },
-  { id: 'food', name: 'Food', Component: FoodIcon3D },
-  { id: 'concert', name: 'Concert', Component: ConcertIcon3D },
-  { id: 'comedy', name: 'Comedy', Component: ComedyIcon3D },
-  { id: 'nightlife', name: 'Nightlife', Component: NightlifeIcon3D },
+  { id: 'music', name: 'Music', icon: Music, color: '#CE83FF' },
+  { id: 'sports', name: 'Sport', icon: Trophy, color: '#FB4EFF' },
+  { id: 'food', name: 'Food', icon: Utensils, color: '#7cffd6' },
+  { id: 'concert', name: 'Concert', icon: Mic, color: '#CE83FF' },
+  { id: 'comedy', name: 'Comedy', icon: Laugh, color: '#FB4EFF' },
+  { id: 'nightlife', name: 'Nightlife', icon: Moon, color: '#7cffd6' },
 ];
 
 export default function HomePage() {
@@ -246,33 +247,38 @@ export default function HomePage() {
   const popularEvents = filteredEvents.slice(0, 5);
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-24">
       {/* Brand Reveal Animation */}
       <div className={`fixed inset-0 z-50 transition-opacity duration-1000 ${showContent ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <BrandReveal />
       </div>
-
       {/* Main Content */}
-      <div className={`min-h-screen transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`min-h-screen transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`} style={{ background: '#0C0C0C' }}>
         <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Top Header Bar */}
-          <div className="sticky top-0 z-50 backdrop-blur-lg bg-white/30 border-b border-gray-200/50 shadow-sm">
-            <div className="max-w-[428px] mx-auto px-4">
-              <div className="flex justify-between items-center h-14 gap-2">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="sticky top-0 z-50">
+            <div
+              className="max-w-[428px] mx-auto border-b border-white/10 shadow-lg px-4 py-2 transition-[background-position] duration-600 ease-in-out hover:bg-right"
+              style={{
+                background: 'linear-gradient(90deg, #13161D, #1E222B, #13161D)',
+                backgroundSize: '200% 100%',
+              }}
+            >
+              <div className="flex justify-between items-center h-12 gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-                    <img src="/logo.png" alt="Powerglide" className="h-8 w-auto" />
+                    <img src="/navbar_logo.png" alt="PG" className="h-6 w-auto object-contain" />
                   </Link>
 
                   {/* Location Selector */}
                   <div className="relative flex-1 max-w-[140px]">
                     <button
                       onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm text-sm text-gray-700 hover:bg-white/70 transition-all flex items-center justify-between gap-2"
+                      className="w-full px-3 py-2 rounded-[12px] bg-[#2C2C2E] text-sm text-white hover:bg-[#3A3A3C] transition-all flex items-center justify-between gap-2 border border-white/5"
                       disabled={availableCities.length === 0}
                     >
-                      <span className="truncate">{selectedLocation || 'Select City'}</span>
-                      <span className="text-gray-500 flex-shrink-0 text-xs">▼</span>
+                      <span className="truncate text-[13px] font-medium">{selectedLocation || 'Select City'}</span>
+                      <span className="text-gray-400 flex-shrink-0 text-[10px]">▼</span>
                     </button>
 
                     {showLocationDropdown && (
@@ -281,7 +287,7 @@ export default function HomePage() {
                           className="fixed inset-0 z-40"
                           onClick={() => setShowLocationDropdown(false)}
                         />
-                        <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg z-50 max-h-48 overflow-y-auto">
+                        <div className="absolute top-full left-0 mt-2 w-full bg-[#2C2C2E] rounded-[16px] border border-white/10 shadow-xl z-50 max-h-48 overflow-y-auto overflow-hidden py-1">
                           {availableCities.length > 0 ? (
                             availableCities.map((location, index) => (
                               <button
@@ -291,8 +297,8 @@ export default function HomePage() {
                                   localStorage.setItem('selectedLocation', location);
                                   setShowLocationDropdown(false);
                                 }}
-                                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors ${selectedLocation === location ? 'bg-teal-50 text-teal-600 font-medium' : 'text-gray-700'
-                                  } ${index === 0 ? 'rounded-t-lg' : ''} ${index === availableCities.length - 1 ? 'rounded-b-lg' : ''}`}
+                                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors ${selectedLocation === location ? 'text-[#7cffd6] font-medium bg-white/5' : 'text-gray-300'
+                                  }`}
                               >
                                 {location}
                               </button>
@@ -306,28 +312,33 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   {/* Search Button */}
                   <button
                     onClick={() => router.push('/events')}
-                    className="w-9 h-9 rounded-full border border-gray-300 bg-white/50 backdrop-blur-sm hover:bg-white/70 flex items-center justify-center transition-all"
+                    className="w-9 h-9 rounded-full bg-[#2C2C2E] hover:bg-[#3A3A3C] flex items-center justify-center transition-all border border-white/5 group"
                     aria-label="Search"
                   >
-                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </button>
 
                   {user ? (
                     <>
-                      <Button onClick={() => { logout(); router.push('/'); router.refresh(); }} variant="outline" size="sm" className="border-red-500 text-red-600 bg-red-50 hover:bg-red-100 hover:border-red-600 text-xs">
+                      <Button
+                        onClick={() => { logout(); router.push('/'); router.refresh(); }}
+                        className="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white text-xs font-medium px-4 h-9 rounded-[12px] border border-white/5 transition-all"
+                      >
                         Logout
                       </Button>
                     </>
                   ) : (
                     <>
                       <Link href="/login">
-                        <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs">
+                        <Button
+                          className="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white text-xs font-medium px-4 h-9 rounded-[12px] border border-white/5 transition-all"
+                        >
                           Login
                         </Button>
                       </Link>
@@ -339,85 +350,103 @@ export default function HomePage() {
           </div>
 
           {/* Welcome Banner */}
-          <div className="relative bg-gradient-to-br from-teal-500/80 to-emerald-500/80 backdrop-blur-xl p-6 rounded-b-3xl border-b border-white/10">
-            <div className="flex justify-between items-start mb-4">
+          <div
+            className="relative p-6 rounded-[28px] mb-6 mx-4"
+            style={{
+              background: 'linear-gradient(160deg, #52C4A3 0%, #6AD3B8 100%)',
+              boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.1), 0 6px 16px rgba(0,0,0,0.12)',
+            }}
+          >
+            <div className="flex justify-between items-start">
               <div>
-                {user ? (
-                  <>
-                    <p className="text-teal-100 text-sm mb-1">Welcome back</p>
-                    <h1 className="text-2xl font-bold text-white">
-                      {user?.name || user?.email?.split('@')[0] || 'User'}
-                    </h1>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-teal-100 text-sm mb-1">Welcome to PG Events</p>
-                    <h1 className="text-2xl font-bold text-white">Discover Amazing Events</h1>
-                  </>
-                )}
+                <p className="text-white/90 text-sm mb-2 leading-relaxed" style={{ fontSize: '14px' }}>Welcome back</p>
+                <h1 className="text-white font-bold leading-tight mb-2" style={{ fontSize: '26px' }}>Hero</h1>
+                <p className="text-white/90 text-sm leading-relaxed" style={{ fontSize: '14px' }}>Ready for your next experience?</p>
               </div>
-              {user && <NotificationBell />}
+              <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all hover:scale-105" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <Bell className="w-5 h-5 text-white" strokeWidth={1.5} />
+              </button>
             </div>
-            {!user && (
-              <div className="flex gap-2 mt-4">
-                <Link href="/login" className="flex-1">
-                  <Button variant="outline" className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/signup" className="flex-1">
-                  <Button className="w-full bg-white text-teal-600 hover:bg-teal-50">
-                    Sign Up
-                  </Button>
-                </Link>
+          </div>
+
+          {/* Feature Highlights Section */}
+          <div className="px-6 mb-8">
+            <div className="flex flex-wrap gap-y-3">
+              <div className="flex items-center gap-3 w-1/2">
+                <Users className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-400 text-[13px] font-medium">500+ events hosted</span>
               </div>
-            )}
-            <div className="absolute top-0 right-0 w-32 h-32 opacity-20">
-              <div className="w-full h-full bg-white rounded-full blur-2xl"></div>
+              <div className="flex items-center gap-3 w-1/2">
+                <User className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-400 text-[13px] font-medium">Trusted by 50k users</span>
+              </div>
+              <div className="flex items-center gap-3 w-full mt-1">
+                <Zap className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-400 text-[13px] font-medium">Instant booking & secure payments</span>
+              </div>
             </div>
           </div>
 
           {/* Category Section */}
-          <div className="px-4 mb-6 mt-6">
-            <h2 className="text-lg font-bold text-white mb-4">Category</h2>
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-              {CATEGORIES.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(selectedCategory === category.id ? null : category.id)}
-                  className={`flex flex-col items-center justify-center min-w-[100px] h-28 rounded-2xl transition-all ${selectedCategory === category.id
-                    ? 'bg-white/20 shadow-lg scale-105 border border-teal-400'
-                    : 'bg-white/5 hover:bg-white/10 border border-white/10'
-                    }`}
-                >
-                  <div className="w-16 h-16 pointer-events-none">
-                    <category.Component />
-                  </div>
-                  <span className={`text-sm font-medium mt-2 ${selectedCategory === category.id ? 'text-white' : 'text-gray-300'}`}>
-                    {category.name}
-                  </span>
-                </button>
-              ))}
+          <div className="px-4 mb-8">
+            <h2 className="text-white font-semibold mb-4 leading-tight" style={{ fontSize: '20px' }}>Category</h2>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {CATEGORIES.map((category) => {
+                const IconComponent = category.icon;
+                const isSelected = selectedCategory === category.id;
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(isSelected ? null : category.id)}
+                    className={`flex flex-col items-center justify-center min-w-[90px] px-4 py-3 transition-all hover:scale-[1.03] ${isSelected ? 'scale-105' : ''
+                      }`}
+                    style={{
+                      borderRadius: '20px',
+                      background: isSelected ? 'rgba(206, 131, 255, 0.2)' : 'rgba(28, 28, 28, 0.2)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                      border: isSelected ? `1px solid ${category.color}` : '1px solid rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <IconComponent
+                      className="pointer-events-none mb-2"
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        color: category.color,
+                        strokeWidth: 1.5
+                      }}
+                    />
+                    <span className={`text-xs font-medium leading-relaxed ${isSelected ? 'text-white' : 'text-gray-300'}`} style={{ fontSize: '12px' }}>
+                      {category.name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Popular Events Section */}
-          <div className="px-4 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-white">Popular Events</h2>
-              <Link href="/events" className="text-teal-400 text-sm font-medium hover:text-teal-300">
-                See More
+          <div className="px-4 mb-12">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-white font-semibold leading-tight" style={{ fontSize: '20px' }}>Popular Events</h2>
+              <Link href="/events" className="text-[#7cffd6] text-sm font-medium hover:text-[#52C4A3] transition-colors" style={{ fontSize: '14px' }}>
+                See all
               </Link>
             </div>
+            <p className="text-gray-400 mb-5 leading-relaxed" style={{ fontSize: '14px' }}>Handpicked events happening near you this week</p>
             {loading ? (
               <div className="space-y-4">
                 {[1, 2].map((i) => (
-                  <div key={i} className="h-48 rounded-2xl bg-white/5 animate-pulse" />
+                  <div key={i} className="h-48 rounded-[22px] bg-white/5 animate-pulse" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }} />
                 ))}
               </div>
             ) : popularEvents.length === 0 ? (
-              <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10 backdrop-blur-md">
-                <p className="text-gray-400">No events available at the moment.</p>
+              <div className="text-center py-12 rounded-xl backdrop-blur-md" style={{
+                background: 'rgba(28, 28, 28, 0.2)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                <p className="text-gray-400" style={{ fontSize: '14px', lineHeight: '1.6' }}>No events available at the moment.</p>
               </div>
             ) : (
               <div className="space-y-4">
