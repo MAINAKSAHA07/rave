@@ -42,7 +42,7 @@ export default function TableFloorPlanView({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   
   // Touch/pinch zoom state
-  const [touches, setTouches] = useState<Touch[]>([]);
+  const [touchCount, setTouchCount] = useState(0);
   const [lastPinchDistance, setLastPinchDistance] = useState<number | null>(null);
   const [lastPinchCenter, setLastPinchCenter] = useState<{ x: number; y: number } | null>(null);
   const [initialZoom, setInitialZoom] = useState(1);
@@ -118,14 +118,14 @@ export default function TableFloorPlanView({
   };
 
   // Calculate distance between two touch points
-  const getDistance = (touch1: Touch, touch2: Touch) => {
+  const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
     const dx = touch2.clientX - touch1.clientX;
     const dy = touch2.clientY - touch1.clientY;
     return Math.sqrt(dx * dx + dy * dy);
   };
 
   // Calculate center point between two touches
-  const getCenter = (touch1: Touch, touch2: Touch) => {
+  const getCenter = (touch1: React.Touch, touch2: React.Touch) => {
     return {
       x: (touch1.clientX + touch2.clientX) / 2,
       y: (touch1.clientY + touch2.clientY) / 2,
@@ -136,7 +136,7 @@ export default function TableFloorPlanView({
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
     const touchList = Array.from(e.touches);
-    setTouches(touchList);
+    setTouchCount(touchList.length);
     setHasMoved(false);
 
     if (touchList.length === 1) {
@@ -167,7 +167,7 @@ export default function TableFloorPlanView({
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
     const touchList = Array.from(e.touches);
-    setTouches(touchList);
+    setTouchCount(touchList.length);
 
     if (touchList.length === 1 && isPanning) {
       // Single touch panning
@@ -210,7 +210,7 @@ export default function TableFloorPlanView({
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.preventDefault();
     const touchList = Array.from(e.touches);
-    setTouches(touchList);
+    setTouchCount(touchList.length);
 
     if (touchList.length === 0) {
       // All touches released
@@ -354,7 +354,7 @@ export default function TableFloorPlanView({
                 }}
                 onTouchEnd={(e) => {
                   // Handle touch end for table selection
-                  if (!hasMoved && !isUnavailable && touches.length === 0) {
+                  if (!hasMoved && !isUnavailable && touchCount === 0) {
                     e.preventDefault();
                     e.stopPropagation();
                     onTableClick(table.id);
