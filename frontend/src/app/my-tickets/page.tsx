@@ -118,7 +118,7 @@ export default function MyTicketsPage() {
     const order = orders[ticket.order_id];
     const frontendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:3000';
     const qrUrl = `${frontendUrl}/t/${ticket.ticket_code}`;
-    
+
     // Note: At this point, ticket.status is guaranteed to be 'issued' or 'checked_in' due to early return above
 
     printWindow.document.write(`
@@ -212,27 +212,27 @@ export default function MyTicketsPage() {
   const frontendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:3000';
 
   return (
-    <div className="min-h-screen pb-20 bg-gray-50">
-      <div className="max-w-[428px] mx-auto bg-white min-h-screen">
+    <div className="min-h-screen pb-20">
+      <div className="max-w-[428px] mx-auto min-h-screen">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center gap-4">
-          <button onClick={() => router.back()} className="text-gray-700 text-xl">
+        <div className="sticky top-0 z-10 backdrop-blur-md bg-black/30 border-b border-white/10 p-4 flex items-center gap-4">
+          <button onClick={() => router.back()} className="text-white text-xl hover:text-gray-300 transition-colors">
             ←
           </button>
-          <h1 className="text-xl font-bold text-gray-900">My Ticket</h1>
+          <h1 className="text-xl font-bold text-white">My Ticket</h1>
         </div>
 
         {tickets.length === 0 ? (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center text-3xl mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl mx-auto mb-4 border border-white/10">
               🎟️
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tickets yet</h3>
-            <p className="text-gray-600 max-w-sm text-sm mb-6">
+            <h3 className="text-lg font-semibold text-white mb-2">No tickets yet</h3>
+            <p className="text-gray-400 max-w-sm text-sm mb-6">
               You haven't purchased any tickets yet. Browse our events to find your next experience.
             </p>
             <Link href="/events">
-              <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-900/20">
                 Browse Events
               </Button>
             </Link>
@@ -248,26 +248,26 @@ export default function MyTicketsPage() {
               return (
                 <div
                   key={ticket.id}
-                  className="bg-white border-2 border-teal-500 rounded-3xl overflow-hidden shadow-lg"
+                  className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden shadow-lg"
                 >
                   {/* Event Banner */}
-                  <div className="relative bg-gradient-to-br from-teal-500 to-emerald-500 p-6">
+                  <div className="relative bg-gradient-to-br from-teal-500/80 to-emerald-500/80 p-6 backdrop-blur-sm border-b border-white/10">
                     {event?.cover_image ? (
                       <img
                         src={getPocketBase().files.getUrl(event, event.cover_image)}
                         alt={event.name}
-                        className="absolute inset-0 w-full h-full object-cover opacity-30"
+                        className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
                       />
                     ) : null}
                     <div className="relative z-10">
-                      <h2 className="text-xl font-bold text-white mb-2">{event?.name || 'Event'}</h2>
-                      <p className="text-teal-100 text-sm">
+                      <h2 className="text-xl font-bold text-white mb-2 shadow-sm">{event?.name || 'Event'}</h2>
+                      <p className="text-teal-50 text-sm font-medium">
                         {event?.event_date || event?.start_date
                           ? new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                            }).toUpperCase()
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          }).toUpperCase()
                           : 'DATE TBD'}
                       </p>
                     </div>
@@ -277,18 +277,18 @@ export default function MyTicketsPage() {
                   <div className="p-6">
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Name</p>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-xs text-gray-400 mb-1">Name</p>
+                        <p className="text-sm font-semibold text-white">
                           {getCurrentUser()?.name || getCurrentUser()?.email?.split('@')[0] || 'Guest'}
                         </p>
                       </div>
                       {ticket.expand?.ticket_type_id?.ticket_type_category && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Type</p>
-                          <p className="text-sm font-semibold text-gray-900">
+                          <p className="text-xs text-gray-400 mb-1">Type</p>
+                          <p className="text-sm font-semibold text-white">
                             {ticket.expand.ticket_type_id.ticket_type_category}
                             {ticket.expand?.table_id && (
-                              <span className="ml-1 text-xs font-normal text-gray-600">
+                              <span className="ml-1 text-xs font-normal text-gray-300">
                                 - Table {ticket.expand.table_id.name}
                                 {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}
                               </span>
@@ -297,57 +297,57 @@ export default function MyTicketsPage() {
                         </div>
                       )}
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Time</p>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-xs text-gray-400 mb-1">Time</p>
+                        <p className="text-sm font-semibold text-white">
                           {event?.start_date
                             ? new Date(event.start_date).toLocaleTimeString('en-IN', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
                             : 'TBD'}{' '}
                           -{' '}
                           {event?.end_date
                             ? new Date(event.end_date).toLocaleTimeString('en-IN', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
                             : 'TBD'}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Date</p>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-xs text-gray-400 mb-1">Date</p>
+                        <p className="text-sm font-semibold text-white">
                           {event?.event_date || event?.start_date
                             ? new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                              })
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                            })
                             : 'TBD'}
                         </p>
                       </div>
                     </div>
 
                     <div className="mb-4">
-                      <p className="text-xs text-gray-500 mb-1">Place</p>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-xs text-gray-400 mb-1">Place</p>
+                      <p className="text-sm font-semibold text-white">
                         {event?.venue_id?.name || 'Venue TBD'}, {event?.city || ''}
                       </p>
                     </div>
 
                     {/* Seat/Table Information */}
                     {ticket.expand?.seat_id && (
-                      <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-3">
-                        <p className="text-xs text-blue-600 mb-1 font-semibold">💺 Seat Assignment</p>
-                        <p className="text-sm font-semibold text-blue-900">
+                      <div className="mb-4 bg-blue-500/10 border border-blue-400/20 rounded-xl p-3">
+                        <p className="text-xs text-blue-300 mb-1 font-semibold">💺 Seat Assignment</p>
+                        <p className="text-sm font-semibold text-blue-100">
                           {ticket.expand.seat_id.section} - Row {ticket.expand.seat_id.row} - {ticket.expand.seat_id.label}
                         </p>
                       </div>
                     )}
                     {ticket.expand?.table_id && (
-                      <div className="mb-4 bg-teal-50 border border-teal-200 rounded-xl p-3">
-                        <p className="text-xs text-teal-600 mb-1 font-semibold">🪑 Table Assignment</p>
-                        <p className="text-sm font-semibold text-teal-900">
+                      <div className="mb-4 bg-teal-500/10 border border-teal-400/20 rounded-xl p-3">
+                        <p className="text-xs text-teal-300 mb-1 font-semibold">🪑 Table Assignment</p>
+                        <p className="text-sm font-semibold text-teal-100">
                           Table: {ticket.expand.table_id.name}
                           {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}
                           {ticket.expand.table_id.capacity && ` - Capacity: ${ticket.expand.table_id.capacity}`}
@@ -357,8 +357,8 @@ export default function MyTicketsPage() {
 
                     {/* QR Code Section - Only show for issued or checked_in tickets */}
                     {ticket.status === 'issued' || ticket.status === 'checked_in' ? (
-                      <div className="bg-gray-50 rounded-2xl p-4 mb-4 text-center">
-                        <p className="text-xs text-gray-600 mb-3">
+                      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 text-center">
+                        <p className="text-xs text-gray-300 mb-3">
                           Scan this QR code or show this ticket at the event
                         </p>
                         <div className="flex justify-center mb-3">
@@ -366,34 +366,34 @@ export default function MyTicketsPage() {
                             <QRCodeSVG value={qrUrl} size={120} />
                           </div>
                         </div>
-                        <p className="text-xs font-mono text-gray-700">
+                        <p className="text-xs font-mono text-gray-300">
                           <strong>Ticket ID: {ticket.ticket_code}</strong>
                         </p>
                       </div>
                     ) : ticket.status === 'pending' ? (
-                      <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 mb-4 text-center">
+                      <div className="bg-yellow-500/10 border-2 border-yellow-500/30 rounded-2xl p-4 mb-4 text-center">
                         <div className="flex items-center justify-center mb-2">
                           <span className="text-2xl mr-2">⏳</span>
-                          <p className="text-sm font-semibold text-yellow-800">Payment Pending</p>
+                          <p className="text-sm font-semibold text-yellow-200">Payment Pending</p>
                         </div>
-                        <p className="text-xs text-yellow-700 mb-2">
+                        <p className="text-xs text-yellow-100/80 mb-2">
                           Your ticket will be issued once payment is confirmed.
                         </p>
-                        <p className="text-xs font-mono text-gray-700">
+                        <p className="text-xs font-mono text-gray-300">
                           <strong>Ticket ID: {ticket.ticket_code}</strong>
                         </p>
                         {order?.status === 'pending' && order?.payment_method === 'cash' && (
-                          <p className="text-xs text-yellow-600 mt-2">
+                          <p className="text-xs text-yellow-200/60 mt-2">
                             Waiting for cash payment confirmation at venue
                           </p>
                         )}
                       </div>
                     ) : (
-                      <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 mb-4 text-center">
-                        <p className="text-xs text-gray-600 mb-2">
-                          Ticket Status: <span className="font-semibold uppercase">{ticket.status.replace('_', ' ')}</span>
+                      <div className="bg-white/5 border-2 border-white/10 rounded-2xl p-4 mb-4 text-center">
+                        <p className="text-xs text-gray-400 mb-2">
+                          Ticket Status: <span className="font-semibold uppercase text-white">{ticket.status.replace('_', ' ')}</span>
                         </p>
-                        <p className="text-xs font-mono text-gray-700">
+                        <p className="text-xs font-mono text-gray-500">
                           <strong>Ticket ID: {ticket.ticket_code}</strong>
                         </p>
                       </div>
@@ -403,7 +403,7 @@ export default function MyTicketsPage() {
                     {(ticket.status === 'issued' || ticket.status === 'checked_in') && (
                       <Button
                         onClick={() => downloadTicket(ticket)}
-                        className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-teal-900/20"
                       >
                         <span>📥</span>
                         Download Ticket

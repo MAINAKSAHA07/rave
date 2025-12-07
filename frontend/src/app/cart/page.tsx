@@ -45,7 +45,7 @@ export default function CartPage() {
   const hasTableItems = items.some(item => item.ticketTypeCategory === 'TABLE' && (!item.selectedTables || item.selectedTables.length === 0));
 
   // Check if there are table items with selections
-  const hasTableSelections = items.some(item => 
+  const hasTableSelections = items.some(item =>
     item.ticketTypeCategory === 'TABLE' && item.selectedTables && item.selectedTables.length > 0
   );
 
@@ -53,15 +53,15 @@ export default function CartPage() {
   const handleCheckoutTimerExpiry = useCallback(async () => {
     console.log('[CartTimer] Timer expired - releasing table reservations');
     notifyError('Checkout timer expired. Please add items to cart again.');
-    
+
     // Release table reservations for all table items
-    const tableItems = items.filter(item => 
+    const tableItems = items.filter(item =>
       item.ticketTypeCategory === 'TABLE' && item.selectedTables && item.selectedTables.length > 0
     );
-    
+
     if (tableItems.length > 0) {
       const allTableIds = tableItems.flatMap(item => item.selectedTables || []);
-      
+
       try {
         await tableReservationsApi.release(allTableIds);
         console.log('[CartTimer] Released table reservations:', allTableIds);
@@ -69,7 +69,7 @@ export default function CartPage() {
         console.error('[CartTimer] Failed to release table reservations:', error);
       }
     }
-    
+
     clearCart();
     router.push('/events');
   }, [items, clearCart, router, notifyError]);
@@ -115,7 +115,7 @@ export default function CartPage() {
           return prev - 1;
         });
       }, 1000);
-      
+
       checkoutTimerIntervalRef.current = interval;
       console.log('[CartTimer] Countdown started, interval ID:', interval);
     }
@@ -178,7 +178,7 @@ export default function CartPage() {
         // Razorpay payment
         const response = await ordersApi.create(orderData);
         const { razorpayOrder, order } = response.data;
-        
+
         if (razorpayOrder && window.Razorpay) {
           const options = {
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -259,24 +259,24 @@ export default function CartPage() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="min-h-screen pb-20 bg-gray-50">
-        <div className="max-w-[428px] mx-auto bg-white min-h-screen">
+      <div className="min-h-screen pb-20">
+        <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Header */}
-          <div className="sticky top-0 z-20 bg-white border-b border-gray-200 p-4">
-            <h1 className="text-2xl font-bold text-gray-900">Cart</h1>
-            <p className="text-sm font-medium text-gray-800">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
+          <div className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10 p-4">
+            <h1 className="text-2xl font-bold text-white">Cart</h1>
+            <p className="text-sm font-medium text-gray-300">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
           </div>
 
           <div className="p-4 space-y-4">
             {/* Cart Items */}
             {items.map((item) => (
-              <div key={`${item.eventId}-${item.ticketTypeId}`} className="bg-white rounded-2xl p-4 border border-gray-200">
+              <div key={`${item.eventId}-${item.ticketTypeId}`} className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900">{item.ticketTypeName}</h3>
-                    <p className="text-sm text-gray-600">{item.eventName}</p>
+                    <h3 className="font-bold text-white">{item.ticketTypeName}</h3>
+                    <p className="text-sm text-gray-400">{item.eventName}</p>
                     {item.ticketTypeCategory && (
-                      <p className="text-xs text-teal-600 mt-1">
+                      <p className="text-xs text-teal-400 mt-1">
                         {item.ticketTypeCategory}
                         {item.selectedTables && item.selectedTables.length > 0 && (
                           <span> - {item.selectedTables.length} table(s) selected</span>
@@ -289,7 +289,7 @@ export default function CartPage() {
                   </div>
                   <button
                     onClick={() => removeFromCart(item.eventId, item.ticketTypeId)}
-                    className="text-red-500 hover:text-red-700 ml-2"
+                    className="text-red-400 hover:text-red-300 ml-2"
                   >
                     ✕
                   </button>
@@ -298,142 +298,140 @@ export default function CartPage() {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => updateQuantity(item.eventId, item.ticketTypeId, item.quantity - 1)}
-                      className="w-8 h-8 rounded-lg border-2 border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                      className="w-8 h-8 rounded-lg border border-white/20 flex items-center justify-center hover:bg-white/10 text-white"
                     >
                       −
                     </button>
-                    <span className="font-semibold w-8 text-center">{item.quantity}</span>
+                    <span className="font-semibold w-8 text-center text-white">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.eventId, item.ticketTypeId, item.quantity + 1)}
-                      className="w-8 h-8 rounded-lg border-2 border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                      className="w-8 h-8 rounded-lg border border-white/20 flex items-center justify-center hover:bg-white/10 text-white"
                     >
                       +
                     </button>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900">
+                    <p className="font-bold text-white">
                       ₹{((item.price * item.quantity) / 100).toFixed(2)}
                     </p>
-                    <p className="text-xs text-gray-500">₹{(item.price / 100).toFixed(2)} each</p>
+                    <p className="text-xs text-gray-400">₹{(item.price / 100).toFixed(2)} each</p>
                   </div>
                 </div>
               </div>
             ))}
 
             {/* Attendee Details */}
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-4 text-gray-900">Attendee Details</h2>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+              <h2 className="text-lg font-bold mb-4 text-white">Attendee Details</h2>
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <Label htmlFor="attendeeName" className="text-gray-700 mb-2 block">Name *</Label>
+                  <Label htmlFor="attendeeName" className="text-gray-300 mb-2 block">Name *</Label>
                   <Input
                     id="attendeeName"
                     value={attendeeDetails.name}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, name: e.target.value })}
                     placeholder="Full name"
-                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900 placeholder:text-gray-400"
+                    className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="attendeeEmail" className="text-gray-700 mb-2 block">Email *</Label>
+                  <Label htmlFor="attendeeEmail" className="text-gray-300 mb-2 block">Email *</Label>
                   <Input
                     id="attendeeEmail"
                     type="email"
                     value={attendeeDetails.email}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, email: e.target.value })}
                     placeholder="email@example.com"
-                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900 placeholder:text-gray-400"
+                    className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="attendeePhone" className="text-gray-700 mb-2 block">Phone *</Label>
+                  <Label htmlFor="attendeePhone" className="text-gray-300 mb-2 block">Phone *</Label>
                   <Input
                     id="attendeePhone"
                     type="tel"
                     value={attendeeDetails.phone}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, phone: e.target.value })}
                     placeholder="+91 1234567890"
-                    className="bg-white border-2 border-gray-300 focus:border-teal-500 rounded-xl text-gray-900 placeholder:text-gray-400"
+                    className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
                   />
                 </div>
               </div>
             </div>
 
             {/* Order Summary */}
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-4 text-gray-900">Order Summary</h2>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+              <h2 className="text-lg font-bold mb-4 text-white">Order Summary</h2>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Subtotal</span>
-                  <span className="text-base font-semibold text-gray-700">₹{(baseAmount / 100).toFixed(2)}</span>
+                  <span className="text-sm text-gray-400">Subtotal</span>
+                  <span className="text-base font-semibold text-gray-300">₹{(baseAmount / 100).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">GST (18%)</span>
-                  <span className="text-base font-semibold text-gray-700">₹{(gstAmount / 100).toFixed(2)}</span>
+                  <span className="text-sm text-gray-400">GST (18%)</span>
+                  <span className="text-base font-semibold text-gray-300">₹{(gstAmount / 100).toFixed(2)}</span>
                 </div>
-                <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
-                  <span className="text-base font-semibold text-gray-700">Total Amount</span>
-                  <span className="text-2xl font-bold text-teal-600">₹{(totalAmount / 100).toFixed(2)}</span>
+                <div className="border-t border-white/10 pt-2 flex justify-between items-center">
+                  <span className="text-base font-semibold text-white">Total Amount</span>
+                  <span className="text-2xl font-bold text-teal-400">₹{(totalAmount / 100).toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
             {/* Payment Method */}
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <label className="block text-sm font-medium mb-2 text-gray-700">Payment Method</label>
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+              <label className="block text-sm font-medium mb-2 text-gray-300">Payment Method</label>
               <div className="flex flex-col gap-2">
-                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'razorpay' ? 'bg-teal-50 border-teal-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
+                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'razorpay' ? 'bg-teal-500/20 border-teal-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="razorpay"
                     checked={paymentMethod === 'razorpay'}
                     onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                    className="w-4 h-4 accent-teal-600"
+                    className="w-4 h-4 accent-teal-500"
                   />
-                  <span className="text-gray-700">Razorpay (Online)</span>
+                  <span className="text-gray-200">Razorpay (Online)</span>
                 </label>
-                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'cash' ? 'bg-teal-50 border-teal-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
+                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'cash' ? 'bg-teal-500/20 border-teal-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="cash"
                     checked={paymentMethod === 'cash'}
                     onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                    className="w-4 h-4 accent-teal-600"
+                    className="w-4 h-4 accent-teal-500"
                   />
-                  <span className="text-gray-700">Cash (At Venue)</span>
+                  <span className="text-gray-200">Cash (At Venue)</span>
                 </label>
               </div>
             </div>
 
             {/* Checkout Timer */}
             {checkoutTimer !== null && checkoutTimer > 0 && (
-              <div className={`p-3 rounded-lg border-2 ${
-                checkoutTimer <= 60 
-                  ? 'bg-red-50 border-red-300' 
-                  : checkoutTimer <= 120 
-                    ? 'bg-yellow-50 border-yellow-300' 
-                    : 'bg-blue-50 border-blue-300'
-              }`}>
+              <div className={`p-3 rounded-lg border-2 ${checkoutTimer <= 60
+                  ? 'bg-red-500/10 border-red-500/30'
+                  : checkoutTimer <= 120
+                    ? 'bg-yellow-500/10 border-yellow-500/30'
+                    : 'bg-blue-500/10 border-blue-500/30'
+                }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⏱️</span>
-                    <span className={`font-semibold ${
-                      checkoutTimer <= 60 
-                        ? 'text-red-700' 
-                        : checkoutTimer <= 120 
-                          ? 'text-yellow-700' 
-                          : 'text-blue-700'
-                    }`}>
+                    <span className={`font-semibold ${checkoutTimer <= 60
+                        ? 'text-red-400'
+                        : checkoutTimer <= 120
+                          ? 'text-yellow-400'
+                          : 'text-blue-400'
+                      }`}>
                       Complete checkout in: {Math.floor(checkoutTimer / 60)}:{(checkoutTimer % 60).toString().padStart(2, '0')}
                     </span>
                   </div>
                   {checkoutTimer <= 60 && (
-                    <span className="text-xs text-red-600 font-medium">⚠️ Hurry!</span>
+                    <span className="text-xs text-red-400 font-medium">⚠️ Hurry!</span>
                   )}
                 </div>
-                <p className="text-xs mt-1 text-gray-600">
+                <p className="text-xs mt-1 text-gray-400">
                   Your table reservation will expire if checkout is not completed in time.
                 </p>
               </div>
@@ -443,7 +441,7 @@ export default function CartPage() {
             <button
               onClick={handleCheckout}
               disabled={!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone || hasTableItems || loading || (checkoutTimer === 0)}
-              className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold text-base hover:bg-teal-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all shadow-lg"
+              className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold text-base hover:bg-teal-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-teal-900/20"
             >
               {loading ? 'Processing...' : paymentMethod === 'cash' ? 'Create Order (Pay at Venue)' : 'Proceed to Checkout'}
             </button>

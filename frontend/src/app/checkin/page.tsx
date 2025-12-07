@@ -130,21 +130,21 @@ export default function CheckInPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 p-4">
-            <Card className="max-w-md mx-auto">
+        <div className="min-h-screen p-4 flex items-center justify-center">
+            <Card className="max-w-md w-full mx-auto bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
                 <CardHeader>
-                    <CardTitle className="text-center">Event Check-in</CardTitle>
+                    <CardTitle className="text-center text-white text-2xl font-bold">Event Check-in</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Select Event</label>
+                        <label className="text-sm font-medium text-gray-300">Select Event</label>
                         <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white/5 border-white/10 text-white">
                                 <SelectValue placeholder="Select event" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-gray-900 border-gray-800 text-white">
                                 {events.map((event) => (
-                                    <SelectItem key={event.id} value={event.id}>
+                                    <SelectItem key={event.id} value={event.id} className="focus:bg-white/10 focus:text-white">
                                         {event.name}
                                     </SelectItem>
                                 ))}
@@ -153,32 +153,38 @@ export default function CheckInPage() {
                     </div>
 
                     {!scanning ? (
-                        <Button className="w-full h-32 text-lg" onClick={() => setScanning(true)} disabled={!selectedEventId}>
+                        <Button
+                            className="w-full h-32 text-lg bg-teal-600 hover:bg-teal-700 text-white border-none shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02]"
+                            onClick={() => setScanning(true)}
+                            disabled={!selectedEventId}
+                        >
                             <Camera className="w-8 h-8 mr-2" />
                             Start Scanner
                         </Button>
                     ) : (
                         <div className="space-y-4">
-                            <div id="reader" className="w-full"></div>
-                            <Button variant="outline" className="w-full" onClick={() => setScanning(false)}>
+                            <div id="reader" className="w-full rounded-xl overflow-hidden border-2 border-white/20"></div>
+                            <Button variant="outline" className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10" onClick={() => setScanning(false)}>
                                 Stop Scanner
                             </Button>
                         </div>
                     )}
 
                     {scanResult.status !== 'idle' && (
-                        <div className={`p-4 rounded-lg text-center ${scanResult.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        <div className={`p-4 rounded-xl text-center border ${scanResult.status === 'success'
+                                ? 'bg-green-500/20 text-green-200 border-green-500/40'
+                                : 'bg-red-500/20 text-red-200 border-red-500/40'
                             }`}>
                             {scanResult.status === 'success' ? (
-                                <CheckCircle className="w-12 h-12 mx-auto mb-2" />
+                                <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-400" />
                             ) : (
-                                <XCircle className="w-12 h-12 mx-auto mb-2" />
+                                <XCircle className="w-12 h-12 mx-auto mb-2 text-red-400" />
                             )}
                             <h3 className="text-xl font-bold">{scanResult.message}</h3>
                             {scanResult.ticket && (
-                                <div className="mt-2 text-sm">
+                                <div className="mt-2 text-sm text-white/90">
                                     <p>{scanResult.ticket.attendee_name}</p>
-                                    <p className="font-mono">{scanResult.ticket.ticket_code}</p>
+                                    <p className="font-mono opacity-80">{scanResult.ticket.ticket_code}</p>
                                 </div>
                             )}
                         </div>

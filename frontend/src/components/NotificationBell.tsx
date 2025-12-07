@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from 'lucide-react';
 
+import NotificationIcon3D from '@/components/icons/3d/NotificationIcon3D';
+
 export default function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
@@ -79,11 +81,13 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-700 hover:text-teal-600 transition-colors"
+        className="relative text-gray-700 hover:text-teal-600 transition-colors w-10 h-10 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-full hover:bg-white/70"
       >
-        <Bell className="w-6 h-6" />
+        <div className="w-8 h-8 pointer-events-none">
+          <NotificationIcon3D />
+        </div>
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm z-10 border-2 border-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -118,9 +122,8 @@ export default function NotificationBell() {
                 {recentNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                      !notification.read ? 'bg-blue-50/50' : ''
-                    }`}
+                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50/50' : ''
+                      }`}
                     onClick={() => {
                       if (!notification.read) {
                         markAsRead(notification.id);

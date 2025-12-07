@@ -95,7 +95,7 @@ export default function EventDetailsPage() {
   const [reservedTables, setReservedTables] = useState<Set<string>>(new Set());
   const [reservationTimer, setReservationTimer] = useState<NodeJS.Timeout | null>(null);
   const [tableReservationTimer, setTableReservationTimer] = useState<NodeJS.Timeout | null>(null);
-  
+
   // Table selection state
   const [selectedTables, setSelectedTables] = useState<Record<string, string[]>>({}); // ticketTypeId -> tableIds[]
   const [availableTables, setAvailableTables] = useState<any[]>([]);
@@ -130,14 +130,14 @@ export default function EventDetailsPage() {
         const ticketTypesData = await pb.collection('ticket_types').getFullList({
           filter: `event_id="${eventId}"`,
         });
-        
+
         // Log raw data to see what we're getting
         console.log('[Event] Raw ticket types data:', ticketTypesData);
         if (ticketTypesData.length > 0) {
           console.log('[Event] First ticket type raw keys:', Object.keys(ticketTypesData[0]));
           console.log('[Event] First ticket type raw data:', ticketTypesData[0]);
         }
-        
+
         setTicketTypes(ticketTypesData as any);
         console.log('Loaded ticket types:', ticketTypesData.length);
         // Debug: Log ticket type details
@@ -174,7 +174,7 @@ export default function EventDetailsPage() {
       } else if (venue) {
         console.log('[Event] Venue from expansion:', venue.name);
       }
-      
+
       // Only proceed with seat/table loading if we have venue data
       if (venue) {
         if (venue.layout_type === 'SEATED') {
@@ -205,7 +205,7 @@ export default function EventDetailsPage() {
         });
       }
     }
-    
+
     // For GA_TABLE events, clear table selection if quantity is reduced to 0
     if (isGATable && selectedTables[ticketTypeId] && quantity === 0) {
       setSelectedTables({
@@ -326,7 +326,7 @@ export default function EventDetailsPage() {
           // Note: reserveResponse is already the data (from response.data), not wrapped in .data
           const conflicts = reserveResponse.conflicts || reserveResponse.data?.conflicts || [];
           const reserved = reserveResponse.reserved || reserveResponse.data?.reserved || [];
-          
+
           if (conflicts.length > 0) {
             alert(`This table was just selected by another user. Please choose a different table.`);
             // Refresh table availability
@@ -376,7 +376,7 @@ export default function EventDetailsPage() {
             response: error.response?.data,
             status: error.response?.status,
           });
-          
+
           // Check if error response has conflicts
           const errorConflicts = error.response?.data?.conflicts || [];
           if (errorConflicts.length > 0) {
@@ -583,7 +583,7 @@ export default function EventDetailsPage() {
     });
 
     notifySuccess(`${quantity} ${ticketType.name} ticket(s) added to cart`);
-    
+
     // Clear selections for this ticket type
     setSelectedTickets({ ...selectedTickets, [ticketTypeId]: 0 });
     if (isSeated) {
@@ -635,15 +635,15 @@ export default function EventDetailsPage() {
   return (
     <>
 
-      <div className="min-h-screen pb-20 bg-gray-50">
-        <div className="max-w-[428px] mx-auto bg-white min-h-screen">
+      <div className="min-h-screen pb-20">
+        <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Header */}
-          <div className="sticky top-0 z-20 bg-white border-b border-gray-200 p-4 flex items-center gap-4">
-            <button onClick={() => router.back()} className="text-gray-700 text-xl">
+          <div className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10 p-4 flex items-center gap-4">
+            <button onClick={() => router.back()} className="text-white text-xl hover:text-gray-300 transition-colors">
               ←
             </button>
-            <h1 className="text-lg font-bold text-gray-900 flex-1 truncate">{event.name}</h1>
-            <button className="text-red-500 text-xl">❤️</button>
+            <h1 className="text-lg font-bold text-white flex-1 truncate">{event.name}</h1>
+            <button className="text-red-400 hover:text-red-300 text-xl transition-colors">❤️</button>
           </div>
 
           {/* Cover Image */}
@@ -654,15 +654,15 @@ export default function EventDetailsPage() {
                 alt={event.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="px-3 py-1 bg-teal-500 text-white rounded-full text-xs font-semibold capitalize">
+                  <span className="px-3 py-1 bg-teal-500 text-white rounded-full text-xs font-semibold capitalize shadow-md">
                     {event.category}
                   </span>
-                  <span className="text-white text-xs">📍 {event.city}</span>
+                  <span className="text-white text-xs font-medium drop-shadow-md">📍 {event.city}</span>
                 </div>
-                <h2 className="text-white font-bold text-xl mb-1">{event.name}</h2>
-                <p className="text-white text-sm">
+                <h2 className="text-white font-bold text-xl mb-1 drop-shadow-lg">{event.name}</h2>
+                <p className="text-gray-200 text-sm drop-shadow-md">
                   {new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
                     weekday: 'long',
                     year: 'numeric',
@@ -678,390 +678,388 @@ export default function EventDetailsPage() {
 
           <div className="p-4 space-y-6">
 
-          {event.description && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">Description</h2>
-              <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.description}</p>
-            </div>
-          )}
-
-          {event.about && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">About the Event</h2>
-              <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.about}</p>
-            </div>
-          )}
-
-          {event.overview && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">Overview</h2>
-              <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.overview}</p>
-            </div>
-          )}
-
-          {event.things_to_carry && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">Things to Carry</h2>
-              <div className="text-gray-700 text-sm space-y-2">
-                {event.things_to_carry.split('\n').map((item: string, idx: number) => (
-                  item.trim() && (
-                    <div key={idx} className="flex items-start gap-2">
-                      <span className="text-teal-600 mt-1">•</span>
-                      <span>{item.trim()}</span>
-                    </div>
-                  )
-                ))}
+            {event.description && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">Description</h2>
+                <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.description}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {event.inclusions && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">Inclusions</h2>
-              <div className="text-gray-700 text-sm space-y-2">
-                {event.inclusions.split('\n').map((item: string, idx: number) => (
-                  item.trim() && (
-                    <div key={idx} className="flex items-start gap-2">
-                      <span className="text-teal-600 mt-1">✓</span>
-                      <span>{item.trim()}</span>
-                    </div>
-                  )
-                ))}
+            {event.about && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">About the Event</h2>
+                <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.about}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {event.terms_and_conditions && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">Terms & Conditions</h2>
-              <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.terms_and_conditions}</p>
-            </div>
-          )}
+            {event.overview && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">Overview</h2>
+                <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.overview}</p>
+              </div>
+            )}
 
-          {event.expand?.venue_id && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">Venue Details</h2>
-              <div className="text-gray-700 text-sm space-y-2">
-                <div className="flex items-start gap-2">
-                  <span className="text-teal-600 font-semibold">📍</span>
-                  <div>
-                    <p className="font-semibold">{event.expand.venue_id.name}</p>
-                    {event.expand.venue_id.address && (
-                      <p className="text-gray-600">{event.expand.venue_id.address}</p>
-                    )}
-                    {event.expand.venue_id.city && (
-                      <p className="text-gray-600">{event.expand.venue_id.city}</p>
-                    )}
+            {event.things_to_carry && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">Things to Carry</h2>
+                <div className="text-gray-300 text-sm space-y-2">
+                  {event.things_to_carry.split('\n').map((item: string, idx: number) => (
+                    item.trim() && (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-teal-400 mt-1">•</span>
+                        <span>{item.trim()}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {event.inclusions && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">Inclusions</h2>
+                <div className="text-gray-300 text-sm space-y-2">
+                  {event.inclusions.split('\n').map((item: string, idx: number) => (
+                    item.trim() && (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-teal-400 mt-1">✓</span>
+                        <span>{item.trim()}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {event.terms_and_conditions && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">Terms & Conditions</h2>
+                <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.terms_and_conditions}</p>
+              </div>
+            )}
+
+            {event.expand?.venue_id && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">Venue Details</h2>
+                <div className="text-gray-300 text-sm space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-teal-400 font-semibold">📍</span>
+                    <div>
+                      <p className="font-semibold text-white">{event.expand.venue_id.name}</p>
+                      {event.expand.venue_id.address && (
+                        <p className="text-gray-400">{event.expand.venue_id.address}</p>
+                      )}
+                      {event.expand.venue_id.city && (
+                        <p className="text-gray-400">{event.expand.venue_id.city}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
+                {event.venue_details && (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.venue_details}</p>
+                  </div>
+                )}
               </div>
-              {event.venue_details && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.venue_details}</p>
-                </div>
-              )}
-            </div>
-          )}
+            )}
 
-          {event.expand?.organizer_id && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">Organizer Information</h2>
-              <div className="text-gray-700 text-sm space-y-2">
-                <div className="flex items-start gap-2">
-                  <span className="text-teal-600 font-semibold">👤</span>
-                  <div>
-                    <p className="font-semibold">{event.expand.organizer_id.name}</p>
-                    {event.expand.organizer_id.email && (
-                      <p className="text-gray-600">✉️ {event.expand.organizer_id.email}</p>
-                    )}
-                    {event.expand.organizer_id.phone && (
-                      <p className="text-gray-600">📞 {event.expand.organizer_id.phone}</p>
-                    )}
+            {event.expand?.organizer_id && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">Organizer Information</h2>
+                <div className="text-gray-300 text-sm space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-teal-400 font-semibold">👤</span>
+                    <div>
+                      <p className="font-semibold text-white">{event.expand.organizer_id.name}</p>
+                      {event.expand.organizer_id.email && (
+                        <p className="text-gray-400">✉️ {event.expand.organizer_id.email}</p>
+                      )}
+                      {event.expand.organizer_id.phone && (
+                        <p className="text-gray-400">📞 {event.expand.organizer_id.phone}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
+                {event.organizer_info && (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <p className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">{event.organizer_info}</p>
+                  </div>
+                )}
               </div>
-              {event.organizer_info && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <p className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">{event.organizer_info}</p>
+            )}
+
+            {event.tags && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <h2 className="text-lg font-bold mb-3 text-white">Tags</h2>
+                <div className="flex flex-wrap gap-2">
+                  {(Array.isArray(event.tags) ? event.tags : typeof event.tags === 'string' ? (() => {
+                    try {
+                      return JSON.parse(event.tags);
+                    } catch {
+                      return event.tags.split(',').map((t: string) => t.trim());
+                    }
+                  })() : []).map((tag: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full text-xs font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
-              )}
-            </div>
-          )}
-
-          {event.tags && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <h2 className="text-lg font-bold mb-3 text-gray-900">Tags</h2>
-              <div className="flex flex-wrap gap-2">
-                {(Array.isArray(event.tags) ? event.tags : typeof event.tags === 'string' ? (() => {
-                  try {
-                    return JSON.parse(event.tags);
-                  } catch {
-                    return event.tags.split(',').map((t: string) => t.trim());
-                  }
-                })() : []).map((tag: string, idx: number) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-medium"
-                  >
-                    {tag}
-                  </span>
-                ))}
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="bg-white rounded-2xl p-4 border border-gray-200">
-            <h2 className="text-lg font-bold mb-4 text-gray-900">Tickets</h2>
-            {ticketTypes.length === 0 ? (
-              <div className="border border-gray-200 rounded-xl p-6 text-center bg-gray-50">
-                <p className="text-gray-600 mb-2">No tickets available for this event yet.</p>
-                <p className="text-xs text-gray-500">Please check back later or contact the organizer.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {ticketTypes.map((tt) => (
-                  <div key={tt.id} className="border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-teal-300 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base">{tt.name}</h3>
-                        {tt.description && <p className="text-sm text-gray-700 mt-1">{tt.description}</p>}
-                      </div>
-                      <div className="text-right ml-4">
-                        <p className="font-bold text-lg text-teal-600">
-                          ₹{((tt.final_price_minor / 1.18) / 100).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-gray-700 font-medium">+ GST</p>
-                        <p className="text-sm text-gray-700 mt-1">
-                          {tt.remaining_quantity} available
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-sm font-medium text-gray-900">Quantity</span>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() =>
-                            handleTicketChange(tt.id, Math.max(0, (selectedTickets[tt.id] || 0) - 1))
-                          }
-                          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                          disabled={(selectedTickets[tt.id] || 0) === 0}
-                        >
-                          −
-                        </button>
-                        <span className="text-lg font-semibold w-8 text-center">{selectedTickets[tt.id] || 0}</span>
-                        <button
-                          onClick={() =>
-                            handleTicketChange(
-                              tt.id,
-                              Math.min(tt.remaining_quantity, (selectedTickets[tt.id] || 0) + 1)
-                            )
-                          }
-                          className="w-10 h-10 rounded-full border-2 border-teal-500 bg-teal-500 text-white flex items-center justify-center hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                          disabled={
-                            (selectedTickets[tt.id] || 0) >= tt.remaining_quantity ||
-                            (selectedTickets[tt.id] || 0) >= tt.max_per_order
-                          }
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Seat Selection for Seated Events */}
-                    {isSeated && (selectedTickets[tt.id] || 0) > 0 && (
-                      <div className="mt-4 border-t pt-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <button
-                            onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
-                            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
-                          >
-                            {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
-                          </button>
-                          {showSeatSelection[tt.id] && (
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'list' })}
-                                className={`px-3 py-1 text-xs rounded-lg border-2 transition-all ${
-                                  (seatViewMode[tt.id] || 'list') === 'list'
-                                    ? 'bg-teal-600 text-white border-teal-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                }`}
-                              >
-                                List View
-                              </button>
-                              <button
-                                onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'map' })}
-                                className={`px-3 py-1 text-xs rounded-lg border-2 transition-all ${
-                                  seatViewMode[tt.id] === 'map'
-                                    ? 'bg-teal-600 text-white border-teal-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                }`}
-                              >
-                                Map View
-                              </button>
-                            </div>
-                          )}
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+              <h2 className="text-lg font-bold mb-4 text-white">Tickets</h2>
+              {ticketTypes.length === 0 ? (
+                <div className="border border-white/10 rounded-xl p-6 text-center bg-white/5">
+                  <p className="text-gray-400 mb-2">No tickets available for this event yet.</p>
+                  <p className="text-xs text-gray-500">Please check back later or contact the organizer.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {ticketTypes.map((tt) => (
+                    <div key={tt.id} className="border border-white/20 rounded-xl p-4 bg-white/5 hover:bg-white/10 hover:border-teal-500/50 transition-all backdrop-blur-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-white text-base">{tt.name}</h3>
+                          {tt.description && <p className="text-sm text-gray-400 mt-1">{tt.description}</p>}
                         </div>
-                        {showSeatSelection[tt.id] && (
-                          <div className="mt-2">
-                            <p className="text-sm text-gray-600 mb-2">
-                              Select {selectedTickets[tt.id]} seat(s). Selected: {(selectedSeats[tt.id] || []).length}
-                            </p>
-                            
-                            {/* Map View */}
-                            {(seatViewMode[tt.id] || 'list') === 'map' ? (
-                              <FloorPlanView
-                                seats={availableSeats}
-                                selectedSeatIds={selectedSeats[tt.id] || []}
-                                reservedSeatIds={reservedSeats}
-                                onSeatClick={(seatId) => handleSeatToggle(tt.id, seatId)}
-                                maxSelections={selectedTickets[tt.id] || 0}
-                                ticketTypeId={tt.id}
-                                floorPlanImageUrl={event.expand?.venue_id?.layout_image ? getPocketBase().files.getUrl(event.expand.venue_id as any, (event.expand.venue_id as any).layout_image) : undefined}
-                              />
-                            ) : (
-                              /* List View */
-                              <div className="max-h-64 overflow-y-auto border rounded p-3">
-                                {availableSeats.length === 0 ? (
-                                  <p className="text-sm text-gray-500">Loading seats...</p>
-                                ) : (
-                                  <div className="flex flex-wrap gap-2">
-                                    {availableSeats.map((seat) => {
-                                      const isSelected = (selectedSeats[tt.id] || []).includes(seat.id);
-                                      const isReserved = reservedSeats.has(seat.id) && !isSelected;
-                                      const isUnavailable = !seat.available || seat.sold || isReserved;
-
-                                      return (
-                                        <button
-                                          key={seat.id}
-                                          onClick={() => handleSeatToggle(tt.id, seat.id)}
-                                          disabled={isUnavailable}
-                                          className={`px-2 py-1 text-xs rounded-lg transition-all ${isSelected
-                                            ? 'bg-teal-600 text-white border-2 border-teal-700'
-                                            : isReserved
-                                              ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
-                                              : seat.available && !seat.sold
-                                                ? 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-300'
-                                                : 'bg-red-100 text-gray-400 border-2 border-red-300 cursor-not-allowed'
-                                            }`}
-                                          title={
-                                            isSelected
-                                              ? `Selected: ${seat.section} - Row ${seat.row} - ${seat.label}`
-                                              : isReserved
-                                                ? `Reserved: ${seat.section} - Row ${seat.row} - ${seat.label}`
-                                                : seat.sold
-                                                  ? 'Sold'
-                                                  : `${seat.section} - Row ${seat.row} - ${seat.label}`
-                                          }
-                                        >
-                                          💺 {seat.label}
-                                          {isReserved && <span className="ml-1 text-xs">⏱️</span>}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Table Selection for GA_TABLE Events - Only for TABLE category ticket types */}
-                    {/* Show warning if GA_TABLE event but ticket type doesn't have category set */}
-                    {isGATable && !tt.ticket_type_category && (selectedTickets[tt.id] || 0) > 0 && (
-                      <div className="mt-4 border-t pt-4">
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                          <p className="text-sm text-yellow-800">
-                            ⚠️ This ticket type needs to be configured. Please contact the organizer to set up table selection for this ticket type.
+                        <div className="text-right ml-4">
+                          <p className="font-bold text-lg text-teal-400">
+                            ₹{((tt.final_price_minor / 1.18) / 100).toFixed(2)}
+                          </p>
+                          <p className="text-xs text-gray-500 font-medium">+ GST</p>
+                          <p className="text-sm text-gray-400 mt-1">
+                            {tt.remaining_quantity} available
                           </p>
                         </div>
                       </div>
-                    )}
-                    {isGATable && tt.ticket_type_category === 'TABLE' && (selectedTickets[tt.id] || 0) > 0 && (
-                      <div className="mt-4 border-t pt-4">
-                        <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center justify-between mt-4">
+                        <span className="text-sm font-medium text-gray-300">Quantity</span>
+                        <div className="flex items-center gap-3">
                           <button
-                            onClick={() => setShowTableSelection({ ...showTableSelection, [tt.id]: !showTableSelection[tt.id] })}
-                            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                            onClick={() =>
+                              handleTicketChange(tt.id, Math.max(0, (selectedTickets[tt.id] || 0) - 1))
+                            }
+                            className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            disabled={(selectedTickets[tt.id] || 0) === 0}
                           >
-                            {showTableSelection[tt.id] ? 'Hide Table Selection' : 'Select Table'}
+                            −
+                          </button>
+                          <span className="text-lg font-semibold w-8 text-center text-white">{selectedTickets[tt.id] || 0}</span>
+                          <button
+                            onClick={() =>
+                              handleTicketChange(
+                                tt.id,
+                                Math.min(tt.remaining_quantity, (selectedTickets[tt.id] || 0) + 1)
+                              )
+                            }
+                            className="w-10 h-10 rounded-full border border-teal-500 bg-teal-600 text-white flex items-center justify-center hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-teal-900/20"
+                            disabled={
+                              (selectedTickets[tt.id] || 0) >= tt.remaining_quantity ||
+                              (selectedTickets[tt.id] || 0) >= tt.max_per_order
+                            }
+                          >
+                            +
                           </button>
                         </div>
-                        {showTableSelection[tt.id] && (() => {
-                          // Filter tables based on ticket type's table_ids
-                          let filteredTables: any[] = [];
-                          if (!tt.table_ids) {
-                            console.warn(`[TableSelection] Ticket type ${tt.id} has no table_ids`);
-                          } else {
-                            let allowedTableIds: string[] = [];
-                            try {
-                              allowedTableIds = typeof tt.table_ids === 'string' 
-                                ? JSON.parse(tt.table_ids) 
-                                : tt.table_ids;
-                              if (!Array.isArray(allowedTableIds)) {
-                                console.warn(`[TableSelection] Invalid table_ids format for ticket type ${tt.id}`);
-                              } else {
-                                filteredTables = availableTables.filter(table => allowedTableIds.includes(table.id));
-                                console.log(`[TableSelection] Filtered ${filteredTables.length} tables from ${availableTables.length} available for ticket type ${tt.id}`);
-                              }
-                            } catch (error) {
-                              console.error(`[TableSelection] Failed to parse table_ids for ticket type ${tt.id}:`, error);
-                            }
-                          }
+                      </div>
 
-                          return (
-                            <div className="mt-2">
-                              <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mb-3">
-                                <p className="text-sm text-teal-900 font-medium">
-                                  Select <span className="font-bold">{selectedTickets[tt.id]}</span> table{selectedTickets[tt.id] !== 1 ? 's' : ''} for <span className="font-bold">{selectedTickets[tt.id]}</span> ticket{selectedTickets[tt.id] !== 1 ? 's' : ''}
-                                </p>
-                                <p className="text-xs text-teal-700 mt-1">
-                                  Selected: <span className="font-semibold">{(selectedTables[tt.id] || []).length}</span> of <span className="font-semibold">{selectedTickets[tt.id]}</span>
-                                </p>
+                      {/* Seat Selection for Seated Events */}
+                      {isSeated && (selectedTickets[tt.id] || 0) > 0 && (
+                        <div className="mt-4 border-t border-white/10 pt-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <button
+                              onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
+                              className="text-sm text-teal-400 hover:text-teal-300 font-medium"
+                            >
+                              {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
+                            </button>
+                            {showSeatSelection[tt.id] && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'list' })}
+                                  className={`px-3 py-1 text-xs rounded-lg border transition-all ${(seatViewMode[tt.id] || 'list') === 'list'
+                                      ? 'bg-teal-600 text-white border-teal-600'
+                                      : 'bg-white/5 text-gray-300 border-white/20 hover:bg-white/10'
+                                    }`}
+                                >
+                                  List View
+                                </button>
+                                <button
+                                  onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'map' })}
+                                  className={`px-3 py-1 text-xs rounded-lg border transition-all ${seatViewMode[tt.id] === 'map'
+                                      ? 'bg-teal-600 text-white border-teal-600'
+                                      : 'bg-white/5 text-gray-300 border-white/20 hover:bg-white/10'
+                                    }`}
+                                >
+                                  Map View
+                                </button>
                               </div>
-                              
-                              {filteredTables.length === 0 ? (
-                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                                  <p className="text-sm text-yellow-800">
-                                    ⚠️ No tables available for this ticket type. Please contact the organizer or select a different ticket type.
-                                  </p>
-                                </div>
-                              ) : (
-                                /* Map View Only */
-                                <TableFloorPlanView
-                                  tables={filteredTables}
-                                  selectedTableIds={selectedTables[tt.id] || []}
-                                  reservedTableIds={reservedTables}
-                                  onTableClick={(tableId) => handleTableToggle(tt.id, tableId)}
+                            )}
+                          </div>
+                          {showSeatSelection[tt.id] && (
+                            <div className="mt-2">
+                              <p className="text-sm text-gray-400 mb-2">
+                                Select {selectedTickets[tt.id]} seat(s). Selected: {(selectedSeats[tt.id] || []).length}
+                              </p>
+
+                              {/* Map View */}
+                              {(seatViewMode[tt.id] || 'list') === 'map' ? (
+                                <FloorPlanView
+                                  seats={availableSeats}
+                                  selectedSeatIds={selectedSeats[tt.id] || []}
+                                  reservedSeatIds={reservedSeats}
+                                  onSeatClick={(seatId) => handleSeatToggle(tt.id, seatId)}
                                   maxSelections={selectedTickets[tt.id] || 0}
                                   ticketTypeId={tt.id}
                                   floorPlanImageUrl={event.expand?.venue_id?.layout_image ? getPocketBase().files.getUrl(event.expand.venue_id as any, (event.expand.venue_id as any).layout_image) : undefined}
                                 />
+                              ) : (
+                                /* List View */
+                                <div className="max-h-64 overflow-y-auto border border-white/20 rounded-xl p-3 bg-black/20">
+                                  {availableSeats.length === 0 ? (
+                                    <p className="text-sm text-gray-500">Loading seats...</p>
+                                  ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                      {availableSeats.map((seat) => {
+                                        const isSelected = (selectedSeats[tt.id] || []).includes(seat.id);
+                                        const isReserved = reservedSeats.has(seat.id) && !isSelected;
+                                        const isUnavailable = !seat.available || seat.sold || isReserved;
+
+                                        return (
+                                          <button
+                                            key={seat.id}
+                                            onClick={() => handleSeatToggle(tt.id, seat.id)}
+                                            disabled={isUnavailable}
+                                            className={`px-2 py-1 text-xs rounded-lg transition-all ${isSelected
+                                              ? 'bg-teal-600 text-white border border-teal-500 shadow-md shadow-teal-900/20'
+                                              : isReserved
+                                                ? 'bg-yellow-500/20 text-yellow-200 border border-yellow-500/40 cursor-not-allowed'
+                                                : seat.available && !seat.sold
+                                                  ? 'bg-white/10 hover:bg-white/20 border border-white/20 text-gray-300'
+                                                  : 'bg-red-500/10 text-gray-500 border border-red-500/20 cursor-not-allowed'
+                                              }`}
+                                            title={
+                                              isSelected
+                                                ? `Selected: ${seat.section} - Row ${seat.row} - ${seat.label}`
+                                                : isReserved
+                                                  ? `Reserved: ${seat.section} - Row ${seat.row} - ${seat.label}`
+                                                  : seat.sold
+                                                    ? 'Sold'
+                                                    : `${seat.section} - Row ${seat.row} - ${seat.label}`
+                                            }
+                                          >
+                                            💺 {seat.label}
+                                            {isReserved && <span className="ml-1 text-xs">⏱️</span>}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
-                          );
-                        })()}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
 
-                    {/* Add to Cart Button */}
-                    {(selectedTickets[tt.id] || 0) > 0 && (
-                      <div className="mt-4 border-t pt-4">
-                        <button
-                          onClick={() => handleAddToCart(tt.id)}
-                          className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold text-base hover:bg-teal-700 transition-all shadow-lg"
-                        >
-                          Add to Cart
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                      {/* Table Selection for GA_TABLE Events - Only for TABLE category ticket types */}
+                      {/* Show warning if GA_TABLE event but ticket type doesn't have category set */}
+                      {isGATable && !tt.ticket_type_category && (selectedTickets[tt.id] || 0) > 0 && (
+                        <div className="mt-4 border-t border-white/10 pt-4">
+                          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                            <p className="text-sm text-yellow-200">
+                              ⚠️ This ticket type needs to be configured. Please contact the organizer to set up table selection for this ticket type.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {isGATable && tt.ticket_type_category === 'TABLE' && (selectedTickets[tt.id] || 0) > 0 && (
+                        <div className="mt-4 border-t border-white/10 pt-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <button
+                              onClick={() => setShowTableSelection({ ...showTableSelection, [tt.id]: !showTableSelection[tt.id] })}
+                              className="text-sm text-teal-400 hover:text-teal-300 font-medium"
+                            >
+                              {showTableSelection[tt.id] ? 'Hide Table Selection' : 'Select Table'}
+                            </button>
+                          </div>
+                          {showTableSelection[tt.id] && (() => {
+                            // Filter tables based on ticket type's table_ids
+                            let filteredTables: any[] = [];
+                            if (!tt.table_ids) {
+                              console.warn(`[TableSelection] Ticket type ${tt.id} has no table_ids`);
+                            } else {
+                              let allowedTableIds: string[] = [];
+                              try {
+                                allowedTableIds = typeof tt.table_ids === 'string'
+                                  ? JSON.parse(tt.table_ids)
+                                  : tt.table_ids;
+                                if (!Array.isArray(allowedTableIds)) {
+                                  console.warn(`[TableSelection] Invalid table_ids format for ticket type ${tt.id}`);
+                                } else {
+                                  filteredTables = availableTables.filter(table => allowedTableIds.includes(table.id));
+                                  console.log(`[TableSelection] Filtered ${filteredTables.length} tables from ${availableTables.length} available for ticket type ${tt.id}`);
+                                }
+                              } catch (error) {
+                                console.error(`[TableSelection] Failed to parse table_ids for ticket type ${tt.id}:`, error);
+                              }
+                            }
+
+                            return (
+                              <div className="mt-2">
+                                <div className="bg-teal-500/10 border border-teal-500/30 rounded-lg p-3 mb-3">
+                                  <p className="text-sm text-teal-100 font-medium">
+                                    Select <span className="font-bold text-white">{selectedTickets[tt.id]}</span> table{selectedTickets[tt.id] !== 1 ? 's' : ''} for <span className="font-bold text-white">{selectedTickets[tt.id]}</span> ticket{selectedTickets[tt.id] !== 1 ? 's' : ''}
+                                  </p>
+                                  <p className="text-xs text-teal-200 mt-1">
+                                    Selected: <span className="font-semibold text-white">{(selectedTables[tt.id] || []).length}</span> of <span className="font-semibold text-white">{selectedTickets[tt.id]}</span>
+                                  </p>
+                                </div>
+
+                                {filteredTables.length === 0 ? (
+                                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center">
+                                    <p className="text-sm text-yellow-200">
+                                      ⚠️ No tables available for this ticket type. Please contact the organizer or select a different ticket type.
+                                    </p>
+                                  </div>
+                                ) : (
+                                  /* Map View Only */
+                                  <TableFloorPlanView
+                                    tables={filteredTables}
+                                    selectedTableIds={selectedTables[tt.id] || []}
+                                    reservedTableIds={reservedTables}
+                                    onTableClick={(tableId) => handleTableToggle(tt.id, tableId)}
+                                    maxSelections={selectedTickets[tt.id] || 0}
+                                    ticketTypeId={tt.id}
+                                    floorPlanImageUrl={event.expand?.venue_id?.layout_image ? getPocketBase().files.getUrl(event.expand.venue_id as any, (event.expand.venue_id as any).layout_image) : undefined}
+                                  />
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+
+                      {/* Add to Cart Button */}
+                      {(selectedTickets[tt.id] || 0) > 0 && (
+                        <div className="mt-4 border-t border-white/10 pt-4">
+                          <button
+                            onClick={() => handleAddToCart(tt.id)}
+                            className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold text-base hover:bg-teal-700 transition-all shadow-lg shadow-teal-900/20"
+                          >
+                            Add to Cart
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

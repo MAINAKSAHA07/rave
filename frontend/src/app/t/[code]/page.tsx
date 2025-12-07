@@ -21,7 +21,7 @@ export default function TicketPage() {
       // Use backend API for public ticket lookup
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
       const response = await fetch(`${backendUrl}/api/tickets/by-code/${ticketCode}`);
-      
+
       if (!response.ok) {
         if (response.status === 404) {
           setTicket(null);
@@ -51,34 +51,34 @@ export default function TicketPage() {
   const qrUrl = `${frontendUrl}/t/${ticketCode}`;
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+    <div className="min-h-screen p-8 flex items-center justify-center">
+      <div className="max-w-2xl w-full mx-auto bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Your Ticket</h1>
-          <p className="text-gray-600">{ticket.ticket_code}</p>
+          <h1 className="text-3xl font-bold mb-2 text-white">Your Ticket</h1>
+          <p className="text-gray-300 font-mono tracking-wider">{ticket.ticket_code}</p>
         </div>
 
         {/* QR Code - Only show for issued or checked_in tickets */}
         {(ticket.status === 'issued' || ticket.status === 'checked_in') ? (
           <div className="flex justify-center mb-8">
-            <div className="bg-white p-6 rounded border-2 border-dashed">
+            <div className="bg-white p-6 rounded-2xl border-2 border-dashed border-gray-300 shadow-inner">
               <QRCodeSVG value={qrUrl} size={300} />
             </div>
           </div>
         ) : ticket.status === 'pending' ? (
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-8 text-center">
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-8 text-center">
             <div className="flex items-center justify-center mb-2">
               <span className="text-3xl mr-2">⏳</span>
-              <p className="text-lg font-semibold text-yellow-800">Payment Pending</p>
+              <p className="text-lg font-semibold text-yellow-200">Payment Pending</p>
             </div>
-            <p className="text-sm text-yellow-700">
+            <p className="text-sm text-yellow-100/80">
               Your ticket will be issued once payment is confirmed. The QR code will be available after payment processing.
             </p>
           </div>
         ) : (
-          <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 mb-8 text-center">
-            <p className="text-sm text-gray-600 mb-2">
-              Ticket Status: <span className="font-semibold uppercase">{ticket.status.replace('_', ' ')}</span>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8 text-center">
+            <p className="text-sm text-gray-300 mb-2">
+              Ticket Status: <span className="font-semibold uppercase text-white">{ticket.status.replace('_', ' ')}</span>
             </p>
             <p className="text-xs text-gray-500">
               QR code is only available for issued tickets.
@@ -86,18 +86,18 @@ export default function TicketPage() {
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <p className="text-sm text-gray-600">Event</p>
-            <p className="font-semibold">{ticket.expand?.event_id?.name}</p>
+            <p className="text-sm text-gray-400">Event</p>
+            <p className="font-semibold text-white text-xl">{ticket.expand?.event_id?.name}</p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-600">Ticket Type</p>
-            <p className="font-semibold">
+            <p className="text-sm text-gray-400">Ticket Type</p>
+            <p className="font-semibold text-white">
               {ticket.expand?.ticket_type_id?.name}
               {ticket.expand?.ticket_type_id?.ticket_type_category && (
-                <span className="ml-2 text-xs font-normal text-gray-500">
+                <span className="ml-2 text-xs font-normal text-gray-400">
                   ({ticket.expand.ticket_type_id.ticket_type_category}
                   {ticket.expand?.table_id && ` - Table ${ticket.expand.table_id.name}`}
                   )
@@ -107,18 +107,18 @@ export default function TicketPage() {
           </div>
 
           {ticket.expand?.seat_id && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-600 mb-1 font-semibold">💺 Seat Assignment</p>
-              <p className="font-semibold text-blue-900">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+              <p className="text-sm text-blue-300 mb-1 font-semibold">💺 Seat Assignment</p>
+              <p className="font-semibold text-white">
                 {ticket.expand.seat_id.section} - Row {ticket.expand.seat_id.row} - {ticket.expand.seat_id.label}
               </p>
             </div>
           )}
 
           {ticket.expand?.table_id && (
-            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-              <p className="text-sm text-teal-600 mb-1 font-semibold">🪑 Table Assignment</p>
-              <p className="font-semibold text-teal-900">
+            <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-4">
+              <p className="text-sm text-teal-300 mb-1 font-semibold">🪑 Table Assignment</p>
+              <p className="font-semibold text-white">
                 Table: {ticket.expand.table_id.name}
                 {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}
                 {ticket.expand.table_id.capacity && ` - Capacity: ${ticket.expand.table_id.capacity}`}
@@ -127,13 +127,12 @@ export default function TicketPage() {
           )}
 
           <div>
-            <p className="text-sm text-gray-600">Status</p>
-            <p className={`font-semibold capitalize ${
-              ticket.status === 'issued' ? 'text-green-600' :
-              ticket.status === 'checked_in' ? 'text-blue-600' :
-              ticket.status === 'pending' ? 'text-yellow-600' :
-              'text-gray-600'
-            }`}>
+            <p className="text-sm text-gray-400">Status</p>
+            <p className={`font-semibold capitalize ${ticket.status === 'issued' ? 'text-green-400' :
+                ticket.status === 'checked_in' ? 'text-blue-400' :
+                  ticket.status === 'pending' ? 'text-yellow-400' :
+                    'text-gray-400'
+              }`}>
               {ticket.status.replace('_', ' ')}
             </p>
           </div>

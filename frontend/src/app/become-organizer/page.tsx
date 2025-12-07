@@ -108,22 +108,22 @@ export default function OrganizerApplyPage() {
 
   return (
     <div className="min-h-screen p-4 flex items-center justify-center">
-      <div className="w-full relative">
-        <Card className="bg-white border border-gray-200 shadow-md">
+      <div className="w-full relative max-w-lg">
+        <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center text-gray-900">
+            <CardTitle className="text-2xl font-bold text-center text-white">
               Become an Organizer
             </CardTitle>
-            <CardDescription className="text-center mt-2 text-gray-600">
+            <CardDescription className="text-center mt-2 text-gray-300">
               Join Powerglide and start hosting amazing events.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {message && (
               <div
-                className={`p-4 rounded-lg mb-6 border ${message.type === 'success'
-                    ? 'bg-green-50 text-green-700 border-green-200'
-                    : 'bg-red-50 text-red-700 border-red-200'
+                className={`p-4 rounded-xl mb-6 border ${message.type === 'success'
+                  ? 'bg-green-500/20 text-green-200 border-green-500/40'
+                  : 'bg-red-500/20 text-red-200 border-red-500/40'
                   }`}
               >
                 <p className="font-medium flex items-center gap-2">
@@ -134,8 +134,8 @@ export default function OrganizerApplyPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-700">
-                  Organization/Company Name <span className="text-red-500">*</span>
+                <Label htmlFor="name" className="text-gray-300">
+                  Organization/Company Name <span className="text-red-400">*</span>
                 </Label>
                 <Input
                   id="name"
@@ -145,14 +145,14 @@ export default function OrganizerApplyPage() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter your organization name"
                   disabled={loading}
-                  className="bg-white border-gray-300 focus:border-purple-500 transition-colors"
+                  className="bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-purple-500 focus:bg-white/10 transition-colors"
                 />
               </div>
 
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-700">
-                    Email Address <span className="text-red-500">*</span>
+                  <Label htmlFor="email" className="text-gray-300">
+                    Email Address <span className="text-red-400">*</span>
                   </Label>
                   <Input
                     id="email"
@@ -162,13 +162,13 @@ export default function OrganizerApplyPage() {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="your@email.com"
                     disabled={loading}
-                    className="bg-white border-gray-300 focus:border-purple-500 transition-colors"
+                    className="bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-purple-500 focus:bg-white/10 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-gray-700">
-                    Phone Number <span className="text-red-500">*</span>
+                  <Label htmlFor="phone" className="text-gray-300">
+                    Phone Number <span className="text-red-400">*</span>
                   </Label>
                   <Input
                     id="phone"
@@ -178,13 +178,13 @@ export default function OrganizerApplyPage() {
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+91 1234567890"
                     disabled={loading}
-                    className="bg-white border-gray-300 focus:border-purple-500 transition-colors"
+                    className="bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-purple-500 focus:bg-white/10 transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="gst_number" className="text-gray-700">GST Number (Optional)</Label>
+                <Label htmlFor="gst_number" className="text-gray-300">GST Number (Optional)</Label>
                 <Input
                   id="gst_number"
                   type="text"
@@ -192,13 +192,13 @@ export default function OrganizerApplyPage() {
                   onChange={(e) => setFormData({ ...formData, gst_number: e.target.value })}
                   placeholder="29ABCDE1234F1Z5"
                   disabled={loading}
-                  className="bg-white border-gray-300 focus:border-purple-500 transition-colors"
+                  className="bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-purple-500 focus:bg-white/10 transition-colors"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="event_description" className="text-gray-700">
-                  Tell us about your events <span className="text-red-500">*</span>
+                <Label htmlFor="event_description" className="text-gray-300">
+                  Tell us about your events <span className="text-red-400">*</span>
                 </Label>
                 <Textarea
                   id="event_description"
@@ -208,14 +208,14 @@ export default function OrganizerApplyPage() {
                   placeholder="Describe the types of events you plan to host..."
                   rows={4}
                   disabled={loading}
-                  className="resize-none bg-white border-gray-300 focus:border-purple-500 transition-colors"
+                  className="resize-none bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-purple-500 focus:bg-white/10 transition-colors"
                 />
               </div>
 
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className={`w-full h-12 text-base font-semibold relative overflow-hidden transition-all duration-500 ${isLaunching ? 'bg-purple-600 text-transparent' : 'bg-purple-600 hover:bg-purple-700 text-white'
+                  className={`w-full h-12 text-base font-semibold relative overflow-hidden transition-all duration-500 shadow-lg shadow-purple-900/20 ${isLaunching ? 'bg-purple-600 text-transparent' : 'bg-purple-600 hover:bg-purple-700 text-white'
                     }`}
                   disabled={loading}
                 >
@@ -245,7 +245,7 @@ export default function OrganizerApplyPage() {
                 </Button>
               </div>
 
-              <div className="text-center text-sm text-gray-600 pt-4 border-t border-gray-200">
+              <div className="text-center text-sm text-gray-400 pt-4 border-t border-white/10">
                 <p>
                   By submitting this application, you agree to our terms and conditions.
                 </p>
@@ -258,7 +258,7 @@ export default function OrganizerApplyPage() {
           <Button
             variant="ghost"
             onClick={() => router.push('/')}
-            className="text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            className="text-white hover:text-gray-300 hover:bg-white/10 transition-colors"
           >
             Back to Home
           </Button>
