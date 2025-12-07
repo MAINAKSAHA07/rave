@@ -34,6 +34,13 @@ async function updatePublicRules() {
             viewRule: "", // Public
         });
 
+        // Tables - Publicly readable (so users can see available tables when booking)
+        console.log('Updating "tables" rules...');
+        await pb.collections.update('tables', {
+            listRule: "", // Public
+            viewRule: "", // Public
+        });
+
         console.log('✅ Rules updated to allow public access.');
 
     } catch (error) {

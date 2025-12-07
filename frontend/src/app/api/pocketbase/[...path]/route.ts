@@ -58,11 +58,40 @@ export async function GET(
     if (token) {
       // Try to set as user token (not admin)
       try {
+        // Set token first
         pb.authStore.save(token, null);
-        // Log authentication status for debugging
-        if (path.includes('tables')) {
-          console.log('[Proxy] Tables request - Auth token set, isValid:', pb.authStore.isValid);
-          console.log('[Proxy] Tables request - Auth model:', pb.authStore.model?.id || 'null');
+        
+        // Try to get the user record to properly authenticate
+        // This ensures PocketBase has both token and user model
+        try {
+          // Use the PocketBase API to get current user with the token
+          const userResponse = await fetch(`${pbUrl}/api/collections/customers/auth-refresh`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            // Update authStore with both token and user record
+            pb.authStore.save(token, userData.record);
+            if (path.includes('tables')) {
+              console.log('[Proxy] Tables request - Auth validated, user:', userData.record?.id);
+            }
+          } else {
+            // Refresh failed, but token might still work for some requests
+            if (path.includes('tables')) {
+              console.warn('[Proxy] Tables request - Auth refresh failed, using token only');
+            }
+          }
+        } catch (refreshError: any) {
+          // If refresh fails, continue with token only
+          // Some PocketBase requests might still work with just the token
+          if (path.includes('tables')) {
+            console.warn('[Proxy] Tables request - Could not refresh auth, using token only:', refreshError.message);
+          }
         }
       } catch (e) {
         // If token is invalid, continue without auth
@@ -70,6 +99,7 @@ export async function GET(
       }
     } else if (path.includes('tables')) {
       console.warn('[Proxy] Tables request - No auth token provided, making request as guest');
+      console.warn('[Proxy] This might cause issues if tables collection requires authentication');
     }
 
     // Parse the path to determine collection and action

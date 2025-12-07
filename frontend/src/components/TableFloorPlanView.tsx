@@ -40,6 +40,14 @@ export default function TableFloorPlanView({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  
+  // Touch/pinch zoom state
+  const [touches, setTouches] = useState<Touch[]>([]);
+  const [lastPinchDistance, setLastPinchDistance] = useState<number | null>(null);
+  const [lastPinchCenter, setLastPinchCenter] = useState<{ x: number; y: number } | null>(null);
+  const [initialZoom, setInitialZoom] = useState(1);
+  const [hasMoved, setHasMoved] = useState(false);
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const updateSize = () => {
@@ -74,11 +82,20 @@ export default function TableFloorPlanView({
     if (e.button === 0) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      setHasMoved(false);
+      setTouchStartPos({ x: e.clientX, y: e.clientY });
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isPanning) {
+      if (touchStartPos) {
+        const dx = Math.abs(e.clientX - touchStartPos.x);
+        const dy = Math.abs(e.clientY - touchStartPos.y);
+        if (dx > 5 || dy > 5) {
+          setHasMoved(true);
+        }
+      }
       setPan({
         x: e.clientX - panStart.x,
         y: e.clientY - panStart.y,
@@ -88,6 +105,9 @@ export default function TableFloorPlanView({
 
   const handleMouseUp = () => {
     setIsPanning(false);
+    setTouchStartPos(null);
+    // Reset hasMoved after a short delay to allow click events
+    setTimeout(() => setHasMoved(false), 100);
   };
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -95,6 +115,118 @@ export default function TableFloorPlanView({
     e.stopPropagation();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     setZoom((prev) => Math.max(0.5, Math.min(2, prev * delta)));
+  };
+
+  // Calculate distance between two touch points
+  const getDistance = (touch1: Touch, touch2: Touch) => {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Calculate center point between two touches
+  const getCenter = (touch1: Touch, touch2: Touch) => {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2,
+    };
+  };
+
+  // Touch event handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const touchList = Array.from(e.touches);
+    setTouches(touchList);
+    setHasMoved(false);
+
+    if (touchList.length === 1) {
+      // Single touch - start panning
+      setIsPanning(true);
+      const touch = touchList[0];
+      setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
+      setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+    } else if (touchList.length === 2) {
+      // Two touches - start pinch zoom
+      setIsPanning(false);
+      setHasMoved(true); // Pinch is always considered movement
+      const distance = getDistance(touchList[0], touchList[1]);
+      const center = getCenter(touchList[0], touchList[1]);
+      
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const centerX = center.x - rect.left;
+        const centerY = center.y - rect.top;
+        
+        setLastPinchDistance(distance);
+        setLastPinchCenter({ x: centerX, y: centerY });
+        setInitialZoom(zoom);
+      }
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const touchList = Array.from(e.touches);
+    setTouches(touchList);
+
+    if (touchList.length === 1 && isPanning) {
+      // Single touch panning
+      const touch = touchList[0];
+      if (touchStartPos) {
+        const dx = Math.abs(touch.clientX - touchStartPos.x);
+        const dy = Math.abs(touch.clientY - touchStartPos.y);
+        if (dx > 5 || dy > 5) {
+          setHasMoved(true);
+        }
+      }
+      setPan({
+        x: touch.clientX - panStart.x,
+        y: touch.clientY - panStart.y,
+      });
+    } else if (touchList.length === 2 && lastPinchDistance !== null && lastPinchCenter !== null) {
+      // Two touches - pinch zoom
+      const distance = getDistance(touchList[0], touchList[1]);
+      const scale = distance / lastPinchDistance;
+      const newZoom = Math.max(0.5, Math.min(2, initialZoom * scale));
+      
+      // Calculate zoom center relative to container
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const center = getCenter(touchList[0], touchList[1]);
+        const centerX = center.x - rect.left;
+        const centerY = center.y - rect.top;
+        
+        // Adjust pan to zoom towards the pinch center
+        const zoomDelta = newZoom / zoom;
+        const newPanX = centerX - (centerX - pan.x) * zoomDelta;
+        const newPanY = centerY - (centerY - pan.y) * zoomDelta;
+        
+        setZoom(newZoom);
+        setPan({ x: newPanX, y: newPanY });
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const touchList = Array.from(e.touches);
+    setTouches(touchList);
+
+    if (touchList.length === 0) {
+      // All touches released
+      setIsPanning(false);
+      setLastPinchDistance(null);
+      setLastPinchCenter(null);
+      setTouchStartPos(null);
+    } else if (touchList.length === 1) {
+      // One touch remaining - switch to panning
+      setIsPanning(true);
+      const touch = touchList[0];
+      setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
+      setLastPinchDistance(null);
+      setLastPinchCenter(null);
+      setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+    }
   };
 
   const resetView = () => {
@@ -141,7 +273,7 @@ export default function TableFloorPlanView({
             Reset View
           </button>
           <span className="text-sm text-gray-600">
-            Zoom: {Math.round(zoom * 100)}% | Use mouse wheel to zoom, drag to pan
+            Zoom: {Math.round(zoom * 100)}% | Mouse wheel or pinch to zoom, drag to pan
           </span>
         </div>
         <div className="flex items-center gap-4 text-xs">
@@ -173,6 +305,9 @@ export default function TableFloorPlanView({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
         {/* Transform container for zoom and pan */}
@@ -211,8 +346,17 @@ export default function TableFloorPlanView({
             return (
               <button
                 key={table.id}
-                onClick={() => {
-                  if (!isUnavailable) {
+                onClick={(e) => {
+                  // Prevent click if user was panning/zooming
+                  if (!hasMoved && !isUnavailable) {
+                    onTableClick(table.id);
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  // Handle touch end for table selection
+                  if (!hasMoved && !isUnavailable && touches.length === 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     onTableClick(table.id);
                   }
                 }}
