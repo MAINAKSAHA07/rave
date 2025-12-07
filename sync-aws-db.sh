@@ -38,3 +38,4 @@ node sync-aws-db.js
 
 echo ""
 echo "✅ Sync complete!"
+

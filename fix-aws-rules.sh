@@ -31,3 +31,4 @@ node fix-aws-access-rules.js
 
 echo ""
 echo "✅ Access rules updated!"
+

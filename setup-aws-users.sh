@@ -31,3 +31,4 @@ node setup-aws-users.js
 
 echo ""
 echo "✅ Setup complete!"
+

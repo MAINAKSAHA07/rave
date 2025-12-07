@@ -58,11 +58,18 @@ export async function GET(
     if (token) {
       // Try to set as user token (not admin)
       try {
-      pb.authStore.save(token, null);
+        pb.authStore.save(token, null);
+        // Log authentication status for debugging
+        if (path.includes('tables')) {
+          console.log('[Proxy] Tables request - Auth token set, isValid:', pb.authStore.isValid);
+          console.log('[Proxy] Tables request - Auth model:', pb.authStore.model?.id || 'null');
+        }
       } catch (e) {
         // If token is invalid, continue without auth
-        console.warn('[Proxy] Invalid token, continuing as guest');
+        console.warn('[Proxy] Invalid token, continuing as guest:', e);
       }
+    } else if (path.includes('tables')) {
+      console.warn('[Proxy] Tables request - No auth token provided, making request as guest');
     }
 
     // Parse the path to determine collection and action
@@ -124,6 +131,7 @@ export async function GET(
             // Log the options being sent to PocketBase for debugging
             if (collectionName === 'ticket_types' || collectionName === 'tables') {
               console.log(`[Proxy] getFullList for ${collectionName} with options:`, JSON.stringify(options, null, 2));
+              console.log(`[Proxy] Auth status - isValid: ${pb.authStore.isValid}, hasToken: ${!!pb.authStore.token}, modelId: ${pb.authStore.model?.id || 'null'}`);
             }
             const result = await pb.collection(collectionName).getFullList(options);
             // Log the result to see what fields are returned
@@ -134,7 +142,19 @@ export async function GET(
             }
             if (collectionName === 'tables') {
               console.log(`[Proxy] getFullList result for tables: ${result.length} tables found`);
-              if (result.length > 0) {
+              if (result.length === 0) {
+                console.warn(`[Proxy] WARNING: No tables returned. Auth status - isValid: ${pb.authStore.isValid}, hasToken: ${!!pb.authStore.token}`);
+                // Try to get tables without filter to see if it's a filter issue
+                try {
+                  const allTables = await pb.collection('tables').getFullList({});
+                  console.log(`[Proxy] All tables (no filter): ${allTables.length} tables found`);
+                  if (allTables.length > 0) {
+                    console.log(`[Proxy] Sample table venue_id:`, allTables[0].venue_id, 'type:', typeof allTables[0].venue_id);
+                  }
+                } catch (testError: any) {
+                  console.error(`[Proxy] Error getting all tables:`, testError.message);
+                }
+              } else if (result.length > 0) {
                 console.log(`[Proxy] First table:`, {
                   id: result[0].id,
                   name: result[0].name,
@@ -149,6 +169,10 @@ export async function GET(
             console.error('Options:', JSON.stringify(options, null, 2));
             if (error.response?.data) {
               console.error('Error details:', JSON.stringify(error.response.data, null, 2));
+            }
+            // For tables collection, log auth status on error
+            if (collectionName === 'tables') {
+              console.error(`[Proxy] Tables error - Auth status - isValid: ${pb.authStore.isValid}, hasToken: ${!!pb.authStore.token}`);
             }
             return NextResponse.json(
               { error: error.message || 'Request failed', details: error.response?.data },
