@@ -13,6 +13,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import CountdownTimer from '@/components/CountdownTimer';
 import { EventImages } from '@/components/EventImages';
 import { Users, TrendingUp, Share2, Clock, Tag, Mic, User, Info, DollarSign, Shield } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 interface Event {
   id: string;
@@ -110,6 +111,87 @@ export default function EventDetailsPage() {
   useEffect(() => {
     loadEvent();
   }, [eventId]);
+
+  // Trigger confetti effect for nightlife events (immediately and then every 45 seconds)
+  useEffect(() => {
+    if (!event) return;
+
+    // Check if event has nightlife in category or tags
+    const category = (event.category || '').toLowerCase();
+    const tags = event.tags 
+      ? (Array.isArray(event.tags) 
+          ? event.tags.join(' ').toLowerCase() 
+          : (typeof event.tags === 'string' 
+              ? (() => {
+                  try {
+                    const parsed = JSON.parse(event.tags);
+                    return Array.isArray(parsed) ? parsed.join(' ').toLowerCase() : event.tags.toLowerCase();
+                  } catch {
+                    return event.tags.toLowerCase();
+                  }
+                })()
+              : ''))
+      : '';
+    
+    const isNightlife = category === 'nightlife' || tags.includes('nightlife');
+    
+    if (isNightlife) {
+      // Function to trigger confetti effect
+      const triggerConfetti = () => {
+        // Bursting cracker effect
+        const duration = 3000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+        function randomInRange(min: number, max: number) {
+          return Math.random() * (max - min) + min;
+        }
+
+        const interval: NodeJS.Timeout = setInterval(function() {
+          const timeLeft = animationEnd - Date.now();
+
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          const particleCount = 50 * (timeLeft / duration);
+          
+          // Launch from multiple positions for bursting effect
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 }
+          });
+        }, 250);
+
+        // Cleanup interval after duration
+        setTimeout(() => clearInterval(interval), duration);
+      };
+
+      // Trigger immediately on page load
+      triggerConfetti();
+
+      // Then trigger every 45 seconds
+      const confettiInterval = setInterval(() => {
+        triggerConfetti();
+      }, 45000); // 45 seconds
+
+      // Cleanup interval on unmount or event change
+      return () => {
+        clearInterval(confettiInterval);
+      };
+    }
+  }, [event]);
 
   async function loadEvent() {
     try {

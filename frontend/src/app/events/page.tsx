@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { getPocketBase } from '@/lib/pocketbase';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Calendar, Sparkles, Filter, Eye, MapPin } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 const FILTER_CHIPS = [
   'Today',
@@ -23,6 +24,7 @@ export default function EventsPage() {
   const [selectedTab, setSelectedTab] = useState('All Events');
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
   const [selectedCity, setSelectedCity] = useState<string>('');
+  const prevFiltersRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     // Get selected city from localStorage
@@ -231,6 +233,57 @@ export default function EventsPage() {
   // All events should appear in the "All Experiences" section
   // This ensures events are always visible even if they're in featured/handpicked
   const allEvents = sortedEvents;
+
+  // Trigger confetti effect when nightlife/DJ Night filter is selected
+  useEffect(() => {
+    const hasNightlife = selectedFilters.has('DJ Night');
+    const prevHasNightlife = prevFiltersRef.current.has('DJ Night');
+    
+    // Only trigger if nightlife filter was just added (not removed)
+    if (hasNightlife && !prevHasNightlife) {
+      // Bursting cracker effect
+      const duration = 3000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+      function randomInRange(min: number, max: number) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval: NodeJS.Timeout = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        
+        // Launch from multiple positions for bursting effect
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        });
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        });
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 }
+        });
+      }, 250);
+
+      // Cleanup interval on unmount or when filter changes
+      setTimeout(() => clearInterval(interval), duration);
+    }
+    
+    // Update previous filters
+    prevFiltersRef.current = new Set(selectedFilters);
+  }, [selectedFilters]);
 
   const toggleFilter = (filter: string) => {
     setSelectedFilters((prev) => {

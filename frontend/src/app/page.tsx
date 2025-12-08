@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getPocketBase, getCurrentUser, logout } from '@/lib/pocketbase';
@@ -10,6 +10,7 @@ import BrandReveal from '@/components/BrandReveal';
 import BottomNavigation from '@/components/BottomNavigation';
 import NotificationBell from '@/components/NotificationBell';
 import { Bell, Music, Trophy, Utensils, Mic, Laugh, Moon, Heart, Users, User, Zap } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 // Event Card Component
 function EventCard({ event }: { event: any }) {
@@ -120,6 +121,7 @@ export default function HomePage() {
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const prevCategoryRef = useRef<string | null>(null);
 
   // Load selected location from localStorage or default
   useEffect(() => {
@@ -128,6 +130,57 @@ export default function HomePage() {
       setSelectedLocation(savedLocation);
     }
   }, []);
+
+  // Trigger confetti effect when nightlife category is selected
+  useEffect(() => {
+    const isNightlife = selectedCategory === 'nightlife';
+    const wasNightlife = prevCategoryRef.current === 'nightlife';
+    
+    // Only trigger if nightlife was just selected (not deselected)
+    if (isNightlife && !wasNightlife) {
+      // Bursting cracker effect
+      const duration = 3000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+      function randomInRange(min: number, max: number) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval: NodeJS.Timeout = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        
+        // Launch from multiple positions for bursting effect
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        });
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        });
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 }
+        });
+      }, 250);
+
+      // Cleanup
+      return () => clearInterval(interval);
+    }
+    
+    // Update previous category
+    prevCategoryRef.current = selectedCategory;
+  }, [selectedCategory]);
 
   // Fetch cities from events
   useEffect(() => {
