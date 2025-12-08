@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
+import Footer from '@/components/Footer'
 import Sparkles from '@/components/Sparkles'
 import { NotificationProvider } from '@/contexts/NotificationContext'
 import NotificationToast from '@/components/NotificationToast'
@@ -32,12 +33,13 @@ export default function RootLayout({
         <div style={{ display: 'none' }} data-developer="mainak saha" data-author="mainak saha" aria-hidden="true" />
         <NotificationProvider>
           <CartProvider>
-            <div className="min-h-screen">
+            <div className="min-h-screen flex flex-col">
               <Sparkles />
               <Navigation />
-              <main className="relative z-10">
+              <main className="relative z-10 flex-grow">
                 {children}
               </main>
+              <Footer />
               <NotificationToast />
             </div>
           </CartProvider>

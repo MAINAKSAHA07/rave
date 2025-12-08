@@ -198,12 +198,10 @@ export default function EventDetailsPage() {
   async function loadEvent() {
     try {
       const pb = getPocketBase();
-      console.log('[Event] Loading event:', eventId);
       const eventData = await pb.collection('events').getOne(eventId, {
         expand: 'venue_id,organizer_id',
       });
       setEvent(eventData as any);
-      console.log('[Event] Event loaded:', {
         id: eventData.id,
         name: eventData.name,
         venue_id: eventData.venue_id,
@@ -220,17 +218,12 @@ export default function EventDetailsPage() {
         });
 
         // Log raw data to see what we're getting
-        console.log('[Event] Raw ticket types data:', ticketTypesData);
         if (ticketTypesData.length > 0) {
-          console.log('[Event] First ticket type raw keys:', Object.keys(ticketTypesData[0]));
-          console.log('[Event] First ticket type raw data:', ticketTypesData[0]);
         }
 
         setTicketTypes(ticketTypesData as any);
-        console.log('Loaded ticket types:', ticketTypesData.length);
         // Debug: Log ticket type details
         ticketTypesData.forEach((tt: any) => {
-          console.log(`[TicketType] ${tt.name}:`, {
             id: tt.id,
             ticket_type_category: tt.ticket_type_category,
             has_table_ids: !!tt.table_ids,
@@ -246,10 +239,8 @@ export default function EventDetailsPage() {
       // Check if venue is SEATED and load available seats
       let venue = eventData.expand?.venue_id;
       if (!venue && eventData.venue_id) {
-        console.log('[Event] Venue not expanded, fetching manually:', eventData.venue_id);
         try {
           venue = await pb.collection('venues').getOne(eventData.venue_id);
-          console.log('[Event] Venue fetched successfully:', venue?.name);
         } catch (venueError: any) {
           console.error('[Event] Failed to load venue:', {
             venue_id: eventData.venue_id,
@@ -260,7 +251,6 @@ export default function EventDetailsPage() {
           venue = null;
         }
       } else if (venue) {
-        console.log('[Event] Venue from expansion:', venue.name);
       }
 
       // Only proceed with seat/table loading if we have venue data
@@ -321,21 +311,13 @@ export default function EventDetailsPage() {
 
   async function loadTables() {
     try {
-      console.log('[Event] ===== Loading tables for event:', eventId, '=====');
       const tablesResponse = await tablesApi.getAvailableTables(eventId);
-      console.log('[Event] Tables response received:', tablesResponse);
-      console.log('[Event] Tables response.data:', tablesResponse.data);
-      console.log('[Event] Tables response.data.tables:', tablesResponse.data?.tables);
       const tables = tablesResponse.data.tables || [];
-      console.log('[Event] Extracted tables array length:', tables.length);
       if (tables.length > 0) {
-        console.log('[Event] ✓ First table:', tables[0]);
-        console.log('[Event] ✓ All table IDs:', tables.map((t: any) => t.id));
       } else {
         console.warn('[Event] ⚠️ No tables loaded! availableTables will be empty.');
       }
       setAvailableTables(tables);
-      console.log('[Event] ===== Finished loading tables =====');
 
       // Load reserved tables
       const user = getPocketBase().authStore.model;
@@ -408,7 +390,6 @@ export default function EventDetailsPage() {
         // Reserve the table
         try {
           const reserveResponse = await tableReservationsApi.reserve([tableId], user.id, eventId);
-          console.log('[Event] Reserve response:', reserveResponse);
 
           // Check for conflicts
           // Note: reserveResponse is already the data (from response.data), not wrapped in .data
@@ -1278,7 +1259,6 @@ export default function EventDetailsPage() {
                                   console.warn(`[TableSelection] Invalid table_ids format for ticket type ${tt.id}`);
                                 } else {
                                   filteredTables = availableTables.filter(table => allowedTableIds.includes(table.id));
-                                  console.log(`[TableSelection] Filtered ${filteredTables.length} tables from ${availableTables.length} available for ticket type ${tt.id}`);
                                 }
                               } catch (error) {
                                 console.error(`[TableSelection] Failed to parse table_ids for ticket type ${tt.id}:`, error);

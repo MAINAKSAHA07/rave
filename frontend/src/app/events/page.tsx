@@ -91,13 +91,11 @@ export default function EventsPage() {
       );
 
       setEvents(eventsWithPrices as any);
-      console.log(`[EventsPage] Loaded ${eventsWithPrices.length} events`);
       if (selectedCity) {
         const cityEvents = eventsWithPrices.filter((e: any) => {
           const eventCity = (e.city || e.expand?.venue_id?.city || '').toString().trim();
           return eventCity.toLowerCase() === selectedCity.trim().toLowerCase();
         });
-        console.log(`[EventsPage] Filtered to ${cityEvents.length} events for city: ${selectedCity}`);
       }
     } catch (error) {
       console.error('Failed to load events:', error);
@@ -159,11 +157,9 @@ export default function EventsPage() {
       const matches = eventCity.toLowerCase() === selectedCityTrimmed.toLowerCase();
       return matches;
     });
-    console.log(`[EventsPage] City filter: "${selectedCity}" - Found ${cityFiltered.length} events out of ${events.length} total`);
     if (cityFiltered.length === 0 && events.length > 0) {
       // Log available cities for debugging
       const availableCities = [...new Set(events.map((e: any) => (e.city || e.expand?.venue_id?.city || '').toString().trim()).filter(Boolean))];
-      console.log(`[EventsPage] Available cities in events:`, availableCities);
     }
     filteredEvents = cityFiltered;
   }

@@ -130,7 +130,6 @@ export default function CreateTicketTypePage() {
             }
             
             setTables(tablesData);
-            console.log('[CreateTicketType] Loaded tables:', tablesData.length);
           } catch (error) {
             console.error('[CreateTicketType] Failed to load tables:', error);
           }
@@ -220,7 +219,6 @@ export default function CreateTicketTypePage() {
       if (isGATable) {
         if (values.ticket_type_category) {
           recordData.ticket_type_category = values.ticket_type_category;
-          console.log('[CreateTicketType] Saving ticket_type_category:', values.ticket_type_category);
         } else {
           console.warn('[CreateTicketType] WARNING: GA_TABLE event but no ticket_type_category selected!');
         }
@@ -229,12 +227,9 @@ export default function CreateTicketTypePage() {
       // Add table_ids if this is a GA_TABLE event with Table category and tables are selected
       if (isGATable && values.ticket_type_category === 'TABLE' && selectedTableIds.length > 0) {
         recordData.table_ids = JSON.stringify(selectedTableIds);
-        console.log('[CreateTicketType] Saving table_ids:', selectedTableIds);
       }
 
-      console.log('[CreateTicketType] Final recordData:', JSON.stringify(recordData, null, 2));
       const record = await pb.collection('ticket_types').create(recordData);
-      console.log('[CreateTicketType] Created ticket type:', record.id, 'with category:', record.ticket_type_category);
 
       alert('Ticket type created successfully!');
       router.push(`/organizer/events/${eventId}`);

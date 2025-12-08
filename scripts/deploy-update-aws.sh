@@ -90,3 +90,4 @@ echo "   - Frontend: http://$SERVER_IP:3000"
 echo "   - Backoffice: http://$SERVER_IP:3001"
 echo "   - PocketBase: http://$SERVER_IP:8090"
 
+

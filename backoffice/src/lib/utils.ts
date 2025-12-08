@@ -55,27 +55,11 @@ export function getPocketBaseFileUrl(record: any, filename: string | string[] | 
       const recordId = record.id;
       const encodedFilename = encodeURIComponent(actualFilename).replace(/%2F/g, '/');
       const proxyUrl = `/api/pocketbase/api/files/${collectionId}/${recordId}/${encodedFilename}`;
-      
-      console.log('[getPocketBaseFileUrl] Using proxy URL for hosted environment:', {
-        record_id: recordId,
-        filename: actualFilename,
-        proxyUrl,
-        collectionId,
-        collectionName,
-      });
-      
       return proxyUrl;
     } else {
       // For localhost, use PocketBase SDK to generate direct URL
       const pb = getPocketBase();
       const url = pb.files.getUrl(record, actualFilename);
-      
-      console.log('[getPocketBaseFileUrl] Generated direct URL for localhost:', {
-        record_id: record.id,
-        filename: actualFilename,
-        url,
-      });
-      
       return url;
     }
   } catch (error) {

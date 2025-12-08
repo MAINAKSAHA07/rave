@@ -154,7 +154,6 @@ export const tablesApi = {
     // First get the event to find the venue_id
     const event = await pb.collection('events').getOne(eventId);
     const venueId = event.venue_id;
-    console.log('[tablesApi] Event venue_id:', venueId);
     
     // Fetch all tables for this venue - try multiple filter formats
     // Note: venue_id might be stored as an array in PocketBase, which won't match string filters
@@ -162,17 +161,14 @@ export const tablesApi = {
     
     // Try direct filter first
     try {
-      console.log('[tablesApi] Trying direct venue_id filter...');
       tables = await pb.collection('tables').getFullList({ 
         filter: `venue_id="${venueId}"`,
         sort: 'section,name',
       });
-      console.log('[tablesApi] Direct filter returned', tables.length, 'tables');
       
       // If we got 0 results, the filter might not work (e.g., venue_id is an array)
       // Fall through to manual filtering
       if (tables.length === 0) {
-        console.log('[tablesApi] Direct filter returned 0 results, trying fallback...');
         throw new Error('No results from direct filter, trying fallback');
       }
     } catch (error: any) {
@@ -180,16 +176,13 @@ export const tablesApi = {
       
       // Try relation filter
       try {
-        console.log('[tablesApi] Trying relation filter...');
         tables = await pb.collection('tables').getFullList({ 
           filter: `venue_id.id="${venueId}"`,
           sort: 'section,name',
         });
-        console.log('[tablesApi] Relation filter returned', tables.length, 'tables');
         
         // If still 0, fall through to manual filtering
         if (tables.length === 0) {
-          console.log('[tablesApi] Relation filter returned 0 results, trying fallback...');
           throw new Error('No results from relation filter, trying fallback');
         }
       } catch (relError: any) {
@@ -197,29 +190,15 @@ export const tablesApi = {
         
         // Fallback: get all and filter manually
         // This handles cases where venue_id is stored as an array
-        console.log('[tablesApi] Using fallback: get all tables and filter manually...');
-        console.log('[tablesApi] Looking for venue_id:', venueId, 'type:', typeof venueId);
         let allTables: any[] = [];
         try {
           allTables = await pb.collection('tables').getFullList({ sort: 'section,name' });
-          console.log('[tablesApi] Got all tables:', allTables.length);
           if (allTables.length === 0) {
             console.error('[tablesApi] ERROR: No tables found in database at all!');
           }
         } catch (fallbackError: any) {
           console.error('[tablesApi] ERROR: Failed to get all tables in fallback:', fallbackError.message);
           throw fallbackError;
-        }
-        
-        // Log first table to see the actual format
-        if (allTables.length > 0) {
-          console.log('[tablesApi] Sample table venue_id format:', {
-            id: allTables[0].id,
-            name: allTables[0].name,
-            venue_id: allTables[0].venue_id,
-            venue_id_type: typeof allTables[0].venue_id,
-            is_array: Array.isArray(allTables[0].venue_id),
-          });
         }
         
         tables = allTables.filter((t: any) => {
@@ -234,31 +213,23 @@ export const tablesApi = {
           } else if (Array.isArray(t.venue_id)) {
             // If venue_id is an array, check if it contains the venueId
             matches = t.venue_id.includes(venueId);
-            console.log('[tablesApi] Checking array venue_id:', t.venue_id, 'includes', venueId, '?', matches);
           } else if (t.venue_id && typeof t.venue_id === 'object') {
             // If it's an object, try to get the id
             const objId = t.venue_id.id || t.venue_id;
             matches = objId === venueId;
           }
           
-          if (matches) {
-            console.log('[tablesApi] ✓ Found matching table:', t.id, t.name, 'venue_id format:', Array.isArray(t.venue_id) ? 'array' : typeof t.venue_id, 'value:', JSON.stringify(t.venue_id));
-          }
           return matches;
         });
-        console.log('[tablesApi] After manual filter, found', tables.length, 'tables for venue', venueId);
       }
     }
     
     // Get all tickets for this event to determine sold tables
-    console.log('[tablesApi] Fetching tickets for event to check sold tables...');
     const tickets = await pb.collection('tickets').getFullList({
       filter: `event_id="${eventId}" && status="issued"`,
     });
-    console.log('[tablesApi] Found', tickets.length, 'issued tickets');
     
     const soldTableIds = new Set(tickets.map((t: any) => t.table_id).filter(Boolean));
-    console.log('[tablesApi] Sold table IDs:', Array.from(soldTableIds));
     
     // Mark tables as sold/available
     const tablesWithStatus = tables.map((table: any) => ({
@@ -267,7 +238,6 @@ export const tablesApi = {
       sold: soldTableIds.has(table.id),
     }));
     
-    console.log('[tablesApi] Returning', tablesWithStatus.length, 'tables with status');
     return { data: { tables: tablesWithStatus } };
   },
 };

@@ -10,15 +10,6 @@ function generateTicketCode() {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        console.log('📦 Order creation request received:', {
-            userId: body.userId,
-            eventId: body.eventId,
-            ticketItemsCount: body.ticketItems?.length,
-            paymentMethod: body.paymentMethod,
-            hasAttendeeName: !!body.attendeeName,
-            hasAttendeeEmail: !!body.attendeeEmail,
-            hasAttendeePhone: !!body.attendeePhone,
-        });
         const { userId, eventId, ticketItems, attendeeName, attendeeEmail, attendeePhone, paymentMethod = 'razorpay' } = body;
 
         if (!userId || !eventId || !ticketItems || ticketItems.length === 0) {
@@ -99,16 +90,6 @@ export async function POST(request: NextRequest) {
             const salesStart = new Date(ticketType.sales_start);
             const salesEnd = new Date(ticketType.sales_end);
             
-            console.log(`📅 Checking sales window for ${ticketType.name}:`, {
-                sales_start: ticketType.sales_start,
-                sales_end: ticketType.sales_end,
-                now: now.toISOString(),
-                salesStart: salesStart.toISOString(),
-                salesEnd: salesEnd.toISOString(),
-                isBeforeStart: salesStart > now,
-                isAfterEnd: salesEnd < now,
-            });
-            
             if (salesStart > now) {
                 errors.push(`Ticket type ${ticketType.name} sales have not started yet. Sales start: ${salesStart.toLocaleString()}`);
             } else if (salesEnd < now) {
@@ -160,9 +141,7 @@ export async function POST(request: NextRequest) {
 
         let order;
         try {
-            console.log('📦 Creating order with data:', JSON.stringify(orderData, null, 2));
             order = await pb.collection('orders').create(orderData);
-            console.log('✅ Order created successfully:', order.id);
         } catch (createError: any) {
             console.error('❌ Failed to create order:', createError);
             console.error('   Order data:', JSON.stringify(orderData, null, 2));
@@ -185,7 +164,6 @@ export async function POST(request: NextRequest) {
                     
                     try {
                         order = await pb.collection('orders').create(fallbackOrderData);
-                        console.log('✅ Order created successfully without GST fields');
                     } catch (fallbackError: any) {
                         throw createError; // Throw original error if fallback also fails
                     }

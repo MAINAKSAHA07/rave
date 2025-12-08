@@ -65,7 +65,6 @@ export default function OrganizerDashboard() {
       } catch (staffError: any) {
         if (staffError?.isAbort) return;
 
-        console.log('No organizer staff association found');
         if (user.backoffice_access || user.role === 'admin' || user.role === 'super_admin') {
           setOrganizer({
             name: 'No Organizer Association',

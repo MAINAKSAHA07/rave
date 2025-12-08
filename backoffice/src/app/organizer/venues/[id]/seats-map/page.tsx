@@ -74,7 +74,6 @@ export default function SeatMapEditorPage() {
         venueData.collectionName = 'venues';
       }
       
-      console.log('[SeatMap] Venue data loaded:', {
         id: venueData.id,
         name: venueData.name,
         layout_image: venueData.layout_image,
@@ -339,7 +338,6 @@ export default function SeatMapEditorPage() {
                         });
                       }}
                       onLoad={() => {
-                        console.log('[SeatMap] Floor plan image loaded successfully');
                       }}
                     />
                   </div>
@@ -416,7 +414,6 @@ export default function SeatMapEditorPage() {
                     });
                   }}
                   onLoad={() => {
-                    console.log('[SeatMap] Floor plan background image loaded successfully');
                   }}
                 />
               )}

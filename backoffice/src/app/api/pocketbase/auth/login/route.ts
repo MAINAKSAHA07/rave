@@ -48,9 +48,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[Login] Connecting to PocketBase at:', dynamicPbUrl);
-    console.log('[Login] Environment check - AWS_POCKETBASE_URL:', process.env.AWS_POCKETBASE_URL ? 'SET' : 'NOT SET');
-    console.log('[Login] Environment check - POCKETBASE_URL:', process.env.POCKETBASE_URL || 'NOT SET');
     const pb = new PocketBase(dynamicPbUrl);
     const authData = await pb.collection('users').authWithPassword(email, password);
 

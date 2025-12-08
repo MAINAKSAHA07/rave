@@ -63,7 +63,6 @@ export default function UsersManagementPage() {
         filter: 'status="approved"',
         sort: 'name',
       });
-      console.log('Loaded organizers:', orgs.length);
       setOrganizers(orgs as any);
     } catch (error) {
       console.error('Failed to load organizers:', error);

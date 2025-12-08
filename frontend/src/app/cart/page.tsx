@@ -51,7 +51,6 @@ export default function CartPage() {
 
   // Handle timer expiry - defined before useEffect that uses it
   const handleCheckoutTimerExpiry = useCallback(async () => {
-    console.log('[CartTimer] Timer expired - releasing table reservations');
     notifyError('Checkout timer expired. Please add items to cart again.');
 
     // Release table reservations for all table items
@@ -64,7 +63,6 @@ export default function CartPage() {
 
       try {
         await tableReservationsApi.release(allTableIds);
-        console.log('[CartTimer] Released table reservations:', allTableIds);
       } catch (error) {
         console.error('[CartTimer] Failed to release table reservations:', error);
       }
@@ -78,13 +76,11 @@ export default function CartPage() {
   useEffect(() => {
     // Only start timer if we have table selections and timer is not already running
     if (hasTableSelections && checkoutTimer === null) {
-      console.log('[CartTimer] Starting 5-minute checkout timer...');
       setCheckoutTimer(300); // 5 minutes (300 seconds)
     }
 
     // Stop timer if no table selections
     if (!hasTableSelections && checkoutTimer !== null) {
-      console.log('[CartTimer] Clearing timer - no table selections');
       if (checkoutTimerIntervalRef.current) {
         clearInterval(checkoutTimerIntervalRef.current);
         checkoutTimerIntervalRef.current = null;
@@ -107,7 +103,6 @@ export default function CartPage() {
           if (prev === null || prev <= 1) {
             clearInterval(interval);
             checkoutTimerIntervalRef.current = null;
-            console.log('[CartTimer] Timer expired');
             // Timer expired - release tables
             handleCheckoutTimerExpiry();
             return null;
@@ -117,7 +112,6 @@ export default function CartPage() {
       }, 1000);
 
       checkoutTimerIntervalRef.current = interval;
-      console.log('[CartTimer] Countdown started, interval ID:', interval);
     }
 
     return () => {

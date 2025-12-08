@@ -78,7 +78,6 @@ export default function AdminPage() {
         // The interceptor should have handled this automatically
         // If we're here, the refresh failed and we're being redirected
         // Don't show alert or redirect again to prevent loops
-        console.log('Authentication failed, redirecting to login...');
       } else {
         // Don't show alert for network errors or autocancelled, just log
         console.error('Error details:', {

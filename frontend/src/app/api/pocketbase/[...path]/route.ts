@@ -30,10 +30,6 @@ function getPocketBaseUrl(): string {
 }
 
 const pbUrl = getPocketBaseUrl();
-// Debug log to verify which PocketBase URL is being used
-if (process.env.NODE_ENV === 'development') {
-  console.log('[PocketBase Proxy] Using URL:', pbUrl);
-}
 
 /**
  * Generic PocketBase API proxy
@@ -77,9 +73,6 @@ export async function GET(
             const userData = await userResponse.json();
             // Update authStore with both token and user record
             pb.authStore.save(token, userData.record);
-            if (path.includes('tables')) {
-              console.log('[Proxy] Tables request - Auth validated, user:', userData.record?.id);
-            }
           } else {
             // Refresh failed, but token might still work for some requests
             if (path.includes('tables')) {
@@ -158,40 +151,9 @@ export async function GET(
           }
 
           try {
-            // Log the options being sent to PocketBase for debugging
-            if (collectionName === 'ticket_types' || collectionName === 'tables') {
-              console.log(`[Proxy] getFullList for ${collectionName} with options:`, JSON.stringify(options, null, 2));
-              console.log(`[Proxy] Auth status - isValid: ${pb.authStore.isValid}, hasToken: ${!!pb.authStore.token}, modelId: ${pb.authStore.model?.id || 'null'}`);
-            }
             const result = await pb.collection(collectionName).getFullList(options);
-            // Log the result to see what fields are returned
-            if (collectionName === 'ticket_types' && result.length > 0) {
-              console.log(`[Proxy] getFullList result for ticket_types - first record fields:`, Object.keys(result[0]));
-              console.log(`[Proxy] First record has ticket_type_category:`, result[0].ticket_type_category !== undefined);
-              console.log(`[Proxy] First record has table_ids:`, result[0].table_ids !== undefined);
-            }
-            if (collectionName === 'tables') {
-              console.log(`[Proxy] getFullList result for tables: ${result.length} tables found`);
-              if (result.length === 0) {
-                console.warn(`[Proxy] WARNING: No tables returned. Auth status - isValid: ${pb.authStore.isValid}, hasToken: ${!!pb.authStore.token}`);
-                // Try to get tables without filter to see if it's a filter issue
-                try {
-                  const allTables = await pb.collection('tables').getFullList({});
-                  console.log(`[Proxy] All tables (no filter): ${allTables.length} tables found`);
-                  if (allTables.length > 0) {
-                    console.log(`[Proxy] Sample table venue_id:`, allTables[0].venue_id, 'type:', typeof allTables[0].venue_id);
-                  }
-                } catch (testError: any) {
-                  console.error(`[Proxy] Error getting all tables:`, testError.message);
-                }
-              } else if (result.length > 0) {
-                console.log(`[Proxy] First table:`, {
-                  id: result[0].id,
-                  name: result[0].name,
-                  venue_id: result[0].venue_id,
-                  section: result[0].section,
-                });
-              }
+            if (collectionName === 'tables' && result.length === 0) {
+              console.warn(`[Proxy] WARNING: No tables returned. Auth status - isValid: ${pb.authStore.isValid}, hasToken: ${!!pb.authStore.token}`);
             }
             return NextResponse.json({ items: result, totalItems: result.length, page: 1, perPage: result.length, totalPages: 1 });
           } catch (error: any) {
@@ -222,9 +184,7 @@ export async function GET(
         }
         
         try {
-          console.log(`[Proxy] Fetching ${collectionName}/${recordId}`, { expand: options.expand });
           const result = await pb.collection(collectionName).getOne(recordId, options);
-          console.log(`[Proxy] Successfully fetched ${collectionName}/${recordId}`);
           return NextResponse.json(result);
         } catch (error: any) {
           // If record not found, return proper 404

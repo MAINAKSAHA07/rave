@@ -335,14 +335,6 @@ class ProxyPocketBase {
           const actualFilename = Array.isArray(filename) ? filename[0] : filename;
           const encodedFilename = encodeURIComponent(actualFilename).replace(/%2F/g, '/');
           const proxyUrl = `/api/pocketbase/api/files/${collectionId}/${recordId}/${encodedFilename}`;
-          
-          console.log('[ProxyPocketBase.files.getUrl] Using proxy URL for hosted environment:', {
-            record_id: recordId,
-            filename: actualFilename,
-            proxyUrl,
-            collectionId,
-          });
-          
           return proxyUrl;
         } else {
           // For localhost, use direct PocketBase URL
@@ -352,14 +344,6 @@ class ProxyPocketBase {
           
           const pb = new PocketBase(clientBaseUrl);
           const url = pb.files.getUrl(record, filename, queryParams);
-          
-          console.log('[ProxyPocketBase.files.getUrl] Generated direct URL for localhost:', {
-            baseUrl: clientBaseUrl,
-            record_id: record?.id,
-            filename,
-            url,
-          });
-          
           return url;
         }
       },
@@ -370,7 +354,6 @@ class ProxyPocketBase {
 export function getPocketBase(): any {
   if (typeof window === 'undefined') {
     // Server-side: Use direct PocketBase connection
-    console.log('[PocketBase] Initializing server-side client with URL:', pbUrl);
     const pb = new PocketBase(pbUrl);
     pb.autoCancellation(false);
     return pb;

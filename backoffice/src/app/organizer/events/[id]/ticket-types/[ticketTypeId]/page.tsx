@@ -101,7 +101,6 @@ export default function EditTicketTypePage() {
         // Store venue data for later use
         const loadedVenue = venueData;
         
-        console.log('[EditTicketType] Venue data:', { 
           id: venueData?.id, 
           layout_type: venueData?.layout_type,
           isObject: typeof venueData === 'object',
@@ -110,7 +109,6 @@ export default function EditTicketTypePage() {
         
         // Check if venue is GA_TABLE
         if (venueData && typeof venueData === 'object' && venueData.layout_type === 'GA_TABLE') {
-          console.log('[EditTicketType] Setting isGATable to true');
           setIsGATable(true);
           
           // Ensure collection info for file URLs
@@ -140,37 +138,29 @@ export default function EditTicketTypePage() {
             
             // First try: Direct venue_id match (for string IDs)
             try {
-              console.log('[EditTicketType] Trying venue_id filter:', venueId);
               tablesData = await pb.collection('tables').getFullList({
                 filter: `venue_id="${venueId}"`,
                 sort: 'section,name',
               });
-              console.log('[EditTicketType] Loaded with venue_id filter:', tablesData.length);
             } catch (filterError) {
-              console.log('[EditTicketType] Direct filter failed, trying relation filter');
             }
             
             // If no results, try relation filter format (this works based on logs)
             if (tablesData.length === 0) {
               try {
-                console.log('[EditTicketType] Trying venue_id.id filter:', venueId);
                 tablesData = await pb.collection('tables').getFullList({
                   filter: `venue_id.id="${venueId}"`,
                   sort: 'section,name',
                 });
-                console.log('[EditTicketType] Loaded with venue_id.id filter:', tablesData.length);
               } catch (relError) {
-                console.log('[EditTicketType] Relation filter also failed');
               }
             }
             
             // If still no results, get all and filter manually
             if (tablesData.length === 0) {
-              console.log('[EditTicketType] No results with filters, fetching all and filtering manually...');
               const allTables = await pb.collection('tables').getFullList({
                 sort: 'section,name',
               });
-              console.log('[EditTicketType] Total tables in database:', allTables.length);
               
               // Filter manually by comparing venue_id values
               tablesData = allTables.filter((t: any) => {
@@ -179,16 +169,13 @@ export default function EditTicketTypePage() {
                   : (t.venue_id?.id || t.venue_id || '');
                 return tableVenueId === venueId;
               });
-              console.log('[EditTicketType] Filtered tables manually:', tablesData.length);
             }
             
-            console.log('[EditTicketType] Final tables count:', tablesData.length);
             setTables(tablesData);
           } catch (error) {
             console.error('[EditTicketType] Failed to load tables:', error);
           }
         } else {
-          console.log('[EditTicketType] Venue is not GA_TABLE. Venue:', venueData?.layout_type, 'Type check:', typeof venueData === 'object');
         }
 
         // Load ticket type
@@ -199,7 +186,6 @@ export default function EditTicketTypePage() {
         // This is a fallback in case venue detection failed (check loadedVenue directly, not state)
         const venueIsGATable = loadedVenue && typeof loadedVenue === 'object' && loadedVenue.layout_type === 'GA_TABLE';
         if (!venueIsGATable && (ticketTypeData.ticket_type_category || ticketTypeData.table_ids)) {
-          console.log('[EditTicketType] Ticket type has category/table_ids but venue not detected as GA_TABLE. Enabling GA_TABLE mode.');
           setIsGATable(true);
           
           // Try to get venue again
@@ -251,7 +237,6 @@ export default function EditTicketTypePage() {
                 }
               }
               setTables(tablesData);
-              console.log('[EditTicketType] Fallback loaded tables:', tablesData.length);
             } catch (error) {
               console.error('[EditTicketType] Failed to load tables in fallback:', error);
             }
@@ -280,7 +265,6 @@ export default function EditTicketTypePage() {
         const category = ticketTypeData.ticket_type_category || '';
         form.setValue('ticket_type_category', category);
         setTicketCategory(category); // Set local state to avoid infinite loops
-        console.log('[EditTicketType] Ticket type category:', category, 'isGATable:', isGATable, 'venue layout:', loadedVenue?.layout_type);
         
         form.setValue('base_price_minor', (ticketTypeData.base_price_minor / 100).toFixed(2));
         form.setValue('gst_rate', ticketTypeData.gst_rate?.toString() || '18');
@@ -357,7 +341,6 @@ export default function EditTicketTypePage() {
       if (isGATable) {
         if (values.ticket_type_category) {
           updateData.ticket_type_category = values.ticket_type_category;
-          console.log('[EditTicketType] Updating ticket_type_category:', values.ticket_type_category);
         } else {
           console.warn('[EditTicketType] WARNING: GA_TABLE event but no ticket_type_category selected!');
         }
@@ -367,7 +350,6 @@ export default function EditTicketTypePage() {
       if (isGATable && values.ticket_type_category === 'TABLE') {
         if (selectedTableIds.length > 0) {
           updateData.table_ids = JSON.stringify(selectedTableIds);
-          console.log('[EditTicketType] Updating table_ids:', selectedTableIds);
         } else {
           updateData.table_ids = null;
         }
@@ -376,18 +358,12 @@ export default function EditTicketTypePage() {
         updateData.table_ids = null;
       }
 
-      console.log('[EditTicketType] Final updateData:', JSON.stringify(updateData, null, 2));
-      console.log('[EditTicketType] Updating ticket type ID:', ticketTypeId);
       
       try {
         const updatedRecord = await pb.collection('ticket_types').update(ticketTypeId, updateData);
-        console.log('[EditTicketType] Update successful! Updated record:', updatedRecord);
-        console.log('[EditTicketType] Updated ticket type with category:', updatedRecord.ticket_type_category);
-        console.log('[EditTicketType] Updated ticket type with table_ids:', updatedRecord.table_ids);
         
         // Verify the update by fetching the record again
         const verifyRecord = await pb.collection('ticket_types').getOne(ticketTypeId);
-        console.log('[EditTicketType] Verification - fetched record:', {
           id: verifyRecord.id,
           ticket_type_category: verifyRecord.ticket_type_category,
           table_ids: verifyRecord.table_ids,

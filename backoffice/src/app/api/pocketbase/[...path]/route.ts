@@ -30,10 +30,6 @@ function getPocketBaseUrl(): string {
 }
 
 const pbUrl = getPocketBaseUrl();
-// Debug log to verify which PocketBase URL is being used
-if (process.env.NODE_ENV === 'development') {
-  console.log('[PocketBase Proxy] Using URL:', pbUrl);
-}
 
 /**
  * Generic PocketBase API proxy for backoffice
@@ -58,13 +54,10 @@ export async function GET(
     if (token) {
       try {
         pb.authStore.save(token, null);
-        console.log(`[Proxy] Auth token set for request to ${path}`);
       } catch (e) {
         // If token is invalid, continue without auth
         console.warn(`[Proxy] Invalid token, continuing as guest:`, e);
       }
-    } else {
-      console.log(`[Proxy] No auth token provided for request to ${path}`);
     }
 
     // Parse the path to determine collection and action
@@ -103,7 +96,6 @@ export async function GET(
             const collection = collections.find((c: any) => c.name === collectionId);
             if (collection) {
               collectionId = collection.id;
-              console.log(`[Proxy] Resolved collection name "${pathParts[2]}" to ID "${collectionId}"`);
             } else {
               console.warn(`[Proxy] Collection name "${collectionId}" not found, trying as ID`);
             }
@@ -115,14 +107,6 @@ export async function GET(
         // Build the file URL using PocketBase SDK
         const record = { id: recordId, collectionId };
         const fileUrl = pb.files.getUrl(record, filename);
-        
-        console.log('[Proxy] Fetching file:', {
-          collectionId,
-          recordId,
-          filename,
-          fileUrl,
-          hasAuth: !!token,
-        });
         
         // Fetch the file with authentication if available
         const headers: Record<string, string> = {};
@@ -149,11 +133,6 @@ export async function GET(
         // Get the file content and content type
         const fileBlob = await fileResponse.blob();
         const contentType = fileResponse.headers.get('content-type') || 'application/octet-stream';
-        
-        console.log('[Proxy] File fetched successfully:', {
-          contentType,
-          size: fileBlob.size,
-        });
         
         // Return the file with proper headers
         return new NextResponse(fileBlob, {
@@ -225,14 +204,7 @@ export async function GET(
           }
 
           try {
-            console.log(`[Proxy] getFullList for ${collectionName}`, { 
-              filter: options.filter, 
-              sort: options.sort,
-              expand: options.expand,
-              hasAuth: !!token,
-            });
             const result = await pb.collection(collectionName).getFullList(options);
-            console.log(`[Proxy] getFullList success for ${collectionName}: ${result.length} items`);
             return NextResponse.json({
               items: result,
               totalItems: result.length,
@@ -440,26 +412,8 @@ export async function PUT(
         // Update record: api/collections/{collection}/records/{id}
         const recordId = pathParts[4];
         
-        // Add logging for ticket_types updates
-        if (collectionName === 'ticket_types') {
-          console.log(`[Proxy] PUT update for ticket_types/${recordId}`);
-          console.log(`[Proxy] Update data:`, JSON.stringify(body, null, 2));
-          console.log(`[Proxy] Has ticket_type_category:`, body.ticket_type_category !== undefined);
-          console.log(`[Proxy] Has table_ids:`, body.table_ids !== undefined);
-        }
-        
         try {
           const result = await pb.collection(collectionName).update(recordId, body);
-          
-          if (collectionName === 'ticket_types') {
-            console.log(`[Proxy] Update successful for ticket_types/${recordId}`);
-            console.log(`[Proxy] Updated record:`, {
-              id: result.id,
-              ticket_type_category: result.ticket_type_category,
-              table_ids: result.table_ids,
-            });
-          }
-          
           return NextResponse.json(result);
         } catch (updateError: any) {
           console.error(`[Proxy] Update failed for ${collectionName}/${recordId}:`, updateError);

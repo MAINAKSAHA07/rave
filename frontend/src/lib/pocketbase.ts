@@ -197,26 +197,6 @@ class ProxyPocketBase {
           return data;
         }
         const items = data.items || [];
-        // Debug logging for ticket_types
-        if (name === 'ticket_types' && items.length > 0) {
-          console.log(`[ProxyPocketBase] getFullList for ticket_types returned ${items.length} items`);
-          console.log(`[ProxyPocketBase] First item keys:`, Object.keys(items[0]));
-          console.log(`[ProxyPocketBase] First item has ticket_type_category:`, items[0].ticket_type_category !== undefined);
-          console.log(`[ProxyPocketBase] First item has table_ids:`, items[0].table_ids !== undefined);
-        }
-        // Debug logging for tables
-        if (name === 'tables') {
-          console.log(`[ProxyPocketBase] getFullList for tables returned ${items.length} items`);
-          if (items.length > 0) {
-            console.log(`[ProxyPocketBase] First table:`, {
-              id: items[0].id,
-              name: items[0].name,
-              venue_id: items[0].venue_id,
-              venue_id_type: typeof items[0].venue_id,
-              is_array: Array.isArray(items[0].venue_id),
-            });
-          }
-        }
         return items;
       },
       getOne: async (id: string | number, options: any = {}) => {

@@ -82,7 +82,6 @@ export default function TableMapEditorPage() {
             ? venueData.layout_image[0] 
             : venueData.layout_image;
           venueData.layout_image_url = pb.files.getUrl(venueData, layoutImageFilename);
-          console.log('[TableMap] Generated layout image URL:', venueData.layout_image_url);
         } catch (urlError) {
           console.error('[TableMap] Failed to generate layout image URL:', urlError);
           // Fallback to getPocketBaseFileUrl
@@ -90,7 +89,6 @@ export default function TableMapEditorPage() {
         }
       }
       
-      console.log('[TableMap] Venue data loaded:', {
         id: venueData.id,
         name: venueData.name,
         layout_image: venueData.layout_image,
@@ -103,7 +101,6 @@ export default function TableMapEditorPage() {
       setVenue(venueData);
 
       if (venueData.layout_type === 'GA_TABLE') {
-        console.log('[TableMap] Loading tables for venue:', venueId);
         // Try multiple filter formats to handle both string and relation venue_id
         let tablesData: any[] = [];
         
@@ -113,9 +110,7 @@ export default function TableMapEditorPage() {
             filter: `venue_id="${venueId}"`,
             sort: 'section,name',
           });
-          console.log('[TableMap] Loaded with venue_id filter:', tablesData.length);
         } catch (filterError) {
-          console.log('[TableMap] Direct filter failed, trying relation filter');
         }
         
         // If no results, try relation filter format
@@ -125,19 +120,15 @@ export default function TableMapEditorPage() {
               filter: `venue_id.id="${venueId}"`,
               sort: 'section,name',
             });
-            console.log('[TableMap] Loaded with venue_id.id filter:', tablesData.length);
           } catch (relError) {
-            console.log('[TableMap] Relation filter also failed');
           }
         }
         
         // If still no results, get all and filter manually
         if (tablesData.length === 0) {
-          console.log('[TableMap] No results with filters, fetching all and filtering manually...');
           const allTables = await pb.collection('tables').getFullList({
             sort: 'section,name',
           });
-          console.log('[TableMap] Total tables in database:', allTables.length);
           
           // Filter manually by comparing venue_id values
           tablesData = allTables.filter((t: any) => {
@@ -146,10 +137,8 @@ export default function TableMapEditorPage() {
               : (t.venue_id?.id || t.venue_id || '');
             return tableVenueId === venueId;
           });
-          console.log('[TableMap] Filtered tables manually:', tablesData.length);
         }
         
-        console.log('[TableMap] Final tables count:', tablesData.length);
         setTables(tablesData as any);
       }
     } catch (error) {
@@ -386,7 +375,6 @@ export default function TableMapEditorPage() {
                         });
                       }}
                       onLoad={() => {
-                        console.log('[TableMap] Floor plan image loaded successfully');
                       }}
                     />
                   </div>
@@ -464,7 +452,6 @@ export default function TableMapEditorPage() {
                     });
                   }}
                   onLoad={() => {
-                    console.log('[TableMap] Floor plan background image loaded successfully');
                   }}
                 />
               )}
