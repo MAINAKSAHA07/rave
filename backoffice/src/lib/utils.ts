@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
  * Handles both string and array formats for filename
  * Uses API proxy for hosted environments to handle authentication and CORS
  */
-export function getPocketBaseFileUrl(record: any, filename: string | string[] | null | undefined): string {
+export function getPocketBaseFileUrl(record: any, filename: string | string[] | null | undefined, collectionName?: string): string {
   if (!filename || !record) {
     return '';
   }
@@ -31,8 +31,27 @@ export function getPocketBaseFileUrl(record: any, filename: string | string[] | 
       window.location.hostname !== '127.0.0.1';
     
     if (isHosted) {
-      // In hosted environments, always use the proxy route to handle CORS and authentication
-      const collectionId = record.collectionId || record.collectionName || 'venues';
+      // In hosted environments, use the proxy route to handle CORS and authentication
+      // Try to determine collection name from record or use provided parameter
+      let collectionId = collectionName || record.collectionId || record.collectionName;
+      
+      // If we still don't have a collection name, try to infer from record structure
+      // This is a fallback - ideally collectionName should be passed
+      if (!collectionId) {
+        // Common collection names based on typical record fields
+        if (record.venue_id !== undefined || record.layout_image !== undefined) {
+          collectionId = 'venues';
+        } else if (record.event_id !== undefined || record.ticket_type_id !== undefined) {
+          collectionId = 'tickets';
+        } else if (record.organizer_id !== undefined || record.venue_id !== undefined || record.start_date !== undefined) {
+          collectionId = 'events';
+        } else if (record.price_minor !== undefined || record.event_id !== undefined) {
+          collectionId = 'ticket_types';
+        } else {
+          collectionId = 'events'; // Default fallback
+        }
+      }
+      
       const recordId = record.id;
       const encodedFilename = encodeURIComponent(actualFilename).replace(/%2F/g, '/');
       const proxyUrl = `/api/pocketbase/api/files/${collectionId}/${recordId}/${encodedFilename}`;
@@ -42,6 +61,7 @@ export function getPocketBaseFileUrl(record: any, filename: string | string[] | 
         filename: actualFilename,
         proxyUrl,
         collectionId,
+        collectionName,
       });
       
       return proxyUrl;

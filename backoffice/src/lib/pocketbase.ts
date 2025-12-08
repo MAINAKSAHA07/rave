@@ -129,9 +129,14 @@ class ProxyPocketBase {
           page: '1',
           perPage: '1',
           filter,
-          ...(options.sort && { sort: options.sort }),
-          ...(options.expand && { expand: options.expand }),
         });
+        if (options.sort) params.set('sort', options.sort);
+        if (options.expand) {
+          const expandValue = Array.isArray(options.expand) 
+            ? options.expand.join(',') 
+            : options.expand;
+          if (expandValue) params.set('expand', expandValue);
+        }
 
         const response = await fetch(`/api/pocketbase/api/collections/${name}?${params}`, {
           headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
@@ -234,7 +239,7 @@ class ProxyPocketBase {
 
         return response.json();
       },
-      update: async (id: string, data: any) => {
+      update: async (id: string, data: any, options: any = {}) => {
         const isFormData = data instanceof FormData;
         const headers: Record<string, string> = {
           ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
@@ -245,7 +250,16 @@ class ProxyPocketBase {
           headers['Content-Type'] = 'application/json';
         }
 
-        const response = await fetch(`/api/pocketbase/api/collections/${name}/records/${id}`, {
+        const params = new URLSearchParams();
+        if (options.expand) {
+          const expandValue = Array.isArray(options.expand) 
+            ? options.expand.join(',') 
+            : options.expand;
+          if (expandValue) params.set('expand', expandValue);
+        }
+
+        const url = `/api/pocketbase/api/collections/${name}/records/${id}${params.toString() ? `?${params}` : ''}`;
+        const response = await fetch(url, {
           method: 'PUT',
           headers,
           body: isFormData ? data : JSON.stringify(data),

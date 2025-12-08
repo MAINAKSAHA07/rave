@@ -70,9 +70,10 @@ export default function CheckInPage() {
   async function loadStats() {
     try {
       const response = await checkinApi.getStats(selectedEventId);
-      setStats((response as any).data || response);
+      setStats(response);
     } catch (error) {
       console.error('Failed to load stats:', error);
+      setStats(null);
     }
   }
 
@@ -102,12 +103,25 @@ export default function CheckInPage() {
               async (decodedText) => {
               // Pause scanning to prevent multiple scans
                 if (scannerRef.current) {
-                  scannerRef.current.pause();
+                  try {
+                    scannerRef.current.pause();
+                  } catch (e) {
+                    console.warn('Failed to pause scanner:', e);
+                  }
                 }
-                await handleScan(decodedText);
-                // Resume after processing
-                if (scannerRef.current) {
-                  scannerRef.current.resume();
+                try {
+                  await handleScan(decodedText);
+                } catch (error) {
+                  console.error('Error in handleScan:', error);
+                } finally {
+                  // Always resume after processing, even if there was an error
+                  if (scannerRef.current) {
+                    try {
+                      scannerRef.current.resume();
+                    } catch (e) {
+                      console.warn('Failed to resume scanner:', e);
+                    }
+                  }
                 }
               },
               (errorMessage) => {
@@ -141,8 +155,15 @@ export default function CheckInPage() {
 
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(console.error);
-        scannerRef.current = null;
+        scannerRef.current
+          .stop()
+          .then(() => {
+            scannerRef.current = null;
+          })
+          .catch((err) => {
+            console.error('Error stopping scanner in cleanup:', err);
+            scannerRef.current = null;
+          });
       }
     };
   }, [scanning, selectedEventId]);
@@ -170,8 +191,8 @@ export default function CheckInPage() {
         code = code.split('/t/')[1].split('?')[0].split('#')[0];
       }
 
-      const response = await checkinApi.scan(code, selectedEventId, user.id);
-      setLastScanResult({ success: true, data: response.data });
+      const ticket = await checkinApi.scan(code, selectedEventId, user.id);
+      setLastScanResult({ success: true, data: { ticket } });
       
       // Clear result after 3 seconds
       setTimeout(() => {
@@ -180,9 +201,11 @@ export default function CheckInPage() {
       
       await loadStats();
     } catch (error: any) {
+      console.error('Check-in error:', error);
+      const errorMessage = error?.message || error?.error || 'Check-in failed';
       setLastScanResult({
         success: false,
-        error: error.response?.data?.error || 'Check-in failed',
+        error: errorMessage,
       });
       
       // Clear error after 3 seconds
@@ -268,7 +291,13 @@ export default function CheckInPage() {
                 <p className="font-semibold text-green-800">✓ Check-in successful!</p>
                 {lastScanResult.data?.ticket && (
                   <p className="text-sm mt-2">
-                    {lastScanResult.data.ticket.attendeeName} - {lastScanResult.data.ticket.type}
+                    Ticket: {lastScanResult.data.ticket.ticket_code}
+                    {lastScanResult.data.ticket.expand?.order_id?.attendee_name && (
+                      <> - {lastScanResult.data.ticket.expand.order_id.attendee_name}</>
+                    )}
+                    {lastScanResult.data.ticket.expand?.ticket_type_id?.name && (
+                      <> ({lastScanResult.data.ticket.expand.ticket_type_id.name})</>
+                    )}
                   </p>
                 )}
               </div>

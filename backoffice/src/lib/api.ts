@@ -284,8 +284,11 @@ export const adminApi = {
 export const checkinApi = {
   scan: async (ticketCode: string, eventId: string, checkedInBy: string) => {
     const pb = getPocketBase();
-    // Find ticket by code
-    const ticket = await pb.collection('tickets').getFirstListItem(`ticket_code="${ticketCode}" && event_id="${eventId}"`);
+    // Find ticket by code with expanded relations
+    const ticket = await pb.collection('tickets').getFirstListItem(
+      `ticket_code="${ticketCode}" && event_id="${eventId}"`,
+      { expand: 'order_id,ticket_type_id,order_id.user_id' }
+    );
 
     if (ticket.status === 'checked_in') {
       throw new Error('Ticket already checked in');
@@ -295,19 +298,23 @@ export const checkinApi = {
     }
 
     // Check in
-    return await pb.collection('tickets').update(ticket.id, {
+    const updatedTicket = await pb.collection('tickets').update(ticket.id, {
       status: 'checked_in',
       checked_in_at: new Date().toISOString(),
       checked_in_by: checkedInBy,
-    });
+    }, { expand: 'order_id,ticket_type_id,order_id.user_id' });
+
+    return updatedTicket;
   },
   getStats: async (eventId: string) => {
     const pb = getPocketBase();
-    const total = await pb.collection('tickets').getList(1, 1, { filter: `event_id="${eventId}" && status="issued"` });
+    const issued = await pb.collection('tickets').getList(1, 1, { filter: `event_id="${eventId}" && status="issued"` });
     const checkedIn = await pb.collection('tickets').getList(1, 1, { filter: `event_id="${eventId}" && status="checked_in"` });
+    const total = issued.totalItems + checkedIn.totalItems;
     return {
-      totalIssued: total.totalItems + checkedIn.totalItems,
+      total,
       checkedIn: checkedIn.totalItems,
+      remaining: issued.totalItems,
     };
   },
 };

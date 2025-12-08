@@ -88,10 +88,15 @@ export async function GET(
           pb.authStore.save(token, null);
         }
         
-        // Try to get collection by name if it looks like a name (not a short ID)
-        // PocketBase collection IDs are typically short strings like '6jufmvxr0ihyle1'
-        // Collection names are longer like 'venues', 'events', etc.
-        if (collectionId.length > 10 || !collectionId.match(/^[a-z0-9]+$/)) {
+        // Try to get collection by name if it looks like a name (not an ID)
+        // PocketBase collection IDs are typically 15 characters like '6jufmvxr0ihyle1'
+        // Collection names are usually shorter and contain only lowercase letters and underscores
+        // Try to resolve as name first (common names: events, venues, tickets, etc.)
+        const isLikelyCollectionName = collectionId.length < 15 && 
+          (collectionId.match(/^[a-z_]+$/) || 
+           ['events', 'venues', 'tickets', 'ticket_types', 'orders', 'users', 'organizers'].includes(collectionId));
+        
+        if (isLikelyCollectionName) {
           // This looks like a collection name, try to get the collection
           try {
             const collections = await pb.collections.getFullList();
@@ -99,6 +104,8 @@ export async function GET(
             if (collection) {
               collectionId = collection.id;
               console.log(`[Proxy] Resolved collection name "${pathParts[2]}" to ID "${collectionId}"`);
+            } else {
+              console.warn(`[Proxy] Collection name "${collectionId}" not found, trying as ID`);
             }
           } catch (e) {
             console.warn(`[Proxy] Could not resolve collection name, using as-is:`, e);

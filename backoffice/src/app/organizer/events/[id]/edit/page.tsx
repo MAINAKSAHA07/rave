@@ -209,23 +209,19 @@ export default function EditEventPage() {
         formData.append('cover_image', coverImage);
       }
 
-      // Handle images: PocketBase requires sending all files that should remain
-      // If we're removing images or adding new ones, we need to send the complete list
-      if (imagesToRemove.length > 0 || images.length > 0) {
-        // Keep existing images that aren't being removed
-        const remainingImages = existingImages.filter(img => !imagesToRemove.includes(img));
-        
-        // Append remaining existing images (as file references)
-        // Note: PocketBase may require a different approach - we'll try sending the filenames
-        // For now, we'll append new images and let PocketBase handle the merge
+      // Handle image deletion: PocketBase uses fieldName- to delete specific files
+      if (imagesToRemove.length > 0) {
+        // Delete specific files by sending their filenames with the images- field
+        imagesToRemove.forEach((filename) => {
+          formData.append('images-', filename);
+        });
+      }
+
+      // Handle new image uploads
+      if (images.length > 0) {
         images.forEach((image) => {
           formData.append('images', image);
         });
-        
-        // If we're only removing (no new images), we need to send an empty array or handle differently
-        // PocketBase might require us to delete and re-upload, but let's try this approach first
-      } else {
-        // No changes to images, don't include the field
       }
 
       await pb.collection('events').update(eventId, formData);
@@ -500,7 +496,7 @@ export default function EditEventPage() {
                   <div className="mb-2">
                     <p className="text-sm text-gray-600 mb-2">Current cover image:</p>
                     <img
-                      src={getPocketBaseFileUrl(event, event.cover_image)}
+                      src={getPocketBaseFileUrl(event, event.cover_image, 'events')}
                       alt={event.name}
                       className="w-48 h-32 object-cover rounded-lg border"
                     />
@@ -533,7 +529,7 @@ export default function EditEventPage() {
                       {existingImages.map((img, idx) => (
                         <div key={idx} className="relative">
                           <img
-                            src={getPocketBaseFileUrl(event, img)}
+                            src={getPocketBaseFileUrl(event, img, 'events')}
                             alt={`Event image ${idx + 1}`}
                             className="w-full h-32 object-cover rounded-lg border"
                           />
