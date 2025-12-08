@@ -81,7 +81,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+      }}
+    >
       <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl rounded-3xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-bold text-white">Welcome Back</CardTitle>

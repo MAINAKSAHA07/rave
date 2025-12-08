@@ -107,7 +107,12 @@ export default function OrganizerApplyPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 flex items-center justify-center">
+    <div
+      className="min-h-screen p-4 flex items-center justify-center"
+      style={{
+        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+      }}
+    >
       <div className="w-full relative max-w-lg">
         <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
           <CardHeader>

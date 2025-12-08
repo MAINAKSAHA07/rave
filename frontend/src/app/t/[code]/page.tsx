@@ -51,7 +51,12 @@ export default function TicketPage() {
   const qrUrl = `${frontendUrl}/t/${ticketCode}`;
 
   return (
-    <div className="min-h-screen p-8 flex items-center justify-center">
+    <div
+      className="min-h-screen p-8 flex items-center justify-center"
+      style={{
+        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+      }}
+    >
       <div className="max-w-2xl w-full mx-auto bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2 text-white">Your Ticket</h1>
@@ -129,9 +134,9 @@ export default function TicketPage() {
           <div>
             <p className="text-sm text-gray-400">Status</p>
             <p className={`font-semibold capitalize ${ticket.status === 'issued' ? 'text-green-400' :
-                ticket.status === 'checked_in' ? 'text-blue-400' :
-                  ticket.status === 'pending' ? 'text-yellow-400' :
-                    'text-gray-400'
+              ticket.status === 'checked_in' ? 'text-blue-400' :
+                ticket.status === 'pending' ? 'text-yellow-400' :
+                  'text-gray-400'
               }`}>
               {ticket.status.replace('_', ' ')}
             </p>

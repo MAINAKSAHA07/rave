@@ -31,14 +31,20 @@ export default function EventsPage() {
       setSelectedCity(savedCity);
     }
     loadEvents();
-  }, []);
 
-  // Reload events when city changes
-  useEffect(() => {
-    if (selectedCity) {
-      // City filter is applied in the render, no need to reload
-    }
-  }, [selectedCity]);
+    // Listen for location changes from navbar
+    const handleLocationChange = () => {
+      const newCity = localStorage.getItem('selectedLocation');
+      if (newCity) {
+        setSelectedCity(newCity);
+      }
+    };
+
+    window.addEventListener('locationChanged', handleLocationChange);
+    return () => {
+      window.removeEventListener('locationChanged', handleLocationChange);
+    };
+  }, []);
 
   async function loadEvents() {
     try {

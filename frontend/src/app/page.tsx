@@ -258,49 +258,56 @@ export default function HomePage() {
       }}>
         <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Top Header Bar */}
-          <div className="sticky top-0 z-50">
-            <div className="max-w-[428px] mx-auto glass-shimmer px-4 py-2" style={{ borderRadius: '0 0 20px 20px' }}>
-              <div className="flex justify-between items-center h-12 gap-3 relative z-10">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="sticky top-0 z-50" style={{ overflow: 'visible' }}>
+            <div className="max-w-[428px] mx-auto glass-shimmer px-4 py-2" style={{ borderRadius: '0 0 20px 20px', overflow: 'visible' }}>
+              <div className="flex justify-between items-center h-12 gap-3 relative z-10" style={{ overflow: 'visible' }}>
+                <div className="flex items-center gap-3 flex-1 min-w-0" style={{ overflow: 'visible' }}>
                   <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
                     <img src="/navbar_logo.png" alt="PG" className="h-6 w-auto object-contain" />
                   </Link>
 
                   {/* Location Selector */}
-                  <div className="relative flex-1 max-w-[140px]">
+                  <div className="relative flex-1 max-w-[140px] min-w-[100px]" style={{ overflow: 'visible', zIndex: 100 }}>
                     <button
                       onClick={() => setShowLocationDropdown(!showLocationDropdown)}
                       className="w-full px-3 py-2 rounded-[12px] bg-[#2C2C2E] text-sm text-white hover:bg-[#3A3A3C] transition-all flex items-center justify-between gap-2 border border-white/5"
                       disabled={availableCities.length === 0}
                     >
                       <span className="truncate text-[13px] font-medium">{selectedLocation || 'Select City'}</span>
-                      <span className="text-gray-400 flex-shrink-0 text-[10px]">▼</span>
+                      <span className={`text-gray-400 flex-shrink-0 text-[10px] transition-transform ${showLocationDropdown ? 'rotate-180' : ''}`}>▼</span>
                     </button>
 
                     {showLocationDropdown && (
                       <>
                         <div
-                          className="fixed inset-0 z-40"
+                          className="fixed inset-0 z-[45]"
                           onClick={() => setShowLocationDropdown(false)}
                         />
-                        <div className="absolute top-full left-0 mt-2 w-full bg-[#2C2C2E] rounded-[16px] border border-white/10 shadow-xl z-50 max-h-48 overflow-y-auto overflow-hidden py-1">
+                        <div className="absolute top-full left-0 mt-2 w-[180px] bg-[#2C2C2E] rounded-[16px] border border-white/10 shadow-xl z-[100] max-h-64 overflow-y-auto py-1" style={{ scrollbarWidth: 'thin' }}>
                           {availableCities.length > 0 ? (
-                            availableCities.map((location, index) => (
+                            availableCities.map((location) => (
                               <button
                                 key={location}
                                 onClick={() => {
                                   setSelectedLocation(location);
                                   localStorage.setItem('selectedLocation', location);
                                   setShowLocationDropdown(false);
+                                  // Trigger page refresh to update filtered events
+                                  if (typeof window !== 'undefined') {
+                                    window.dispatchEvent(new Event('locationChanged'));
+                                  }
                                 }}
-                                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors ${selectedLocation === location ? 'text-[#7cffd6] font-medium bg-white/5' : 'text-gray-300'
-                                  }`}
+                                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors ${
+                                  selectedLocation === location 
+                                    ? 'text-[#7cffd6] font-medium bg-white/5' 
+                                    : 'text-gray-300'
+                                }`}
                               >
                                 {location}
                               </button>
                             ))
                           ) : (
-                            <div className="px-3 py-2 text-sm text-gray-500 text-center">Loading cities...</div>
+                            <div className="px-3 py-2 text-sm text-gray-400 text-center">Loading cities...</div>
                           )}
                         </div>
                       </>
@@ -351,6 +358,7 @@ export default function HomePage() {
             style={{
               background: 'linear-gradient(135deg, #1E4C55 0%, #4ABBB0 50%, #1E4C55 100%)',
               padding: '28px',
+              zIndex: 1,
             }}
           >
             <div className="flex justify-between items-start relative z-10">

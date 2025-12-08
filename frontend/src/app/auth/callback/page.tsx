@@ -53,7 +53,12 @@ function AuthCallbackContent() {
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{
+          background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+        }}
+      >
         <div className="text-center">
           <div className="text-red-600 text-4xl mb-4">✕</div>
           <h1 className="text-2xl font-bold mb-2">Authentication Failed</h1>

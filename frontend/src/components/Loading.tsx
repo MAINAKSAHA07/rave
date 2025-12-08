@@ -4,18 +4,12 @@ import Image from 'next/image';
 
 export default function Loading() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-[#0C0C0C]">
-      {/* Radial Gradient Background (matching global theme) */}
-      <div
-        className="absolute inset-0 z-0 pointer-events-none"
-        style={{
-          backgroundImage: `
-            radial-gradient(at 0% 0%, hsla(253, 30%, 15%, 0.4) 0, transparent 50%),
-            radial-gradient(at 50% 0%, hsla(225, 40%, 20%, 0.4) 0, transparent 50%),
-            radial-gradient(at 100% 0%, hsla(339, 50%, 20%, 0.4) 0, transparent 50%)
-          `
-        }}
-      />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-8"
+      style={{
+        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+      }}
+    >
 
       <div className="relative z-10 flex flex-col items-center justify-center">
         {/* Grey Transparent Background Container for Branding */}

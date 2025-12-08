@@ -7,7 +7,12 @@ export default function OrganizerLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex h-screen bg-transparent">
+        <div
+            className="flex h-screen"
+            style={{
+                background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+            }}
+        >
             {/* Sidebar */}
             <aside className="w-64 bg-black/30 backdrop-blur-md border-r border-white/10 hidden md:block">
                 <div className="p-6">

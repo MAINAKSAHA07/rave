@@ -130,7 +130,12 @@ export default function CheckInPage() {
     }
 
     return (
-        <div className="min-h-screen p-4 flex items-center justify-center">
+        <div
+            className="min-h-screen p-4 flex items-center justify-center"
+            style={{
+                background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+            }}
+        >
             <Card className="max-w-md w-full mx-auto bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
                 <CardHeader>
                     <CardTitle className="text-center text-white text-2xl font-bold">Event Check-in</CardTitle>
@@ -172,8 +177,8 @@ export default function CheckInPage() {
 
                     {scanResult.status !== 'idle' && (
                         <div className={`p-4 rounded-xl text-center border ${scanResult.status === 'success'
-                                ? 'bg-green-500/20 text-green-200 border-green-500/40'
-                                : 'bg-red-500/20 text-red-200 border-red-500/40'
+                            ? 'bg-green-500/20 text-green-200 border-green-500/40'
+                            : 'bg-red-500/20 text-red-200 border-red-500/40'
                             }`}>
                             {scanResult.status === 'success' ? (
                                 <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-400" />
