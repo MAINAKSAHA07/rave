@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { getPocketBase } from '@/lib/pocketbase';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Calendar, Sparkles, Filter, Eye, MapPin } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 const FILTER_CHIPS = [
   'Today',
@@ -241,44 +240,49 @@ export default function EventsPage() {
     
     // Only trigger if nightlife filter was just added (not removed)
     if (hasNightlife && !prevHasNightlife) {
-      // Bursting cracker effect
-      const duration = 3000;
-      const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+      // Dynamically import and trigger confetti
+      (async () => {
+        const confetti = (await import('canvas-confetti')).default;
+        
+        // Bursting cracker effect
+        const duration = 3000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
 
-      function randomInRange(min: number, max: number) {
-        return Math.random() * (max - min) + min;
-      }
-
-      const interval: NodeJS.Timeout = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
+        function randomInRange(min: number, max: number) {
+          return Math.random() * (max - min) + min;
         }
 
-        const particleCount = 50 * (timeLeft / duration);
-        
-        // Launch from multiple positions for bursting effect
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-        });
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-        });
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 }
-        });
-      }, 250);
+        const interval: NodeJS.Timeout = setInterval(function() {
+          const timeLeft = animationEnd - Date.now();
 
-      // Cleanup interval on unmount or when filter changes
-      setTimeout(() => clearInterval(interval), duration);
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          const particleCount = 50 * (timeLeft / duration);
+          
+          // Launch from multiple positions for bursting effect
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 }
+          });
+        }, 250);
+
+        // Cleanup interval on unmount or when filter changes
+        setTimeout(() => clearInterval(interval), duration);
+      })();
     }
     
     // Update previous filters

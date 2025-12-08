@@ -13,7 +13,6 @@ import BottomNavigation from '@/components/BottomNavigation';
 import CountdownTimer from '@/components/CountdownTimer';
 import { EventImages } from '@/components/EventImages';
 import { Users, TrendingUp, Share2, Clock, Tag, Mic, User, Info, DollarSign, Shield } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 interface Event {
   id: string;
@@ -137,7 +136,10 @@ export default function EventDetailsPage() {
     
     if (isNightlife) {
       // Function to trigger confetti effect
-      const triggerConfetti = () => {
+      const triggerConfetti = async () => {
+        // Dynamically import confetti to avoid SSR issues
+        const confetti = (await import('canvas-confetti')).default;
+        
         // Bursting cracker effect
         const duration = 3000;
         const animationEnd = Date.now() + duration;
