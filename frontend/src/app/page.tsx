@@ -134,13 +134,13 @@ export default function HomePage() {
   useEffect(() => {
     const isNightlife = selectedCategory === 'nightlife';
     const wasNightlife = prevCategoryRef.current === 'nightlife';
-    
+
     // Only trigger if nightlife was just selected (not deselected)
     if (isNightlife && !wasNightlife) {
       // Dynamically import and trigger confetti
       (async () => {
         const confetti = (await import('canvas-confetti')).default;
-        
+
         // Bursting cracker effect
         const duration = 3000;
         const animationEnd = Date.now() + duration;
@@ -150,7 +150,7 @@ export default function HomePage() {
           return Math.random() * (max - min) + min;
         }
 
-        const interval: NodeJS.Timeout = setInterval(function() {
+        const interval: NodeJS.Timeout = setInterval(function () {
           const timeLeft = animationEnd - Date.now();
 
           if (timeLeft <= 0) {
@@ -158,7 +158,7 @@ export default function HomePage() {
           }
 
           const particleCount = 50 * (timeLeft / duration);
-          
+
           // Launch from multiple positions for bursting effect
           confetti({
             ...defaults,
@@ -181,7 +181,7 @@ export default function HomePage() {
         setTimeout(() => clearInterval(interval), duration);
       })();
     }
-    
+
     // Update previous category
     prevCategoryRef.current = selectedCategory;
   }, [selectedCategory]);
@@ -301,19 +301,36 @@ export default function HomePage() {
     return true;
   });
 
+  // Calculate event counts per category and sort categories
+  const categoryCounts = CATEGORIES.map(category => {
+    const count = events.filter(event => {
+      const eventCategory = (event.category || '').toLowerCase();
+      return eventCategory === category.id;
+    }).length;
+    return { ...category, count };
+  });
+
+  // Sort categories by event count (descending), then by name if counts are equal
+  const sortedCategories = [...categoryCounts].sort((a, b) => {
+    if (b.count !== a.count) {
+      return b.count - a.count; // Sort by count descending
+    }
+    return a.name.localeCompare(b.name); // If counts are equal, sort alphabetically
+  });
+
   const popularEvents = filteredEvents.slice(0, 5);
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="pb-6">
       {/* Brand Reveal Animation */}
       <div className={`fixed inset-0 z-50 transition-opacity duration-1000 ${showContent ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <BrandReveal />
       </div>
       {/* Main Content */}
-      <div className={`min-h-screen transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`} style={{ 
+      <div className={`transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`} style={{
         background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)'
       }}>
-        <div className="max-w-[428px] mx-auto min-h-screen">
+        <div className="max-w-[428px] mx-auto">
           {/* Top Header Bar */}
           <div className="sticky top-0 z-50" style={{ overflow: 'visible' }}>
             <div className="max-w-[428px] mx-auto glass-shimmer px-4 py-2" style={{ borderRadius: '0 0 20px 20px', overflow: 'visible' }}>
@@ -354,11 +371,10 @@ export default function HomePage() {
                                     window.dispatchEvent(new Event('locationChanged'));
                                   }
                                 }}
-                                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors ${
-                                  selectedLocation === location 
-                                    ? 'text-[#7cffd6] font-medium bg-white/5' 
-                                    : 'text-gray-300'
-                                }`}
+                                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors ${selectedLocation === location
+                                  ? 'text-[#7cffd6] font-medium bg-white/5'
+                                  : 'text-gray-300'
+                                  }`}
                               >
                                 {location}
                               </button>
@@ -467,13 +483,13 @@ export default function HomePage() {
                   border: '1px solid rgba(255,255,255,0.3)'
                 }}
               >
-                <Bell 
-                  className="w-5 h-5" 
-                  strokeWidth={1.5} 
-                  style={{ 
+                <Bell
+                  className="w-5 h-5"
+                  strokeWidth={1.5}
+                  style={{
                     color: '#DFFCFB',
                     filter: 'drop-shadow(0 0 4px #A8FFF7)'
-                  }} 
+                  }}
                 />
               </button>
             </div>
@@ -501,7 +517,7 @@ export default function HomePage() {
           <div className="px-4 mb-8">
             <h2 className="text-white font-semibold mb-4 leading-tight" style={{ fontSize: '20px' }}>Category</h2>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {CATEGORIES.map((category) => {
+              {sortedCategories.map((category) => {
                 const IconComponent = category.icon;
                 const isSelected = selectedCategory === category.id;
                 return (
@@ -536,7 +552,7 @@ export default function HomePage() {
           </div>
 
           {/* Popular Events Section */}
-          <div className="px-4 mb-12">
+          <div className="px-4 mb-6 pb-6">
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-white font-semibold leading-tight" style={{ fontSize: '20px' }}>Popular Events</h2>
               <Link href="/events" className="text-[#7cffd6] text-sm font-medium hover:text-[#52C4A3] transition-colors" style={{ fontSize: '14px' }}>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Script from 'next/script';
 import { getPocketBase, login } from '@/lib/pocketbase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import Loading from '@/components/Loading';
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 export default function LoginPage() {
   return (
@@ -27,11 +34,17 @@ function LoginForm() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check if we're returning from OAuth
+    // Check if already logged in
     const pb = getPocketBase();
     if (pb.authStore.isValid) {
       const redirect = searchParams.get('redirect') || '/events';
       router.push(redirect);
+      return;
+    }
+
+    // Initialize Google Sign-In when script loads
+    if (window.google) {
+      handleGoogleLogin();
     }
   }, [router, searchParams]);
 
@@ -53,29 +66,111 @@ function LoginForm() {
   }
 
   async function handleGoogleLogin() {
+    if (!window.google) {
+      setError('Google Sign-In is loading. Please wait...');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
+    const clientId =
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      process.env.NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID ||
+      '';
+
+    if (!clientId) {
+      setError('Google Client ID not configured');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const pb = getPocketBase();
       const redirect = searchParams.get('redirect') || '/events';
 
-      // PocketBase OAuth2 flow
-      await pb.collection('customers').authWithOAuth2({
-        provider: 'google',
-        urlCallback: (url: string) => {
-          // Store redirect URL in sessionStorage
-          sessionStorage.setItem('oauth_redirect', redirect);
-          // Redirect to OAuth provider
-          window.location.href = url;
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response: any) => {
+          try {
+            // Send the credential to your backend
+            const loginResponse = await fetch('/api/auth/google', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ credential: response.credential }),
+            });
+
+            const data = await loginResponse.json();
+
+            if (loginResponse.ok && data.token && data.record) {
+              // Save to PocketBase auth store
+              const pb = getPocketBase();
+              pb.authStore.save(data.token, data.record);
+              
+              router.push(redirect);
+              router.refresh();
+            } else {
+              setError(data.error || 'Login failed');
+              setLoading(false);
+            }
+          } catch (err: any) {
+            setError(err.message || 'Login failed');
+            setLoading(false);
+          }
+        },
+        error_callback: (error: any) => {
+          console.error('Google Sign-In error:', error);
+          if (error.type === 'popup_closed') {
+            setError('Sign-in popup was closed. Please try again.');
+          } else if (error.type === 'popup_failed_to_open') {
+            setError('Failed to open sign-in popup. Please check your browser settings.');
+          } else if (error.type === 'popup_blocked') {
+            setError('Sign-in popup was blocked. Please allow popups for this site.');
+          } else {
+            const errorMessage = error.message || 'Google Sign-In error';
+            if (errorMessage.includes('invalid_client') || 
+                errorMessage.includes('no registered origin') ||
+                errorMessage.includes('not allowed') ||
+                errorMessage.includes('403')) {
+              const currentOrigin = window.location.origin;
+              const redirectUri = `${currentOrigin}/auth/callback`;
+              setError(
+                `❌ Google OAuth Error: Origin not authorized\n\n` +
+                `Current origin: ${currentOrigin}\n\n` +
+                `To fix this:\n` +
+                `1. Go to Google Cloud Console → APIs & Services → Credentials\n` +
+                `2. Edit your OAuth 2.0 Client ID\n` +
+                `3. Add to "Authorized JavaScript origins":\n` +
+                `   ${currentOrigin}\n\n` +
+                `4. Add to "Authorized redirect URIs":\n` +
+                `   ${redirectUri}\n` +
+                `   http://13.201.90.240:8092/api/oauth2/google/callback\n\n` +
+                `5. Save and wait 1-2 minutes\n\n` +
+                `See GOOGLE_OAUTH_SETUP.md for detailed instructions.`
+              );
+            } else {
+              setError(errorMessage);
+            }
+          }
+          setLoading(false);
         },
       });
 
-      // This will only execute if OAuth completes synchronously (unlikely)
-      router.push(redirect);
+      // Render the button
+      const buttonWidth = Math.min(window.innerWidth - 64, 320);
+      window.google.accounts.id.renderButton(
+        document.getElementById('google-signin-button'),
+        {
+          theme: 'outline',
+          size: 'large',
+          width: buttonWidth,
+          text: 'signin_with',
+        }
+      );
+
+      // Also try one-tap sign-in
+      window.google.accounts.id.prompt();
     } catch (err: any) {
-      // OAuth redirects away, so this might not execute
-      setError(err.message || 'Google login failed. Please try again.');
+      setError(err.message || 'Failed to initialize Google Sign-In');
       setLoading(false);
     }
   }
@@ -87,38 +182,21 @@ function LoginForm() {
         background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
       }}
     >
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        onLoad={() => {
+          if (window.google) {
+            handleGoogleLogin();
+          }
+        }}
+      />
       <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl rounded-3xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-bold text-white">Welcome Back</CardTitle>
           <CardDescription className="text-gray-300">Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full bg-white/5 text-white hover:bg-white/10 border-2 border-white/10 transition-all hover:scale-[1.02] font-medium backdrop-blur-md"
-            variant="outline"
-          >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            Continue with Google
-          </Button>
+          <div id="google-signin-button" className="w-full min-h-[42px] flex items-center justify-center"></div>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">

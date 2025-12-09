@@ -91,12 +91,6 @@ export default function EventsPage() {
       );
 
       setEvents(eventsWithPrices as any);
-      if (selectedCity) {
-        const cityEvents = eventsWithPrices.filter((e: any) => {
-          const eventCity = (e.city || e.expand?.venue_id?.city || '').toString().trim();
-          return eventCity.toLowerCase() === selectedCity.trim().toLowerCase();
-        });
-      }
     } catch (error) {
       console.error('Failed to load events:', error);
     } finally {
@@ -157,10 +151,6 @@ export default function EventsPage() {
       const matches = eventCity.toLowerCase() === selectedCityTrimmed.toLowerCase();
       return matches;
     });
-    if (cityFiltered.length === 0 && events.length > 0) {
-      // Log available cities for debugging
-      const availableCities = [...new Set(events.map((e: any) => (e.city || e.expand?.venue_id?.city || '').toString().trim()).filter(Boolean))];
-    }
     filteredEvents = cityFiltered;
   }
 
@@ -382,9 +372,18 @@ export default function EventsPage() {
                   onClick={() => toggleFilter(filter)}
                   className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                     isSelected
-                      ? 'bg-[#CE83FF] text-white'
-                      : 'bg-[#1a1a1a] text-[#9B9B9B] border border-white/10'
+                      ? 'text-white font-bold'
+                      : 'bg-[#1a1a1a] text-white border border-[#9B9B9B]/30'
                   }`}
+                  style={
+                    isSelected
+                      ? {
+                          background: '#CE83FF',
+                          border: '1px solid #CE83FF',
+                          boxShadow: '0 0 12px rgba(206, 131, 255, 0.6)',
+                        }
+                      : {}
+                  }
                 >
                   {filter}
                 </button>

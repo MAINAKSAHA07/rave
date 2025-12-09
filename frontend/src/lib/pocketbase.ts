@@ -311,10 +311,21 @@ class ProxyPocketBase {
         }
 
         const authMethods = await authMethodsResponse.json();
-        const provider = authMethods.authProviders?.find((p: any) => p.name === options.provider);
+        
+        // Check if authProviders exists and has providers
+        if (!authMethods.authProviders || !Array.isArray(authMethods.authProviders)) {
+          throw new Error(`OAuth providers not available. Please configure OAuth providers in PocketBase admin settings.`);
+        }
+        
+        const provider = authMethods.authProviders.find((p: any) => p.name === options.provider);
 
         if (!provider) {
-          throw new Error(`Provider ${options.provider} not found`);
+          const availableProviders = authMethods.authProviders.map((p: any) => p.name).join(', ');
+          throw new Error(
+            `Provider "${options.provider}" not found. ` +
+            `Available providers: ${availableProviders || 'none'}. ` +
+            `Please configure Google OAuth in PocketBase admin settings (Settings > Auth Providers).`
+          );
         }
 
         // If we have a code (OAuth callback), complete the auth
@@ -347,23 +358,38 @@ class ProxyPocketBase {
 
         // Otherwise, initiate OAuth flow
         if (options.urlCallback) {
-          // Use PocketBase's OAuth URL generation
-          // We need to get the OAuth URL from PocketBase, but through proxy
-          // For now, construct it manually based on provider config
+          // Use API route to initiate OAuth server-side (handles PKCE properly)
           const redirectUrl = options.redirectUrl || `${window.location.origin}/auth/callback`;
-          const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+          
+          try {
+            const initiateResponse = await fetch('/api/auth/oauth/initiate', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                provider: options.provider,
+                redirectUrl,
+                collection: name,
+              }),
+            });
 
-          // Store state for verification
-          sessionStorage.setItem('oauth_state', state);
+            if (!initiateResponse.ok) {
+              const error = await initiateResponse.json();
+              throw new Error(error.error || 'Failed to initiate OAuth');
+            }
 
-          // Build OAuth URL from provider
-          const authUrl = new URL(provider.authUrl);
-          authUrl.searchParams.set('redirect_uri', redirectUrl);
-          authUrl.searchParams.set('state', state);
-          authUrl.searchParams.set('client_id', provider.clientId);
+            const { url, state, codeVerifier } = await initiateResponse.json();
+            
+            // Store state and code verifier for callback
+            if (state) sessionStorage.setItem('oauth_state', state);
+            if (codeVerifier) sessionStorage.setItem('oauth_code_verifier', codeVerifier);
 
-          // Call the callback with the URL
-          options.urlCallback(authUrl.toString());
+            // Call the callback with the OAuth URL
+            options.urlCallback(url);
+          } catch (initError: any) {
+            throw new Error(initError.message || 'Failed to initiate OAuth flow');
+          }
         }
 
         return null;

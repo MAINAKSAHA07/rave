@@ -22,7 +22,9 @@
     "build:backoffice": "cd backoffice && npm run build"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "dotenv": "^17.2.3",
+    "pocketbase": "^0.26.5"
   },
   "dependencies": {
     "@vercel/analytics": "^1.6.1"

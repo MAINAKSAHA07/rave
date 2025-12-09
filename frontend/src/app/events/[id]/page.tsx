@@ -117,29 +117,29 @@ export default function EventDetailsPage() {
 
     // Check if event has nightlife in category or tags
     const category = (event.category || '').toLowerCase();
-    const tags = event.tags 
-      ? (Array.isArray(event.tags) 
-          ? event.tags.join(' ').toLowerCase() 
-          : (typeof event.tags === 'string' 
-              ? (() => {
-                  try {
-                    const parsed = JSON.parse(event.tags);
-                    return Array.isArray(parsed) ? parsed.join(' ').toLowerCase() : event.tags.toLowerCase();
-                  } catch {
-                    return event.tags.toLowerCase();
-                  }
-                })()
-              : ''))
+    const tags = event.tags
+      ? (Array.isArray(event.tags)
+        ? event.tags.join(' ').toLowerCase()
+        : (typeof event.tags === 'string'
+          ? (() => {
+            try {
+              const parsed = JSON.parse(event.tags);
+              return Array.isArray(parsed) ? parsed.join(' ').toLowerCase() : event.tags.toLowerCase();
+            } catch {
+              return event.tags.toLowerCase();
+            }
+          })()
+          : ''))
       : '';
-    
+
     const isNightlife = category === 'nightlife' || tags.includes('nightlife');
-    
+
     if (isNightlife) {
       // Function to trigger confetti effect
       const triggerConfetti = async () => {
         // Dynamically import confetti to avoid SSR issues
         const confetti = (await import('canvas-confetti')).default;
-        
+
         // Bursting cracker effect
         const duration = 3000;
         const animationEnd = Date.now() + duration;
@@ -149,7 +149,7 @@ export default function EventDetailsPage() {
           return Math.random() * (max - min) + min;
         }
 
-        const interval: NodeJS.Timeout = setInterval(function() {
+        const interval: NodeJS.Timeout = setInterval(function () {
           const timeLeft = animationEnd - Date.now();
 
           if (timeLeft <= 0) {
@@ -157,7 +157,7 @@ export default function EventDetailsPage() {
           }
 
           const particleCount = 50 * (timeLeft / duration);
-          
+
           // Launch from multiple positions for bursting effect
           confetti({
             ...defaults,
@@ -684,7 +684,7 @@ export default function EventDetailsPage() {
   const venueCity = event.expand?.venue_id?.city || event.city || '';
   const venueLocality = event.expand?.venue_id?.address || '';
   const organizerName = event.expand?.organizer_id?.name || 'Organizer';
-  
+
   // Calculate interested count (mock data - replace with actual)
   const interestedCount = 6317;
   const popularity = 98;
@@ -692,12 +692,12 @@ export default function EventDetailsPage() {
   // Prepare images array
   const pb = getPocketBase();
   const images: string[] = [];
-  
+
   // Add cover image first
   if (event.cover_image) {
     images.push(pb.files.getUrl(event as any, event.cover_image));
   }
-  
+
   // Add additional images if available
   if (event.images) {
     if (Array.isArray(event.images)) {
@@ -768,15 +768,15 @@ export default function EventDetailsPage() {
           )}
 
           {/* Header Section - Minimal with back and share buttons */}
-          <div 
+          <div
             className="sticky top-0 z-20 px-4 pt-4 pb-2"
-            style={{ 
+            style={{
               background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
             }}
           >
             <div className="flex items-center justify-between">
-              <button 
-                onClick={() => router.back()} 
+              <button
+                onClick={() => router.back()}
                 className="text-white text-xl hover:text-gray-300 transition-colors"
               >
                 ←
@@ -788,7 +788,7 @@ export default function EventDetailsPage() {
                       title: event.name,
                       text: `Check out ${event.name}`,
                       url: window.location.href,
-                    }).catch(() => {});
+                    }).catch(() => { });
                   }
                 }}
                 className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:scale-95 transition-transform shadow-lg"
@@ -800,31 +800,46 @@ export default function EventDetailsPage() {
 
           {/* Stats Bar */}
           <div className="px-4 mb-6">
-            <div 
-              className="rounded-[20px] p-4"
-              style={{ 
-                background: '#151515',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+            <div
+              className="rounded-[20px] p-5"
+              style={{
+                background: 'linear-gradient(135deg, rgba(20, 30, 50, 0.8) 0%, rgba(30, 20, 50, 0.9) 100%)',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
-              <div className="grid grid-cols-4 gap-4">
+              <div className="flex justify-between items-center gap-2">
                 {/* Column 1: Interested */}
                 <div className="flex flex-col items-center">
-                  <Users className="w-5 h-5 text-white mb-2" strokeWidth={1.5} />
-                  <span className="text-white font-bold text-base mb-1">{interestedCount}+</span>
-                  <span className="text-[#9B9B9B] text-[10px] uppercase font-medium">Interested</span>
+                  <span className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-2">INTERESTED</span>
+                  <span className="text-white font-bold text-xl sm:text-2xl">
+                    {interestedCount >= 1000
+                      ? `${(interestedCount / 1000).toFixed(1)}K`
+                      : interestedCount.toString()}
+                  </span>
                 </div>
 
                 {/* Column 2: Countdown */}
-                <div className="flex flex-col items-center col-span-2">
+                <div className="flex flex-col items-center">
+                  <span className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-2">COUNTDOWN</span>
                   <CountdownTimer targetDate={eventDate} />
                 </div>
 
                 {/* Column 3: Popularity */}
                 <div className="flex flex-col items-center">
-                  <TrendingUp className="w-5 h-5 text-white mb-2" strokeWidth={1.5} />
-                  <span className="text-white font-bold text-base mb-1">{popularity}%</span>
-                  <span className="text-[#9B9B9B] text-[10px] uppercase font-medium">Popularity</span>
+                  <span className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-2">POPULARITY</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-white font-bold text-xl sm:text-2xl">{popularity}%</span>
+                    <svg
+                      className="w-3 h-3"
+                      style={{ color: '#60A5FA' }}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
@@ -839,10 +854,10 @@ export default function EventDetailsPage() {
                 <span className="text-xs font-medium" style={{ color: '#27D17F' }}>Lowest Price Guaranteed</span>
               </div>
             </div>
-            
-            <div 
+
+            <div
               className="rounded-[20px] p-5 space-y-4"
-              style={{ 
+              style={{
                 background: '#141414',
                 boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
               }}
@@ -881,16 +896,16 @@ export default function EventDetailsPage() {
                   <div className="flex-1">
                     <p className="text-[#9B9B9B] text-[10px] uppercase font-medium mb-1">Artists</p>
                     <p className="text-white text-sm">
-                      {Array.isArray(event.tags) 
-                        ? event.tags.join(', ') 
-                        : typeof event.tags === 'string' 
+                      {Array.isArray(event.tags)
+                        ? event.tags.join(', ')
+                        : typeof event.tags === 'string'
                           ? (() => {
-                              try {
-                                return JSON.parse(event.tags).join(', ');
-                              } catch {
-                                return event.tags;
-                              }
-                            })()
+                            try {
+                              return JSON.parse(event.tags).join(', ');
+                            } catch {
+                              return event.tags;
+                            }
+                          })()
                           : 'TBA'}
                     </p>
                   </div>
@@ -935,9 +950,9 @@ export default function EventDetailsPage() {
           <div className="px-4 space-y-6">
 
             {event.description && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -948,9 +963,9 @@ export default function EventDetailsPage() {
             )}
 
             {event.about && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -960,18 +975,18 @@ export default function EventDetailsPage() {
               </div>
             )}
 
-            <div 
+            <div
               className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-              style={{ 
+              style={{
                 background: '#141414',
                 boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
               }}
             >
               <h2 className="text-white font-bold text-lg mb-4">Tickets</h2>
               {ticketTypes.length === 0 ? (
-                <div 
+                <div
                   className="rounded-xl p-6 text-center"
-                  style={{ 
+                  style={{
                     background: '#1a1a1a',
                     border: '1px solid rgba(255,255,255,0.05)'
                   }}
@@ -982,10 +997,10 @@ export default function EventDetailsPage() {
               ) : (
                 <div className="space-y-4">
                   {ticketTypes.map((tt) => (
-                    <div 
-                      key={tt.id} 
+                    <div
+                      key={tt.id}
                       className="rounded-xl p-4 transition-all hover:scale-[1.01]"
-                      style={{ 
+                      style={{
                         background: '#1a1a1a',
                         border: '1px solid rgba(255,255,255,0.05)',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
@@ -1014,7 +1029,7 @@ export default function EventDetailsPage() {
                               handleTicketChange(tt.id, Math.max(0, (selectedTickets[tt.id] || 0) - 1))
                             }
                             className="w-10 h-10 rounded-full flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:scale-95"
-                            style={{ 
+                            style={{
                               border: '1px solid rgba(255,255,255,0.1)',
                               background: '#1a1a1a'
                             }}
@@ -1031,7 +1046,7 @@ export default function EventDetailsPage() {
                               )
                             }
                             className="w-10 h-10 rounded-full text-white flex items-center justify-center hover:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                            style={{ 
+                            style={{
                               background: '#27D17F',
                               boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
                             }}
@@ -1061,18 +1076,18 @@ export default function EventDetailsPage() {
                                 <button
                                   onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'list' })}
                                   className={`px-3 py-1 text-xs rounded-lg transition-all ${(seatViewMode[tt.id] || 'list') === 'list'
-                                      ? 'text-white'
-                                      : 'text-[#9B9B9B] hover:text-white'
+                                    ? 'text-white'
+                                    : 'text-[#9B9B9B] hover:text-white'
                                     }`}
                                   style={(seatViewMode[tt.id] || 'list') === 'list'
-                                    ? { 
-                                        background: '#27D17F',
-                                        border: '1px solid #27D17F'
-                                      }
-                                    : { 
-                                        background: '#1a1a1a',
-                                        border: '1px solid rgba(255,255,255,0.1)'
-                                      }
+                                    ? {
+                                      background: '#27D17F',
+                                      border: '1px solid #27D17F'
+                                    }
+                                    : {
+                                      background: '#1a1a1a',
+                                      border: '1px solid rgba(255,255,255,0.1)'
+                                    }
                                   }
                                 >
                                   List View
@@ -1080,18 +1095,18 @@ export default function EventDetailsPage() {
                                 <button
                                   onClick={() => setSeatViewMode({ ...seatViewMode, [tt.id]: 'map' })}
                                   className={`px-3 py-1 text-xs rounded-lg transition-all ${seatViewMode[tt.id] === 'map'
-                                      ? 'text-white'
-                                      : 'text-[#9B9B9B] hover:text-white'
+                                    ? 'text-white'
+                                    : 'text-[#9B9B9B] hover:text-white'
                                     }`}
                                   style={seatViewMode[tt.id] === 'map'
-                                    ? { 
-                                        background: '#27D17F',
-                                        border: '1px solid #27D17F'
-                                      }
-                                    : { 
-                                        background: '#1a1a1a',
-                                        border: '1px solid rgba(255,255,255,0.1)'
-                                      }
+                                    ? {
+                                      background: '#27D17F',
+                                      border: '1px solid #27D17F'
+                                    }
+                                    : {
+                                      background: '#1a1a1a',
+                                      border: '1px solid rgba(255,255,255,0.1)'
+                                    }
                                   }
                                 >
                                   Map View
@@ -1118,9 +1133,9 @@ export default function EventDetailsPage() {
                                 />
                               ) : (
                                 /* List View */
-                                <div 
+                                <div
                                   className="max-h-64 overflow-y-auto rounded-xl p-3"
-                                  style={{ 
+                                  style={{
                                     border: '1px solid rgba(255,255,255,0.05)',
                                     background: '#1a1a1a'
                                   }}
@@ -1148,27 +1163,27 @@ export default function EventDetailsPage() {
                                                   : 'cursor-not-allowed'
                                               }`}
                                             style={isSelected
-                                              ? { 
-                                                  background: '#27D17F',
-                                                  border: '1px solid #27D17F',
-                                                  boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
-                                                }
+                                              ? {
+                                                background: '#27D17F',
+                                                border: '1px solid #27D17F',
+                                                boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
+                                              }
                                               : isReserved
-                                                ? { 
-                                                    background: 'rgba(255, 71, 71, 0.15)',
-                                                    color: '#FF4747',
-                                                    border: '1px solid rgba(255, 71, 71, 0.3)'
-                                                  }
+                                                ? {
+                                                  background: 'rgba(255, 71, 71, 0.15)',
+                                                  color: '#FF4747',
+                                                  border: '1px solid rgba(255, 71, 71, 0.3)'
+                                                }
                                                 : seat.available && !seat.sold
-                                                  ? { 
-                                                      background: '#1a1a1a',
-                                                      border: '1px solid rgba(255,255,255,0.1)'
-                                                    }
-                                                  : { 
-                                                      background: '#1a1a1a',
-                                                      color: '#9B9B9B',
-                                                      border: '1px solid rgba(255,255,255,0.05)'
-                                                    }
+                                                  ? {
+                                                    background: '#1a1a1a',
+                                                    border: '1px solid rgba(255,255,255,0.1)'
+                                                  }
+                                                  : {
+                                                    background: '#1a1a1a',
+                                                    color: '#9B9B9B',
+                                                    border: '1px solid rgba(255,255,255,0.05)'
+                                                  }
                                             }
                                             title={
                                               isSelected
@@ -1198,9 +1213,9 @@ export default function EventDetailsPage() {
                       {/* Show warning if GA_TABLE event but ticket type doesn't have category set */}
                       {isGATable && !tt.ticket_type_category && (selectedTickets[tt.id] || 0) > 0 && (
                         <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div 
+                          <div
                             className="rounded-lg p-3"
-                            style={{ 
+                            style={{
                               background: 'rgba(255, 71, 71, 0.15)',
                               border: '1px solid rgba(255, 71, 71, 0.3)'
                             }}
@@ -1245,9 +1260,9 @@ export default function EventDetailsPage() {
 
                             return (
                               <div className="mt-2">
-                                <div 
+                                <div
                                   className="rounded-lg p-3 mb-3"
-                                  style={{ 
+                                  style={{
                                     background: 'rgba(39, 209, 127, 0.15)',
                                     border: '1px solid rgba(39, 209, 127, 0.3)'
                                   }}
@@ -1261,9 +1276,9 @@ export default function EventDetailsPage() {
                                 </div>
 
                                 {filteredTables.length === 0 ? (
-                                  <div 
+                                  <div
                                     className="rounded-lg p-4 text-center"
-                                    style={{ 
+                                    style={{
                                       background: 'rgba(255, 71, 71, 0.15)',
                                       border: '1px solid rgba(255, 71, 71, 0.3)'
                                     }}
@@ -1296,7 +1311,7 @@ export default function EventDetailsPage() {
                           <button
                             onClick={() => handleAddToCart(tt.id)}
                             className="w-full text-white py-3 rounded-xl font-bold text-base transition-all hover:scale-[1.01]"
-                            style={{ 
+                            style={{
                               background: '#27D17F',
                               boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
                             }}
@@ -1312,9 +1327,9 @@ export default function EventDetailsPage() {
             </div>
 
             {event.overview && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -1325,9 +1340,9 @@ export default function EventDetailsPage() {
             )}
 
             {event.things_to_carry && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -1347,9 +1362,9 @@ export default function EventDetailsPage() {
             )}
 
             {event.inclusions && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -1369,9 +1384,9 @@ export default function EventDetailsPage() {
             )}
 
             {event.terms_and_conditions && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -1382,9 +1397,9 @@ export default function EventDetailsPage() {
             )}
 
             {event.expand?.venue_id && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -1413,9 +1428,9 @@ export default function EventDetailsPage() {
             )}
 
             {event.expand?.organizer_id && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -1444,9 +1459,9 @@ export default function EventDetailsPage() {
             )}
 
             {event.tags && (
-              <div 
+              <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
-                style={{ 
+                style={{
                   background: '#141414',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
                 }}
@@ -1463,7 +1478,7 @@ export default function EventDetailsPage() {
                     <span
                       key={idx}
                       className="px-3 py-1 rounded-full text-xs font-medium"
-                      style={{ 
+                      style={{
                         background: 'rgba(39, 209, 127, 0.15)',
                         color: '#27D17F',
                         border: '1px solid rgba(39, 209, 127, 0.3)'
