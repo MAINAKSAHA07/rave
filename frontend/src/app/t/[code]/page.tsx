@@ -98,6 +98,23 @@ export default function TicketPage() {
           </div>
 
           <div>
+            <p className="text-sm text-gray-400">Venue</p>
+            <p className="font-semibold text-white">
+              {(() => {
+                const venue = ticket.expand?.event_id?.expand?.venue_id || ticket.expand?.event_id?.venue_id;
+                if (venue?.address) {
+                  const addressParts = [venue.address];
+                  if (venue.city) addressParts.push(venue.city);
+                  if (venue.state) addressParts.push(venue.state);
+                  if (venue.pincode) addressParts.push(`- ${venue.pincode}`);
+                  return addressParts.join(', ');
+                }
+                return ticket.expand?.event_id?.venue_name || 'Venue TBD';
+              })()}
+            </p>
+          </div>
+
+          <div>
             <p className="text-sm text-gray-400">Ticket Type</p>
             <p className="font-semibold text-white">
               {ticket.expand?.ticket_type_id?.name}

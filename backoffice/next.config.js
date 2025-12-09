@@ -77,6 +77,15 @@ const nextConfig = {
     // Public environment variables (exposed to client-side)
     NEXT_PUBLIC_POCKETBASE_URL: process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090',
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
+    // EmailJS configuration (public for client-side, but also used server-side)
+    NEXT_PUBLIC_EMAILJS_SERVICE_ID: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || '',
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_TICKET_CONFIRMATION: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_TICKET_CONFIRMATION || '',
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_PROMOTIONAL: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_PROMOTIONAL || '',
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_STAFF_INVITATION: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_STAFF_INVITATION || '',
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_EVENT_REMINDER: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_EVENT_REMINDER || '',
+    NEXT_PUBLIC_EMAILJS_PUBLIC_KEY: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || '',
+    // EmailJS private access token for server-side API calls (not exposed to client)
+    EMAILJS_ACCESS_TOKEN: process.env.EMAILJS_ACCESS_TOKEN || '',
   },
   output: 'standalone',
 }

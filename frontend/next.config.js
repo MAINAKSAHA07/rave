@@ -82,6 +82,13 @@ const nextConfig = {
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
     NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_OAUTH_CLIENT_ID || '',
+    // EmailJS configuration (public for client-side, but also used server-side)
+    NEXT_PUBLIC_EMAILJS_SERVICE_ID: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || '',
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_TICKET_CONFIRMATION: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_TICKET_CONFIRMATION || '',
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_PROMOTIONAL: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_PROMOTIONAL || '',
+    NEXT_PUBLIC_EMAILJS_PUBLIC_KEY: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || '',
+    // EmailJS private access token for server-side API calls (not exposed to client)
+    EMAILJS_ACCESS_TOKEN: process.env.EMAILJS_ACCESS_TOKEN || '',
   },
   // Only use standalone output for production builds
   ...(process.env.NODE_ENV === 'production' ? { output: 'standalone' } : {}),

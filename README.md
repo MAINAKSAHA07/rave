@@ -11,7 +11,7 @@ A modern event ticketing platform for India with multi-currency support, built w
 - **Customer Frontend**: Next.js (Port 3000)
 - **Backoffice Frontend**: Next.js (Port 3001) - Organizer & Admin Dashboard
 - **Payments**: Razorpay
-- **Emails**: Resend
+- **Emails**: EmailJS
 - **Analytics**: D3.js
 
 ## Project Structure
@@ -32,7 +32,7 @@ Rave/
 - Node.js 18+
 - PocketBase (download from https://pocketbase.io)
 - Razorpay account
-- Resend account
+- EmailJS account (for email sending)
 
 ### Setup
 

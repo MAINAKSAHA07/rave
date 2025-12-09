@@ -172,6 +172,29 @@ export default function OrganizerStaffPage() {
             role: inviteForm.role,
             invited_by: user.id,
           });
+
+          // Send invitation email for reactivated staff
+          try {
+            const organizerData = await pb.collection('organizers').getOne(targetOrganizerId);
+            const response = await fetch('/api/emails/staff-invitation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to_email: userToInvite.email,
+                to_name: userToInvite.name || userToInvite.email.split('@')[0],
+                organizer_name: organizerData.name || 'the organization',
+                role: inviteForm.role,
+              }),
+            });
+
+            if (!response.ok) {
+              console.warn('Failed to send invitation email, but staff was reactivated successfully');
+            }
+          } catch (emailError) {
+            console.error('Error sending invitation email:', emailError);
+            // Don't fail the whole operation if email fails
+          }
+
           alert('Staff member reactivated successfully!');
           setShowInviteDialog(false);
           setInviteForm({ email: '', role: 'volunteer', organizerId: '' });
@@ -190,6 +213,28 @@ export default function OrganizerStaffPage() {
         status: 'active',
         invited_by: user.id,
       });
+
+      // Send invitation email
+      try {
+        const organizerData = await pb.collection('organizers').getOne(targetOrganizerId);
+        const response = await fetch('/api/emails/staff-invitation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to_email: userToInvite.email,
+            to_name: userToInvite.name || userToInvite.email.split('@')[0],
+            organizer_name: organizerData.name || 'the organization',
+            role: inviteForm.role,
+          }),
+        });
+
+        if (!response.ok) {
+          console.warn('Failed to send invitation email, but staff was added successfully');
+        }
+      } catch (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        // Don't fail the whole operation if email fails
+      }
 
       alert('Staff member added successfully!');
       setShowInviteDialog(false);
