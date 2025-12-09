@@ -101,12 +101,6 @@ export default function EditTicketTypePage() {
         // Store venue data for later use
         const loadedVenue = venueData;
         
-          id: venueData?.id, 
-          layout_type: venueData?.layout_type,
-          isObject: typeof venueData === 'object',
-          hasLayoutType: venueData?.layout_type === 'GA_TABLE'
-        });
-        
         // Check if venue is GA_TABLE
         if (venueData && typeof venueData === 'object' && venueData.layout_type === 'GA_TABLE') {
           setIsGATable(true);
@@ -143,9 +137,10 @@ export default function EditTicketTypePage() {
                 sort: 'section,name',
               });
             } catch (filterError) {
+              // Direct filter failed, trying relation filter
             }
             
-            // If no results, try relation filter format (this works based on logs)
+            // If no results, try relation filter format
             if (tablesData.length === 0) {
               try {
                 tablesData = await pb.collection('tables').getFullList({
@@ -153,6 +148,7 @@ export default function EditTicketTypePage() {
                   sort: 'section,name',
                 });
               } catch (relError) {
+                // Relation filter also failed
               }
             }
             
@@ -170,12 +166,10 @@ export default function EditTicketTypePage() {
                 return tableVenueId === venueId;
               });
             }
-            
             setTables(tablesData);
           } catch (error) {
             console.error('[EditTicketType] Failed to load tables:', error);
           }
-        } else {
         }
 
         // Load ticket type
@@ -358,16 +352,8 @@ export default function EditTicketTypePage() {
         updateData.table_ids = null;
       }
 
-      
       try {
         const updatedRecord = await pb.collection('ticket_types').update(ticketTypeId, updateData);
-        
-        // Verify the update by fetching the record again
-        const verifyRecord = await pb.collection('ticket_types').getOne(ticketTypeId);
-          id: verifyRecord.id,
-          ticket_type_category: verifyRecord.ticket_type_category,
-          table_ids: verifyRecord.table_ids,
-        });
         
         alert('Ticket type updated successfully!');
         router.push(`/organizer/events/${eventId}`);

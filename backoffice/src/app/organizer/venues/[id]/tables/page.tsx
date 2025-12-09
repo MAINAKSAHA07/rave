@@ -59,6 +59,7 @@ export default function VenueTablesPage() {
               sort: 'section,name',
             });
           } catch (filterError) {
+            // Direct filter failed, try relation filter
           }
           
           // If no results, try relation filter format
@@ -69,6 +70,7 @@ export default function VenueTablesPage() {
                 sort: 'section,name',
               });
             } catch (relError) {
+              // Relation filter also failed
             }
           }
           
@@ -84,18 +86,9 @@ export default function VenueTablesPage() {
                 ? t.venue_id 
                 : (t.venue_id?.id || t.venue_id || '');
               const matches = tableVenueId === venueId;
-              if (!matches && allTables.length <= 5) {
-                  tableId: t.id,
-                  tableName: t.name,
-                  tableVenueId: tableVenueId,
-                  expectedVenueId: venueId,
-                  venueIdType: typeof t.venue_id,
-                });
-              }
               return matches;
             });
           }
-          
           setTables(tablesData as any);
           
           // If no tables found, try without filter to see if there are any tables at all
@@ -117,6 +110,7 @@ export default function VenueTablesPage() {
                   return;
                 }
               } catch (relError) {
+                // venue_id.id filter failed
               }
               
               // Check if any tables match by comparing venue_id values

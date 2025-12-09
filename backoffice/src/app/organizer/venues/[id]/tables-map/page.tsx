@@ -89,15 +89,6 @@ export default function TableMapEditorPage() {
         }
       }
       
-        id: venueData.id,
-        name: venueData.name,
-        layout_image: venueData.layout_image,
-        layout_image_type: typeof venueData.layout_image,
-        layout_image_is_array: Array.isArray(venueData.layout_image),
-        layout_image_url: venueData.layout_image_url,
-        collectionId: venueData.collectionId,
-        collectionName: venueData.collectionName,
-      });
       setVenue(venueData);
 
       if (venueData.layout_type === 'GA_TABLE') {
@@ -111,6 +102,7 @@ export default function TableMapEditorPage() {
             sort: 'section,name',
           });
         } catch (filterError) {
+          // Direct filter failed, trying relation filter
         }
         
         // If no results, try relation filter format
@@ -121,6 +113,7 @@ export default function TableMapEditorPage() {
               sort: 'section,name',
             });
           } catch (relError) {
+            // Relation filter also failed
           }
         }
         

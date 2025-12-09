@@ -74,14 +74,6 @@ export default function SeatMapEditorPage() {
         venueData.collectionName = 'venues';
       }
       
-        id: venueData.id,
-        name: venueData.name,
-        layout_image: venueData.layout_image,
-        layout_image_type: typeof venueData.layout_image,
-        layout_image_is_array: Array.isArray(venueData.layout_image),
-        collectionId: venueData.collectionId,
-        collectionName: venueData.collectionName,
-      });
       setVenue(venueData);
 
       if (venueData.layout_type === 'SEATED') {

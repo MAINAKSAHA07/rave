@@ -202,13 +202,6 @@ export default function EventDetailsPage() {
         expand: 'venue_id,organizer_id',
       });
       setEvent(eventData as any);
-        id: eventData.id,
-        name: eventData.name,
-        venue_id: eventData.venue_id,
-        organizer_id: eventData.organizer_id,
-        expanded_venue: eventData.expand?.venue_id ? 'present' : 'missing',
-        expanded_organizer: eventData.expand?.organizer_id ? 'present' : 'missing',
-      });
 
       try {
         // Try to get ticket types with explicit field selection
@@ -217,20 +210,7 @@ export default function EventDetailsPage() {
           filter: `event_id="${eventId}"`,
         });
 
-        // Log raw data to see what we're getting
-        if (ticketTypesData.length > 0) {
-        }
-
         setTicketTypes(ticketTypesData as any);
-        // Debug: Log ticket type details
-        ticketTypesData.forEach((tt: any) => {
-            id: tt.id,
-            ticket_type_category: tt.ticket_type_category,
-            has_table_ids: !!tt.table_ids,
-            table_ids: tt.table_ids ? (typeof tt.table_ids === 'string' ? JSON.parse(tt.table_ids) : tt.table_ids) : tt.table_ids,
-            allKeys: Object.keys(tt),
-          });
-        });
       } catch (ticketError) {
         console.error('Failed to load ticket types:', ticketError);
         setTicketTypes([]);
@@ -250,7 +230,6 @@ export default function EventDetailsPage() {
           // Venue might not exist or user might not have access - continue without venue data
           venue = null;
         }
-      } else if (venue) {
       }
 
       // Only proceed with seat/table loading if we have venue data
@@ -313,8 +292,7 @@ export default function EventDetailsPage() {
     try {
       const tablesResponse = await tablesApi.getAvailableTables(eventId);
       const tables = tablesResponse.data.tables || [];
-      if (tables.length > 0) {
-      } else {
+      if (tables.length === 0) {
         console.warn('[Event] ⚠️ No tables loaded! availableTables will be empty.');
       }
       setAvailableTables(tables);
