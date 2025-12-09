@@ -7,6 +7,7 @@ import Sparkles from '@/components/Sparkles'
 import { NotificationProvider } from '@/contexts/NotificationContext'
 import NotificationToast from '@/components/NotificationToast'
 import { CartProvider } from '@/contexts/CartContext'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -44,6 +45,7 @@ export default function RootLayout({
             </div>
           </CartProvider>
         </NotificationProvider>
+        <Analytics />
       </body>
     </html>
   )
