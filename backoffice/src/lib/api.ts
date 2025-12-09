@@ -216,8 +216,8 @@ export const adminApi = {
       }
 
       // Get ticket details
-      const ticketCodes = tickets.map(t => t.code || t.id);
-      const ticketTypes = tickets.map(t => {
+      const ticketCodes = tickets.map((t: any) => t.code || t.id);
+      const ticketTypes = tickets.map((t: any) => {
         const type = t.expand?.ticket_type_id;
         return type ? type.name : 'General Admission';
       });

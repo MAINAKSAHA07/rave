@@ -231,3 +231,4 @@ async function verifyCustomersCollection() {
 }
 
 verifyCustomersCollection();
+
