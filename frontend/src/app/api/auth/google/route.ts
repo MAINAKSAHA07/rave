@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
     // Check if customer exists (by email)
     let customer;
     let tempPassword: string;
+    let isNewUser = false;
     
     try {
       const customers = await adminPb.collection('customers').getList(1, 1, {
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (customers.items.length > 0) {
+        // Existing user - sign in
         customer = customers.items[0];
         // For existing customers, generate a new temp password for Google auth
         tempPassword = `google_${Math.random().toString(36).slice(-16)}`;
@@ -108,8 +110,9 @@ export async function POST(request: NextRequest) {
         
         // Update password to allow authentication
         await adminPb.collection('customers').update(customer.id, updateData);
+        isNewUser = false;
       } else {
-        // Check if email is already used in users collection (backoffice)
+        // New user - check if email is already used in users collection (backoffice)
         const existingUsers = await adminPb.collection('users').getList(1, 1, {
           filter: `email = "${email}"`,
         });
@@ -121,7 +124,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Create new customer with a temporary password
+        // Create new customer with a temporary password (phone will be collected later)
         tempPassword = `google_${Math.random().toString(36).slice(-16)}`;
         
         customer = await adminPb.collection('customers').create({
@@ -129,9 +132,10 @@ export async function POST(request: NextRequest) {
           password: tempPassword,
           passwordConfirm: tempPassword,
           name: name || email.split('@')[0],
-          phone: '', // Phone is optional, can be filled later
+          phone: '', // Phone will be collected from frontend
           emailVisibility: true, // Make email visible for the user
         });
+        isNewUser = true;
       }
     } catch (error: any) {
       // Check if error is due to duplicate email
@@ -155,7 +159,9 @@ export async function POST(request: NextRequest) {
     // Return PocketBase auth token and customer data
     return NextResponse.json({
       token: customerPb.authStore.token,
-      record: customerPb.authStore.record,
+      record: customerPb.authStore.model,
+      isNewUser: isNewUser,
+      needsPhone: isNewUser && !customer.phone,
       customer: {
         id: customer.id,
         email: customer.email,

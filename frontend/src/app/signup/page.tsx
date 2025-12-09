@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { register, getPocketBase } from '@/lib/pocketbase';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
+import Loading from '@/components/Loading';
 
 declare global {
   interface Window {
@@ -17,7 +18,16 @@ declare global {
 }
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,13 +37,24 @@ export default function SignupPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [updatingPhone, setUpdatingPhone] = useState(false);
 
   useEffect(() => {
-    // Initialize Google Sign-In when script loads
-    if (window.google) {
-      handleGoogleSignup();
+    // Check if redirected from Google auth and needs phone
+    const needsPhone = searchParams.get('needsPhone') === 'true';
+    const googleAuth = searchParams.get('googleAuth') === 'true';
+    
+    if (needsPhone && googleAuth) {
+      setShowPhoneModal(true);
+    } else {
+      // Initialize Google Sign-In when script loads
+      if (window.google) {
+        handleGoogleSignup();
+      }
     }
-  }, []);
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,6 +109,12 @@ export default function SignupPage() {
       return;
     }
 
+    if (!clientId.endsWith('.apps.googleusercontent.com')) {
+      setError(`Invalid Client ID format. Expected format: ...apps.googleusercontent.com\nGot: ${clientId.substring(0, 50)}...`);
+      setLoading(false);
+      return;
+    }
+
     try {
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -107,8 +134,15 @@ export default function SignupPage() {
               const pb = getPocketBase();
               pb.authStore.save(data.token, data.record);
               
-              router.push('/events');
-              router.refresh();
+              // If new user and needs phone, show phone collection modal
+              if (data.isNewUser && data.needsPhone) {
+                setShowPhoneModal(true);
+                setLoading(false);
+              } else {
+                // Existing user or phone already set - go to events
+                router.push('/events');
+                router.refresh();
+              }
             } else {
               setError(data.error || 'Signup failed');
               setLoading(false);
@@ -160,6 +194,52 @@ export default function SignupPage() {
     }
   }
 
+  async function handlePhoneSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!phoneNumber.trim()) {
+      setError('Phone number is required');
+      return;
+    }
+
+    setUpdatingPhone(true);
+    setError('');
+
+    try {
+      const pb = getPocketBase();
+      const token = pb.authStore.token;
+      
+      if (!token) {
+        setError('Not authenticated. Please try again.');
+        setUpdatingPhone(false);
+        return;
+      }
+
+      const response = await fetch('/api/auth/google/update-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, phone: phoneNumber.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update auth store with new user data
+        const updatedUser = await pb.collection('customers').getOne(pb.authStore.model?.id);
+        pb.authStore.save(token, updatedUser);
+        
+        // Redirect to events
+        router.push('/events');
+        router.refresh();
+      } else {
+        setError(data.error || 'Failed to update phone number');
+        setUpdatingPhone(false);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to update phone number');
+      setUpdatingPhone(false);
+    }
+  }
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
@@ -169,12 +249,57 @@ export default function SignupPage() {
     >
       <Script
         src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
         onLoad={() => {
           if (window.google) {
             handleGoogleSignup();
           }
         }}
       />
+      {/* Phone Number Collection Modal */}
+      {showPhoneModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl rounded-3xl">
+            <CardHeader className="text-center space-y-2">
+              <CardTitle className="text-2xl font-bold text-white">Complete Your Profile</CardTitle>
+              <CardDescription className="text-gray-300">Please provide your phone number to continue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePhoneSubmit} className="space-y-4">
+                {error && (
+                  <div className="bg-red-500/10 border-2 border-red-500/20 text-red-200 px-4 py-3 rounded-xl text-sm font-medium backdrop-blur-sm">
+                    {error}
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="phone-modal" className="text-white font-semibold">Phone Number *</Label>
+                  <Input
+                    id="phone-modal"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+91 9876543210"
+                    required
+                    autoFocus
+                    className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                  />
+                  <p className="text-xs text-gray-400">Required for account verification</p>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-teal-900/20" 
+                  disabled={updatingPhone}
+                >
+                  {updatingPhone ? 'Updating...' : 'Continue'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl rounded-3xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-bold text-white">Create Account</CardTitle>

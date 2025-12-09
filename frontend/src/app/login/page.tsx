@@ -85,6 +85,12 @@ function LoginForm() {
       return;
     }
 
+    if (!clientId.endsWith('.apps.googleusercontent.com')) {
+      setError(`Invalid Client ID format. Expected format: ...apps.googleusercontent.com\nGot: ${clientId.substring(0, 50)}...`);
+      setLoading(false);
+      return;
+    }
+
     try {
       const redirect = searchParams.get('redirect') || '/events';
 
@@ -106,8 +112,14 @@ function LoginForm() {
               const pb = getPocketBase();
               pb.authStore.save(data.token, data.record);
               
-              router.push(redirect);
-              router.refresh();
+              // If existing user, sign in directly
+              if (!data.isNewUser) {
+                router.push(redirect);
+                router.refresh();
+              } else {
+                // New user - redirect to signup to collect phone number
+                router.push(`/signup?googleAuth=true&needsPhone=true`);
+              }
             } else {
               setError(data.error || 'Login failed');
               setLoading(false);
@@ -184,6 +196,7 @@ function LoginForm() {
     >
       <Script
         src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
         onLoad={() => {
           if (window.google) {
             handleGoogleLogin();

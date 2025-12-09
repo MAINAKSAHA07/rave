@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const providerConfig = authMethods.authProviders.find((p: any) => p.name === provider);
+    const providerConfig = authMethods.authProviders.find((p: any) => p.name === provider) as any;
     
     if (!providerConfig) {
       const availableProviders = authMethods.authProviders.map((p: any) => p.name).join(', ');
@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate client ID exists
-    if (!providerConfig.clientId || providerConfig.clientId.trim() === '') {
+    const clientId = (providerConfig as any).clientId || '';
+    if (!clientId || clientId.trim() === '') {
       return NextResponse.json(
         { 
           error: `Google OAuth Client ID is not configured. Please configure it in PocketBase admin settings (Settings > Auth Providers > Google).`
@@ -92,11 +93,11 @@ export async function POST(request: NextRequest) {
     // Build OAuth URL with PKCE
     const finalRedirectUrl = redirectUrl || `${request.nextUrl.origin}/auth/callback`;
     
-    const authUrl = new URL(providerConfig.authUrl);
-    authUrl.searchParams.set('client_id', providerConfig.clientId);
+    const authUrl = new URL((providerConfig as any).authUrl);
+    authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', finalRedirectUrl);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', providerConfig.scope || 'openid email profile');
+    authUrl.searchParams.set('scope', (providerConfig as any).scope || 'openid email profile');
     authUrl.searchParams.set('state', state);
     authUrl.searchParams.set('code_challenge', codeChallenge);
     authUrl.searchParams.set('code_challenge_method', 'S256');
