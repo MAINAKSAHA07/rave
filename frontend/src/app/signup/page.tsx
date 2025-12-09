@@ -196,8 +196,11 @@ function SignupForm() {
 
   async function handlePhoneSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!phoneNumber.trim()) {
-      setError('Phone number is required');
+    
+    // Validate phone number - minimum 10 digits
+    const phoneDigits = phoneNumber.replace(/\D/g, ''); // Remove all non-digits
+    if (phoneDigits.length < 10) {
+      setError('Phone number must have at least 10 digits');
       return;
     }
 
@@ -206,34 +209,25 @@ function SignupForm() {
 
     try {
       const pb = getPocketBase();
-      const token = pb.authStore.token;
+      const user = pb.authStore.model;
       
-      if (!token) {
+      if (!user || !pb.authStore.token) {
         setError('Not authenticated. Please try again.');
         setUpdatingPhone(false);
         return;
       }
 
-      const response = await fetch('/api/auth/google/update-phone', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, phone: phoneNumber.trim() }),
+      // Update phone number directly
+      const updated = await pb.collection('customers').update(user.id, {
+        phone: phoneNumber.trim(),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // Update auth store with new user data
-        const updatedUser = await pb.collection('customers').getOne(pb.authStore.model?.id);
-        pb.authStore.save(token, updatedUser);
-        
-        // Redirect to events
-        router.push('/events');
-        router.refresh();
-      } else {
-        setError(data.error || 'Failed to update phone number');
-        setUpdatingPhone(false);
-      }
+      // Update auth store with new user data
+      pb.authStore.save(pb.authStore.token, updated);
+      
+      // Redirect to events
+      router.push('/events');
+      router.refresh();
     } catch (err: any) {
       setError(err.message || 'Failed to update phone number');
       setUpdatingPhone(false);
