@@ -194,7 +194,8 @@ function LoginForm() {
     <div
       className="min-h-screen flex items-center justify-center p-4"
       style={{
-        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+        backgroundColor: '#050509',
+        backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))',
       }}
     >
       <Script
@@ -206,7 +207,7 @@ function LoginForm() {
           }
         }}
       />
-      <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl rounded-3xl">
+      <Card className="w-full max-w-md bg-[#0f1014]/80 backdrop-blur-xl border border-white/12 shadow-2xl rounded-3xl" style={{ boxShadow: '0 14px 45px rgba(0,0,0,0.7)' }}>
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-bold text-white">Welcome Back</CardTitle>
           <CardDescription className="text-gray-300">Sign in to your account to continue</CardDescription>
@@ -239,14 +240,14 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-white font-semibold">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-[#7cffd6] hover:text-[#52C4A3] hover:underline font-medium">
+                <Link href="/forgot-password" className="text-sm btn-ghost">
                   Forgot password?
                 </Link>
               </div>
@@ -257,18 +258,18 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
               />
             </div>
 
-            <Button type="submit" className="w-full bg-[#7cffd6] hover:bg-[#52C4A3] text-white font-semibold py-3 rounded-xl shadow-lg shadow-[#7cffd6]/20" disabled={loading}>
+            <Button type="submit" className="w-full btn-primary" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
-          <div className="text-center text-sm">
-            <span className="text-gray-400">Don't have an account? </span>
-            <Link href="/signup" className="text-[#7cffd6] hover:text-[#52C4A3] hover:underline font-semibold">
+          <div className="text-center text-sm text-gray-300">
+            <span className="text-gray-400">Don&apos;t have an account? </span>
+            <Link href="/signup" className="btn-ghost">
               Sign up
             </Link>
           </div>
