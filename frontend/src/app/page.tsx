@@ -418,8 +418,13 @@ export default function HomePage() {
       </div>
       {/* Main Content */}
       <div className={`transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`} style={{
-        backgroundColor: '#050509',
-        backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))'
+        backgroundColor: '#0D0D12',
+        backgroundImage: `
+          radial-gradient(circle at 30% 20%, rgba(140,100,255,0.25), transparent 60%),
+          radial-gradient(circle at 80% 90%, rgba(90,120,255,0.15), transparent 70%),
+          radial-gradient(circle at 20% 10%, rgba(168,85,247,0.12), rgba(59,130,246,0.08), rgba(12,10,24,0)),
+          radial-gradient(circle at 80% 0%, rgba(196,181,253,0.09), rgba(12,10,24,0))
+        `
       }}>
         <div className="max-w-[428px] mx-auto">
           {/* Top Header Bar */}
@@ -441,7 +446,13 @@ export default function HomePage() {
                   <div className="relative flex-1 max-w-[140px] min-w-[100px]" style={{ overflow: 'visible', zIndex: 100 }}>
                     <button
                       onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                      className="w-full px-3 py-2 rounded-[12px] bg-[#2C2C2E] text-sm text-white hover:bg-[#3A3A3C] transition-all flex items-center justify-between gap-2 border border-white/5"
+                      className="w-full px-3 py-2 text-sm text-white hover:bg-[#3A3A3C] transition-all flex items-center justify-between gap-2"
+                      style={{
+                        height: '44px',
+                        borderRadius: '999px',
+                        background: '#1A1A22',
+                        border: '1px solid rgba(255,255,255,0.12)'
+                      }}
                       disabled={availableCities.length === 0}
                     >
                       <span className="truncate text-[13px] font-medium">{selectedLocation || 'Select City'}</span>
@@ -454,7 +465,7 @@ export default function HomePage() {
                           className="fixed inset-0 z-[45]"
                           onClick={() => setShowLocationDropdown(false)}
                         />
-                        <div className="absolute top-full left-0 mt-2 w-[180px] bg-[#2C2C2E] rounded-[16px] border border-white/10 shadow-xl z-[100] max-h-64 overflow-y-auto py-1" style={{ scrollbarWidth: 'thin' }}>
+                        <div className="absolute top-full left-0 mt-2 w-[180px] bg-[#1A1A22] rounded-[16px] border border-white/12 shadow-xl z-[100] max-h-64 overflow-y-auto py-1" style={{ scrollbarWidth: 'thin' }}>
                           {availableCities.length > 0 ? (
                             availableCities.map((location) => (
                               <button
@@ -489,7 +500,14 @@ export default function HomePage() {
                   {/* Search Button */}
                   <button
                     onClick={() => router.push('/events')}
-                    className="w-9 h-9 rounded-full bg-[#2C2C2E] hover:bg-[#3A3A3C] flex items-center justify-center transition-all border border-white/5 group"
+                    className="flex items-center justify-center transition-all group"
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '999px',
+                      background: '#1A1A22',
+                      border: '1px solid rgba(255,255,255,0.12)'
+                    }}
                     aria-label="Search"
                   >
                     <svg className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -501,7 +519,13 @@ export default function HomePage() {
                     <>
                       <Button
                         onClick={() => { logout(); router.push('/'); router.refresh(); }}
-                        className="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white text-xs font-medium px-4 h-9 rounded-[12px] border border-white/5 transition-all"
+                        className="text-white text-xs font-medium px-4 transition-all"
+                        style={{
+                          height: '44px',
+                          borderRadius: '999px',
+                          background: '#1A1A22',
+                          border: '1px solid rgba(255,255,255,0.12)'
+                        }}
                       >
                         Logout
                       </Button>
@@ -510,7 +534,13 @@ export default function HomePage() {
                     <>
                       <Link href="/login">
                         <Button
-                          className="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white text-xs font-medium px-4 h-9 rounded-[12px] border border-white/5 transition-all"
+                          className="text-white text-xs font-medium px-4 transition-all"
+                          style={{
+                            height: '44px',
+                            borderRadius: '999px',
+                            background: '#1A1A22',
+                            border: '1px solid rgba(255,255,255,0.12)'
+                          }}
                         >
                           Login
                         </Button>
@@ -527,12 +557,19 @@ export default function HomePage() {
             className="relative mb-6 mx-4 motion-fade-in-up"
             style={{
               marginTop: '16px',
-              background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)',
+              background: 'linear-gradient(135deg, #846BFF 0%, #6EA8FF 50%, #C3B8FF 100%)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
               padding: '28px',
               zIndex: 1,
               borderRadius: '24px',
-              border: '1px solid rgba(255,255,255,0.16)',
-              boxShadow: '0 14px 45px rgba(0,0,0,0.7), inset 0 0 40px rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.35)',
+              boxShadow: `
+                inset 0 0 80px rgba(255,255,255,0.12),
+                0 0 30px rgba(120,80,255,0.35),
+                0 10px 40px rgba(0,0,0,0.4)
+              `,
+              filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))',
               position: 'relative',
               overflow: 'hidden',
               backgroundSize: '200% 200%',
@@ -613,22 +650,49 @@ export default function HomePage() {
           <div className="px-6 mb-8">
             <div className="flex flex-wrap gap-y-3">
               <div className="flex items-center gap-3 w-1/2">
-                <Users className="w-4 h-4 text-gray-400" />
+                <Users 
+                  className="flex-shrink-0" 
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    color: '#C4B5FD',
+                    strokeWidth: 1.5,
+                    filter: 'drop-shadow(0 0 4px rgba(196,181,253,0.6))'
+                  }}
+                />
                 <span className="text-gray-400 text-[13px] font-medium">500+ events hosted</span>
               </div>
               <div className="flex items-center gap-3 w-1/2">
-                <User className="w-4 h-4 text-gray-400" />
+                <User 
+                  className="flex-shrink-0" 
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    color: '#C4B5FD',
+                    strokeWidth: 1.5,
+                    filter: 'drop-shadow(0 0 4px rgba(196,181,253,0.6))'
+                  }}
+                />
                 <span className="text-gray-400 text-[13px] font-medium">Trusted by 50k users</span>
               </div>
               <div className="flex items-center gap-3 w-full mt-1">
-                <Zap className="w-4 h-4 text-gray-400" />
+                <Zap 
+                  className="flex-shrink-0" 
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    color: '#C4B5FD',
+                    strokeWidth: 1.5,
+                    filter: 'drop-shadow(0 0 4px rgba(196,181,253,0.6))'
+                  }}
+                />
                 <span className="text-gray-400 text-[13px] font-medium">Instant booking & secure payments</span>
               </div>
             </div>
           </div>
 
           {/* Category Section */}
-          <div className="px-4 mb-8">
+          <div className="px-4" style={{ marginTop: '28px', marginBottom: '16px' }}>
             <h2 className="text-white font-semibold mb-4 leading-tight" style={{ fontSize: '20px' }}>Category</h2>
             <div className="flex flex-wrap gap-3 py-6" style={{ paddingLeft: '4px', paddingRight: '4px' }}>
               {sortedCategories.map((category) => {
@@ -645,20 +709,22 @@ export default function HomePage() {
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(isSelected ? null : category.id)}
-                    className={`group flex flex-col items-center justify-center min-w-[80px] px-3 py-3 transition-all duration-200 hover:scale-[1.03] ${isSelected ? 'scale-[1.04]' : ''} hover:shadow-[0_6px_18px_rgba(0,0,0,0.35)]`}
+                    className={`group flex flex-col items-center justify-center transition-all duration-200 hover:scale-[1.03] ${isSelected ? 'scale-[1.04]' : ''} hover:shadow-[0_6px_18px_rgba(0,0,0,0.35)]`}
                     style={{
+                      height: '78px',
+                      width: '78px',
                       borderRadius: '999px',
-                      background: isSelected ? selectedBg : unselectedBg,
+                      background: isSelected ? selectedBg : 'radial-gradient(circle at center, #2A2638 0%, #1A1824 100%)',
                       boxShadow,
-                      border: isSelected ? '1.5px solid rgba(255,255,255,0.18)' : '1px solid rgba(255,255,255,0.12)',
-                      backgroundImage: !isSelected ? 'radial-gradient(circle at 50% 30%, rgba(196,181,253,0.12), rgba(16,16,25,0.92))' : undefined,
+                      border: isSelected ? '1.5px solid rgba(255,255,255,0.18)' : '1px solid rgba(255,255,255,0.08)',
                       backdropFilter: 'blur(10px)',
                       WebkitBackdropFilter: 'blur(10px)',
-                      transition: 'transform 200ms cubic-bezier(0.18,0.89,0.32,1.28), box-shadow 200ms cubic-bezier(0.18,0.89,0.32,1.28), background 200ms ease-out, color 200ms ease-out'
+                      transition: 'transform 200ms cubic-bezier(0.18,0.89,0.32,1.28), box-shadow 200ms cubic-bezier(0.18,0.89,0.32,1.28), background 200ms ease-out, color 200ms ease-out',
+                      gap: '6px'
                     }}
                   >
                     <IconComponent
-                      className="pointer-events-none mb-1.5"
+                      className="pointer-events-none"
                       style={{
                         width: '22px',
                         height: '22px',
@@ -685,14 +751,14 @@ export default function HomePage() {
           </div>
 
           {/* Popular Events Section */}
-          <div className="px-4 mb-6 pb-6" style={{ marginTop: '20px' }}>
+          <div className="px-4 mb-6 pb-6">
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-white font-semibold leading-tight slide-in-left" style={{ fontSize: '20px' }}>Popular Events</h2>
               <Link href="/events" className="text-[#3B82F6] text-sm font-medium hover:text-[#C4B5FD] transition-colors" style={{ fontSize: '14px' }}>
                 See all
               </Link>
             </div>
-            <p className="text-gray-400 mb-5 leading-relaxed slide-in-left" style={{ fontSize: '14px' }}>Handpicked events happening near you this week</p>
+            <p className="text-white/60 mb-5 leading-relaxed slide-in-left" style={{ fontSize: '13px' }}>Handpicked events happening near you this week</p>
             {loading ? (
               <div className="space-y-4">
                 {[1, 2].map((i) => (

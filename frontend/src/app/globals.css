@@ -88,8 +88,12 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    background-color: #050509;
-    background-image: radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.18), rgba(59, 130, 246, 0.12), rgba(12, 10, 24, 0)), radial-gradient(circle at 80% 0%, rgba(196, 181, 253, 0.14), rgba(12, 10, 24, 0));
+    background-color: #0D0D12;
+    background-image: 
+      radial-gradient(circle at 30% 20%, rgba(140,100,255,0.25), transparent 60%),
+      radial-gradient(circle at 80% 90%, rgba(90,120,255,0.15), transparent 70%),
+      radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.12), rgba(59, 130, 246, 0.08), rgba(12, 10, 24, 0)), 
+      radial-gradient(circle at 80% 0%, rgba(196, 181, 253, 0.09), rgba(12, 10, 24, 0));
     background-attachment: fixed;
   }
 }

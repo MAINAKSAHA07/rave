@@ -124,7 +124,13 @@ export default function Navigation() {
             <div className="relative flex-1 max-w-[140px] min-w-[100px]">
               <button
                 onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                className="w-full px-3 py-2 rounded-[12px] bg-[#2C2C2E] text-sm text-white hover:bg-[#3A3A3C] transition-all flex items-center justify-between gap-2 border border-white/5"
+                className="w-full px-3 py-2 text-sm text-white hover:bg-[#3A3A3C] transition-all flex items-center justify-between gap-2"
+                style={{
+                  height: '44px',
+                  borderRadius: '999px',
+                  background: '#1A1A22',
+                  border: '1px solid rgba(255,255,255,0.12)'
+                }}
                 disabled={availableCities.length === 0}
               >
                 <span className="truncate text-[13px] font-medium">{selectedLocation || 'Select City'}</span>
@@ -137,7 +143,7 @@ export default function Navigation() {
                     className="fixed inset-0 z-[45]"
                     onClick={() => setShowLocationDropdown(false)}
                   />
-                  <div className="absolute top-full left-0 mt-2 w-[180px] bg-[#2C2C2E] rounded-[16px] border border-white/10 shadow-xl z-[50] max-h-64 overflow-y-auto py-1" style={{ scrollbarWidth: 'thin' }}>
+                  <div className="absolute top-full left-0 mt-2 w-[180px] bg-[#1A1A22] rounded-[16px] border border-white/12 shadow-xl z-[50] max-h-64 overflow-y-auto py-1" style={{ scrollbarWidth: 'thin' }}>
                     {availableCities.length > 0 ? (
                       availableCities.map((location) => (
                         <button
@@ -173,7 +179,14 @@ export default function Navigation() {
             {/* Search Button */}
             <button
               onClick={() => router.push('/events')}
-              className="w-9 h-9 rounded-full bg-[#2C2C2E] hover:bg-[#3A3A3C] flex items-center justify-center transition-all border border-white/5 group"
+              className="flex items-center justify-center transition-all group"
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '999px',
+                background: '#1A1A22',
+                border: '1px solid rgba(255,255,255,0.12)'
+              }}
               aria-label="Search"
             >
               <svg className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,7 +199,13 @@ export default function Navigation() {
                 {showLogout && (
                   <Button
                     onClick={handleLogout}
-                    className="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white text-xs font-medium px-4 h-9 rounded-[12px] border border-white/5 transition-all"
+                    className="text-white text-xs font-medium px-4 transition-all"
+                    style={{
+                      height: '44px',
+                      borderRadius: '999px',
+                      background: '#1A1A22',
+                      border: '1px solid rgba(255,255,255,0.12)'
+                    }}
                   >
                     Logout
                   </Button>
@@ -196,7 +215,13 @@ export default function Navigation() {
               <>
                 <Link href="/login">
                   <Button
-                    className="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white text-xs font-medium px-4 h-9 rounded-[12px] border border-white/5 transition-all"
+                    className="text-white text-xs font-medium px-4 transition-all"
+                    style={{
+                      height: '44px',
+                      borderRadius: '999px',
+                      background: '#1A1A22',
+                      border: '1px solid rgba(255,255,255,0.12)'
+                    }}
                   >
                     Login
                   </Button>
