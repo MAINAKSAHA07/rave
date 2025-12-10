@@ -9,6 +9,11 @@ import { Input } from '@/components/ui/input';
 import BrandReveal from '@/components/BrandReveal';
 import BottomNavigation from '@/components/BottomNavigation';
 import NotificationBell from '@/components/NotificationBell';
+import ConcertEffect from '@/components/effects/ConcertEffect';
+import ComedyEffect from '@/components/effects/ComedyEffect';
+import FoodEffect from '@/components/effects/FoodEffect';
+import MusicEffect from '@/components/effects/MusicEffect';
+import SportEffect from '@/components/effects/SportEffect';
 import { Bell, Music, Trophy, Utensils, Mic, Laugh, Moon, Heart, Users, User, Zap } from 'lucide-react';
 
 // Event Card Component
@@ -197,6 +202,11 @@ export default function HomePage() {
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [showConcertEffect, setShowConcertEffect] = useState(false);
+  const [showComedyEffect, setShowComedyEffect] = useState(false);
+  const [showFoodEffect, setShowFoodEffect] = useState(false);
+  const [showMusicEffect, setShowMusicEffect] = useState(false);
+  const [showSportEffect, setShowSportEffect] = useState(false);
   const prevCategoryRef = useRef<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
@@ -220,61 +230,89 @@ export default function HomePage() {
     }
   }, []);
 
-  // Trigger confetti effect when nightlife category is selected
+  // Trigger category-specific effects when category is selected
   useEffect(() => {
-    const isNightlife = selectedCategory === 'nightlife';
-    const wasNightlife = prevCategoryRef.current === 'nightlife';
+    const previousCategory = prevCategoryRef.current;
+    const currentCategory = selectedCategory;
 
-    // Only trigger if nightlife was just selected (not deselected)
-    if (isNightlife && !wasNightlife) {
-      // Dynamically import and trigger confetti
-      (async () => {
-        const confetti = (await import('canvas-confetti')).default;
+    // Only trigger effects when a category is newly selected (not when deselected or same category)
+    if (currentCategory && currentCategory !== previousCategory) {
+      // Reset all effect states first to ensure only one effect runs at a time
+      setShowConcertEffect(false);
+      setShowComedyEffect(false);
+      setShowFoodEffect(false);
+      setShowMusicEffect(false);
+      setShowSportEffect(false);
 
-        // Bursting cracker effect
-        const duration = 3000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+      // Trigger the appropriate effect based on category
+      switch (currentCategory) {
+        case 'concert':
+          setShowConcertEffect(true);
+          break;
+        case 'comedy':
+          setShowComedyEffect(true);
+          break;
+        case 'food':
+          setShowFoodEffect(true);
+          break;
+        case 'music':
+          setShowMusicEffect(true);
+          break;
+        case 'sports':
+          setShowSportEffect(true);
+          break;
+        case 'nightlife':
+          // Dynamically import and trigger confetti for nightlife
+          (async () => {
+            const confetti = (await import('canvas-confetti')).default;
 
-        function randomInRange(min: number, max: number) {
-          return Math.random() * (max - min) + min;
-        }
+            // Bursting cracker effect
+            const duration = 3000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
 
-        const interval: NodeJS.Timeout = setInterval(function () {
-          const timeLeft = animationEnd - Date.now();
+            function randomInRange(min: number, max: number) {
+              return Math.random() * (max - min) + min;
+            }
 
-          if (timeLeft <= 0) {
-            return clearInterval(interval);
-          }
+            const interval: NodeJS.Timeout = setInterval(function () {
+              const timeLeft = animationEnd - Date.now();
 
-          const particleCount = 50 * (timeLeft / duration);
+              if (timeLeft <= 0) {
+                return clearInterval(interval);
+              }
 
-          // Launch from multiple positions for bursting effect
-          confetti({
-            ...defaults,
-            particleCount,
-            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-          });
-          confetti({
-            ...defaults,
-            particleCount,
-            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-          });
-          confetti({
-            ...defaults,
-            particleCount,
-            origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 }
-          });
-        }, 250);
+              const particleCount = 50 * (timeLeft / duration);
 
-        // Cleanup
-        setTimeout(() => clearInterval(interval), duration);
-      })();
+              // Launch from multiple positions for bursting effect
+              confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+              });
+              confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+              });
+              confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 }
+              });
+            }, 250);
+
+            // Cleanup
+            setTimeout(() => clearInterval(interval), duration);
+          })();
+          break;
+      }
     }
 
-    // Update previous category
-    prevCategoryRef.current = selectedCategory;
+    // Update previous category reference
+    prevCategoryRef.current = currentCategory;
   }, [selectedCategory]);
+
 
   // Fetch cities from events
   useEffect(() => {
@@ -412,6 +450,22 @@ export default function HomePage() {
 
   return (
     <div className="pb-6">
+      {/* Visual Effects */}
+      {showConcertEffect && (
+        <ConcertEffect onComplete={() => setShowConcertEffect(false)} />
+      )}
+      {showComedyEffect && (
+        <ComedyEffect onComplete={() => setShowComedyEffect(false)} />
+      )}
+      {showFoodEffect && (
+        <FoodEffect onComplete={() => setShowFoodEffect(false)} />
+      )}
+      {showMusicEffect && (
+        <MusicEffect onComplete={() => setShowMusicEffect(false)} />
+      )}
+      {showSportEffect && (
+        <SportEffect onComplete={() => setShowSportEffect(false)} />
+      )}
       {/* Brand Reveal Animation */}
       <div className={`fixed inset-0 z-50 transition-opacity duration-1000 ${showContent ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <BrandReveal />
