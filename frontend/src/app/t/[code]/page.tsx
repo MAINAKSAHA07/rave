@@ -8,7 +8,7 @@ import Loading from '@/components/Loading';
 
 export default function TicketPage() {
   const params = useParams();
-  const ticketCode = params.code as string;
+  const ticketCode = (params?.code as string) || '';
   const [ticket, setTicket] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

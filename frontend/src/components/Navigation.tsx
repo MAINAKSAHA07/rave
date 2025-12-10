@@ -153,7 +153,7 @@ export default function Navigation() {
                           }}
                           className={`w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors ${
                             selectedLocation === location 
-                              ? 'text-[#7cffd6] font-medium bg-white/5' 
+                              ? 'text-[#3B82F6] font-medium bg-white/5' 
                               : 'text-gray-300'
                           }`}
                         >

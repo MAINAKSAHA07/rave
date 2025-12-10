@@ -209,7 +209,7 @@ export default function CartPage() {
               contact: attendeeDetails.phone,
             },
             theme: {
-              color: '#7cffd6',
+              color: '#A855F7',
             },
           };
 
@@ -236,11 +236,12 @@ export default function CartPage() {
         <div 
           className="min-h-screen pb-20"
           style={{
-            background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+            backgroundColor: '#050509',
+            backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))',
           }}
         >
           <div className="max-w-[428px] mx-auto min-h-screen">
-            <div className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10 p-4">
+            <div className="sticky top-0 z-20 p-4" style={{ background: 'transparent', borderBottom: 'none' }}>
               <h1 className="text-2xl font-bold text-white">Cart</h1>
             </div>
             <div className="p-8 text-center flex flex-col items-center justify-center h-[calc(100vh-80px)]">
@@ -249,7 +250,11 @@ export default function CartPage() {
               <p className="text-gray-400 mb-6">Add tickets to your cart to get started</p>
               <Link
                 href="/events"
-                className="inline-block bg-[#7cffd6] text-white px-8 py-3 rounded-full font-bold hover:bg-[#52C4A3] transition-all shadow-lg hover:shadow-[#7cffd6]/30"
+                className="inline-block text-white px-8 py-3 rounded-full font-bold transition-all"
+                style={{
+                  background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)',
+                  boxShadow: '0 14px 45px rgba(0,0,0,0.6), 0 0 18px rgba(168,85,247,0.35)'
+                }}
               >
                 Browse Events
               </Link>
@@ -267,12 +272,13 @@ export default function CartPage() {
       <div 
         className="min-h-screen pb-20"
         style={{
-          background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+            backgroundColor: '#050509',
+            backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))',
         }}
       >
         <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Header */}
-          <div className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10 p-4">
+          <div className="sticky top-0 z-20 p-4" style={{ background: 'transparent', borderBottom: 'none' }}>
             <h1 className="text-2xl font-bold text-white">Cart</h1>
             <p className="text-sm font-medium text-gray-300">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
           </div>
@@ -286,7 +292,7 @@ export default function CartPage() {
                     <h3 className="font-bold text-white">{item.ticketTypeName}</h3>
                     <p className="text-sm text-gray-400">{item.eventName}</p>
                     {item.ticketTypeCategory && (
-                      <p className="text-xs text-[#7cffd6] mt-1">
+                      <p className="text-xs text-[#C4B5FD] mt-1">
                         {item.ticketTypeCategory}
                         {item.selectedTables && item.selectedTables.length > 0 && (
                           <span> - {item.selectedTables.length} table(s) selected</span>
@@ -341,7 +347,7 @@ export default function CartPage() {
                     value={attendeeDetails.name}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, name: e.target.value })}
                     placeholder="Full name"
-                    className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                    className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                   />
                 </div>
                 <div>
@@ -352,7 +358,7 @@ export default function CartPage() {
                     value={attendeeDetails.email}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, email: e.target.value })}
                     placeholder="email@example.com"
-                    className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                    className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                   />
                 </div>
                 <div>
@@ -363,7 +369,7 @@ export default function CartPage() {
                     value={attendeeDetails.phone}
                     onChange={(e) => setAttendeeDetails({ ...attendeeDetails, phone: e.target.value })}
                     placeholder="+91 1234567890"
-                    className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                    className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -383,7 +389,7 @@ export default function CartPage() {
                 </div>
                 <div className="border-t border-white/10 pt-2 flex justify-between items-center">
                   <span className="text-base font-semibold text-white">Total Amount</span>
-                  <span className="text-2xl font-bold text-[#7cffd6]">₹{(totalAmount / 100).toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-[#3B82F6]">₹{(totalAmount / 100).toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -392,25 +398,25 @@ export default function CartPage() {
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
               <label className="block text-sm font-medium mb-2 text-gray-300">Payment Method</label>
               <div className="flex flex-col gap-2">
-                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'razorpay' ? 'bg-[#7cffd6]/20 border-[#7cffd6]/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'razorpay' ? 'bg-[#A855F7]/15 border-[#A855F7]/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="razorpay"
                     checked={paymentMethod === 'razorpay'}
                     onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                    className="w-4 h-4 accent-[#7cffd6]"
+                    className="w-4 h-4 accent-[#A855F7]"
                   />
                   <span className="text-gray-200">Razorpay (Online)</span>
                 </label>
-                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'cash' ? 'bg-[#7cffd6]/20 border-[#7cffd6]/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all ${paymentMethod === 'cash' ? 'bg-[#A855F7]/15 border-[#A855F7]/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="cash"
                     checked={paymentMethod === 'cash'}
                     onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cash')}
-                    className="w-4 h-4 accent-[#7cffd6]"
+                    className="w-4 h-4 accent-[#A855F7]"
                   />
                   <span className="text-gray-200">Cash (At Venue)</span>
                 </label>
@@ -451,7 +457,11 @@ export default function CartPage() {
             <button
               onClick={handleCheckout}
               disabled={!attendeeDetails.name || !attendeeDetails.email || !attendeeDetails.phone || hasTableItems || loading || (checkoutTimer === 0)}
-              className="w-full bg-[#7cffd6] text-white py-4 rounded-xl font-bold text-base hover:bg-[#52C4A3] disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#7cffd6]/20"
+              className="w-full text-white py-4 rounded-xl font-bold text-base disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
+              style={{
+                background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)',
+                boxShadow: '0 14px 45px rgba(0,0,0,0.6), 0 0 18px rgba(168,85,247,0.35)'
+              }}
             >
               {loading ? 'Processing...' : paymentMethod === 'cash' ? 'Create Order (Pay at Venue)' : 'Proceed to Checkout'}
             </button>

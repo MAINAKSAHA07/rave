@@ -41,10 +41,15 @@ function SignupForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [updatingPhone, setUpdatingPhone] = useState(false);
 
+  const getParam = (key: string) => {
+    const value = searchParams?.get(key);
+    return value && value.trim() ? value : null;
+  };
+
   useEffect(() => {
     // Check if redirected from Google auth and needs phone
-    const needsPhone = searchParams.get('needsPhone') === 'true';
-    const googleAuth = searchParams.get('googleAuth') === 'true';
+    const needsPhone = getParam('needsPhone') === 'true';
+    const googleAuth = getParam('googleAuth') === 'true';
     
     if (needsPhone && googleAuth) {
       setShowPhoneModal(true);

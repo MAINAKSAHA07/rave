@@ -21,6 +21,8 @@ export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('All Events');
+  const [tabIndicator, setTabIndicator] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
   const [selectedCity, setSelectedCity] = useState<string>('');
   const prevFiltersRef = useRef<Set<string>>(new Set());
@@ -295,69 +297,61 @@ export default function EventsPage() {
     });
   };
 
+  useEffect(() => {
+    const updateIndicator = () => {
+      const el = tabRefs.current[selectedTab];
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const parentRect = el.parentElement?.getBoundingClientRect();
+        if (parentRect) {
+          setTabIndicator({ left: rect.left - parentRect.left, width: rect.width });
+        }
+      }
+    };
+    requestAnimationFrame(updateIndicator);
+    window.addEventListener('resize', updateIndicator);
+    return () => window.removeEventListener('resize', updateIndicator);
+  }, [selectedTab]);
+
   return (
     <div 
       className="min-h-screen pb-20"
       style={{
-        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+        backgroundColor: '#050509',
+        backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))',
       }}
     >
       <div className="max-w-[428px] mx-auto min-h-screen">
-        {/* Top Navigation Tabs */}
-        <div className="sticky top-0 z-20 bg-[#050505]/95 backdrop-blur-md border-b border-white/5">
-          <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => setSelectedTab('All Events')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors relative ${
-                selectedTab === 'All Events'
-                  ? 'text-white'
-                  : 'text-[#9B9B9B]'
-              }`}
-            >
-              <Calendar className="w-4 h-4" />
-              <span>All Events</span>
-              {selectedTab === 'All Events' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#CE83FF]" style={{ marginLeft: '12px', marginRight: '12px' }} />
-              )}
-            </button>
-            <button
-              onClick={() => setSelectedTab('NYE 2026')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors relative ${
-                selectedTab === 'NYE 2026'
-                  ? 'text-white'
-                  : 'text-[#9B9B9B]'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>NYE 2026</span>
-              {selectedTab === 'NYE 2026' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#CE83FF]" style={{ marginLeft: '12px', marginRight: '12px' }} />
-              )}
-            </button>
-            <button
-              onClick={() => setSelectedTab('Activities')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors relative ${
-                selectedTab === 'Activities'
-                  ? 'text-white'
-                  : 'text-[#9B9B9B]'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Activities</span>
-              {selectedTab === 'Activities' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#CE83FF]" style={{ marginLeft: '12px', marginRight: '12px' }} />
-              )}
-            </button>
-            <button
-              onClick={() => {
-                // Filters tab just shows all events (same as All Events)
-                setSelectedTab('All Events');
+        {/* Top Navigation Tabs with sliding indicator */}
+        <div className="sticky top-0 z-20 backdrop-blur-md" style={{ background: 'transparent', borderBottom: 'none' }}>
+          <div className="relative flex items-center gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
+            {['All Events', 'NYE 2026', 'Activities'].map((tab) => (
+              <button
+                key={tab}
+                ref={(el) => { tabRefs.current[tab] = el; }}
+                onClick={() => setSelectedTab(tab)}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors relative"
+                style={{
+                  color: selectedTab === tab ? '#FFFFFF' : '#9B9B9B',
+                  transition: 'color 180ms var(--motion-ease-enter)'
+                }}
+              >
+                {tab === 'All Events' && <Calendar className="w-4 h-4" />}
+                {tab === 'NYE 2026' && <Sparkles className="w-4 h-4" />}
+                {tab === 'Activities' && <Sparkles className="w-4 h-4" />}
+                <span>{tab}</span>
+              </button>
+            ))}
+            <div
+              className="absolute bottom-0 h-0.5 rounded-full"
+              style={{
+                left: tabIndicator.left,
+                width: tabIndicator.width,
+                background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)',
+                boxShadow: '0 0 8px rgba(168,85,247,0.45)',
+                transition: 'left 200ms var(--motion-ease-enter), width 200ms var(--motion-ease-enter)'
               }}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ml-auto text-[#9B9B9B] hover:text-white"
-            >
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </button>
+            />
           </div>
         </div>
 
@@ -378,9 +372,9 @@ export default function EventsPage() {
                   style={
                     isSelected
                       ? {
-                          background: '#CE83FF',
-                          border: '1px solid #CE83FF',
-                          boxShadow: '0 0 12px rgba(206, 131, 255, 0.6)',
+                          background: '#A855F7',
+                          border: '1px solid #A855F7',
+                          boxShadow: '0 0 12px rgba(168, 85, 247, 0.6)',
                         }
                       : {
                           background: 'rgba(26, 27, 38, 0.6)',
@@ -484,7 +478,7 @@ export default function EventsPage() {
                     </div>
                     {/* Content Section */}
                     <div className="p-3 bg-[#0f1014]">
-                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 group-hover:text-[#7cffd6] transition-colors duration-300">{event.name}</h3>
+                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 group-hover:text-[#C4B5FD] transition-colors duration-300">{event.name}</h3>
                       <p className="text-[#9B9B9B] text-xs line-clamp-1">
                         {event.expand?.venue_id?.name || event.city || 'Venue TBA'}
                       </p>
@@ -573,7 +567,7 @@ export default function EventsPage() {
                     </div>
                     {/* Content Section */}
                     <div className="p-3 bg-[#0f1014]">
-                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 group-hover:text-[#7cffd6] transition-colors duration-300">{event.name}</h3>
+                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 group-hover:text-[#C4B5FD] transition-colors duration-300">{event.name}</h3>
                       <p className="text-[#9B9B9B] text-xs line-clamp-1">
                         {event.expand?.venue_id?.name || event.city || 'Venue TBA'}
                       </p>
@@ -682,10 +676,10 @@ export default function EventsPage() {
                     </div>
                     {/* Content Section */}
                     <div className="p-3 bg-[#0f1014]">
-                      <p className="text-[#CE83FF] text-xs font-medium mb-1">
+                      <p className="text-[#A855F7] text-xs font-medium mb-1">
                         {formatDate(event.event_date || event.start_date)}
                       </p>
-                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 leading-tight group-hover:text-[#7cffd6] transition-colors duration-300">{event.name}</h3>
+                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 leading-tight group-hover:text-[#C4B5FD] transition-colors duration-300">{event.name}</h3>
                       <p className="text-[#9B9B9B] text-xs line-clamp-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {event.expand?.venue_id?.name || event.city || 'Venue TBA'}

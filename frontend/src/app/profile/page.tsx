@@ -141,12 +141,13 @@ export default function ProfilePage() {
     <div
       className="min-h-screen pb-20"
       style={{
-        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+        backgroundColor: '#050509',
+        backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))',
       }}
     >
       <div className="max-w-[428px] mx-auto min-h-screen">
         {/* Header */}
-        <div className="sticky top-0 z-10 backdrop-blur-md bg-black/30 border-b border-white/10 p-4">
+        <div className="sticky top-0 z-10 p-4" style={{ background: 'transparent', borderBottom: 'none' }}>
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-white">My Profile</h1>
             <Button
@@ -161,12 +162,12 @@ export default function ProfilePage() {
 
         <div className="p-4 space-y-6">
           {/* Profile Header */}
-          <div className="bg-gradient-to-br from-teal-500/80 to-emerald-500/80 backdrop-blur-md rounded-2xl p-6 text-center border border-white/10">
+          <div className="bg-gradient-to-br from-[#A855F7]/60 via-[#3B82F6]/50 to-[#C4B5FD]/50 backdrop-blur-md rounded-2xl p-6 text-center border border-white/12" style={{ boxShadow: '0 14px 45px rgba(0,0,0,0.7)' }}>
             <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold text-white border border-white/20">
               {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
             </div>
             <h2 className="text-xl font-bold text-white mb-1">{user?.name || 'User'}</h2>
-            <p className="text-[#7cffd6] text-sm">{user?.email}</p>
+            <p className="text-[rgba(255,255,255,0.7)] text-sm">{user?.email}</p>
           </div>
 
           {/* Personal Information Card */}
@@ -181,7 +182,7 @@ export default function ProfilePage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                   placeholder="Enter your full name"
                 />
               </div>
@@ -192,7 +193,7 @@ export default function ProfilePage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                   placeholder="Enter your email"
                 />
               </div>
@@ -203,7 +204,7 @@ export default function ProfilePage() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                   placeholder="Enter your phone number"
                 />
               </div>
@@ -225,7 +226,7 @@ export default function ProfilePage() {
                   value={formData.currentPassword}
                   onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                   placeholder="Enter current password"
-                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                 />
               </div>
               <div className="space-y-2">
@@ -236,7 +237,7 @@ export default function ProfilePage() {
                   value={formData.newPassword}
                   onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                   placeholder="Enter new password"
-                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                 />
               </div>
               <div className="space-y-2">
@@ -247,7 +248,7 @@ export default function ProfilePage() {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   placeholder="Confirm new password"
-                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#3B82F6] rounded-xl text-white placeholder:text-gray-500"
                 />
               </div>
             </CardContent>
@@ -258,7 +259,11 @@ export default function ProfilePage() {
             <Button
               onClick={handleSaveProfile}
               disabled={saving}
-              className="w-full bg-[#7cffd6] hover:bg-[#52C4A3] text-white py-3 rounded-xl font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#7cffd6]/20"
+              className="w-full text-white py-3 rounded-xl font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)',
+                boxShadow: '0 14px 45px rgba(0,0,0,0.6), 0 0 18px rgba(168,85,247,0.35)'
+              }}
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>

@@ -11,12 +11,17 @@ function AuthCallbackContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState('');
 
+  const getParam = (key: string) => {
+    const value = searchParams?.get(key);
+    return value && value.trim() ? value : null;
+  };
+
   useEffect(() => {
     async function handleCallback() {
       try {
         const pb = getPocketBase();
-        const code = searchParams.get('code');
-        const state = searchParams.get('state');
+        const code = getParam('code');
+        const state = getParam('state');
 
         if (!code || !state) {
           throw new Error('Missing OAuth parameters');

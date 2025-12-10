@@ -33,12 +33,16 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getRedirectPath = () => {
+    const redirect = searchParams?.get('redirect');
+    return redirect && redirect.trim() ? redirect : '/events';
+  };
+
   useEffect(() => {
     // Check if already logged in
     const pb = getPocketBase();
     if (pb.authStore.isValid) {
-      const redirect = searchParams.get('redirect') || '/events';
-      router.push(redirect);
+      router.push(getRedirectPath());
       return;
     }
 
@@ -55,8 +59,7 @@ function LoginForm() {
 
     try {
       await login(email, password);
-      const redirect = searchParams.get('redirect') || '/events';
-      router.push(redirect);
+      router.push(getRedirectPath());
       router.refresh();
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -92,7 +95,7 @@ function LoginForm() {
     }
 
     try {
-      const redirect = searchParams.get('redirect') || '/events';
+      const redirect = getRedirectPath();
 
       window.google.accounts.id.initialize({
         client_id: clientId,

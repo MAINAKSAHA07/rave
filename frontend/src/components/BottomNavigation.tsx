@@ -22,8 +22,9 @@ export default function BottomNavigation() {
     <nav 
       className="fixed bottom-0 left-0 right-0 backdrop-blur-xl border-t border-white/10 z-50"
       style={{ 
-        background: 'rgba(15, 16, 20, 0.95)',
-        boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.15)'
+        background: 'linear-gradient(180deg, rgba(16,16,25,0.95) 0%, rgba(5,5,9,0.92) 100%)',
+        boxShadow: '0 -2px 14px rgba(0, 0, 0, 0.5), 0 -1px 0 rgba(168,85,247,0.12)',
+        borderTop: '1px solid rgba(255,255,255,0.06)'
       }}
     >
       <div className="max-w-[428px] mx-auto">
@@ -39,16 +40,26 @@ export default function BottomNavigation() {
               >
                 {/* Icon - Consistent weight and alignment */}
                 <div className="relative mb-1">
-                  <IconComponent
-                    className={`transition-colors duration-200 ${
-                      isActive ? 'text-[#CE83FF]' : 'text-[#9B9B9B] group-hover:text-white'
-                    }`}
-                    style={{ 
-                      width: '22px', 
-                      height: '22px', 
-                      strokeWidth: isActive ? 2.5 : 2 
+                  <div
+                    className={`flex items-center justify-center rounded-full transition-all duration-200 ${isActive ? 'w-10 h-10' : 'w-8 h-8'}`}
+                    style={isActive ? {
+                      background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)',
+                      boxShadow: '0 0 18px rgba(168,85,247,0.55)'
+                    } : {
+                      background: 'rgba(255,255,255,0.06)'
                     }}
-                  />
+                  >
+                    <IconComponent
+                      className={`transition-colors duration-200 ${
+                        isActive ? 'text-white' : 'text-[rgba(255,255,255,0.5)] group-hover:text-[rgba(255,255,255,0.85)]'
+                      }`}
+                      style={{ 
+                        width: '22px', 
+                        height: '22px', 
+                        strokeWidth: isActive ? 2.5 : 2 
+                      }}
+                    />
+                  </div>
                   {/* Badge */}
                   {item.badge && item.badge > 0 && (
                     <span 
@@ -60,13 +71,13 @@ export default function BottomNavigation() {
                     >
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
-                  )}
+                )}
                 </div>
                 
                 {/* Label - Smaller font size */}
                 <span
                   className={`transition-colors duration-200 ${
-                    isActive ? 'text-[#CE83FF] font-medium' : 'text-[#9B9B9B] group-hover:text-white font-normal'
+                    isActive ? 'text-[#C4B5FD] font-medium' : 'text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.85)] font-normal'
                   }`}
                   style={{ 
                     fontSize: '9px', 
@@ -83,8 +94,8 @@ export default function BottomNavigation() {
                   <div 
                     className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full"
                     style={{
-                      background: '#CE83FF',
-                      boxShadow: '0 0 8px rgba(206, 131, 255, 0.4)'
+                      background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)',
+                      boxShadow: '0 0 8px rgba(168, 85, 247, 0.45)'
                     }}
                   />
                 )}

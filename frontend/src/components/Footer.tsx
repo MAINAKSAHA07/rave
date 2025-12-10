@@ -17,16 +17,16 @@ export default function Footer() {
               href="/become-organizer"
               className="
                 relative px-6 py-2 rounded-full 
-                bg-gradient-to-r from-[#CE83FF]/10 to-[#7cffd6]/10 
+                bg-gradient-to-r from-[#A855F7]/12 via-[#3B82F6]/12 to-[#C4B5FD]/12 
                 border border-white/10 hover:border-white/20
                 flex items-center gap-2 transition-all duration-300 hover:scale-105
                 group
               "
               style={{
-                boxShadow: '0 0 20px rgba(206, 131, 255, 0.15)',
+                boxShadow: '0 0 20px rgba(168, 85, 247, 0.2)',
               }}
             >
-              <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#CE83FF] to-[#7cffd6]">
+              <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#A855F7] via-[#3B82F6] to-[#C4B5FD]">
                 List your event with us
               </span>
             </Link>

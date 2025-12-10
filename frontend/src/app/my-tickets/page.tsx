@@ -257,7 +257,7 @@ export default function MyTicketsPage() {
     ticketContent.innerHTML = `
       <div style="
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        border: 3px solid #7cffd6;
+        border: 3px solid #A855F7;
         border-radius: 20px;
         padding: 30px;
         width: 450px;
@@ -265,7 +265,7 @@ export default function MyTicketsPage() {
         background: white;
         box-sizing: border-box;
       ">
-        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #7cffd6; padding-bottom: 15px;">
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #A855F7; padding-bottom: 15px;">
           <h1 style="margin: 0; font-size: 28px; color: #0f766e; font-weight: bold;">${event?.name || 'Event Ticket'}</h1>
         </div>
         <div style="margin: 20px 0;">
@@ -435,12 +435,13 @@ export default function MyTicketsPage() {
     <div 
       className="min-h-screen pb-20"
       style={{
-        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
+        backgroundColor: '#050509',
+        backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))',
       }}
     >
       <div className="max-w-[428px] mx-auto min-h-screen">
         {/* Header */}
-        <div className="sticky top-0 z-10 backdrop-blur-md bg-black/30 border-b border-white/10 p-4 flex items-center gap-4">
+        <div className="sticky top-0 z-10 p-4 flex items-center gap-4" style={{ background: 'transparent', borderBottom: 'none' }}>
           <button onClick={() => router.back()} className="text-white text-xl hover:text-gray-300 transition-colors">
             ←
           </button>
@@ -457,7 +458,7 @@ export default function MyTicketsPage() {
               You haven't purchased any tickets yet. Browse our events to find your next experience.
             </p>
             <Link href="/events">
-              <Button className="bg-[#7cffd6] hover:bg-[#52C4A3] text-white shadow-lg shadow-[#7cffd6]/20">
+              <Button className="text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)', boxShadow: '0 14px 45px rgba(0,0,0,0.6), 0 0 18px rgba(168,85,247,0.35)' }}>
                 Browse Events
               </Button>
             </Link>
@@ -482,7 +483,7 @@ export default function MyTicketsPage() {
                   className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden shadow-lg"
                 >
                   {/* Event Banner */}
-                  <div className="relative bg-gradient-to-br from-teal-500/80 to-emerald-500/80 p-6 backdrop-blur-sm border-b border-white/10">
+                  <div className="relative bg-gradient-to-br from-[#A855F7]/60 via-[#3B82F6]/50 to-[#C4B5FD]/50 p-6 backdrop-blur-sm border-b border-white/10">
                     {event?.cover_image ? (
                       <img
                         src={getPocketBase().files.getUrl(event, event.cover_image)}
@@ -492,7 +493,7 @@ export default function MyTicketsPage() {
                     ) : null}
                     <div className="relative z-10">
                       <h2 className="text-xl font-bold text-white mb-2 shadow-sm">{event?.name || 'Event'}</h2>
-                      <p className="text-[#7cffd6] text-sm font-medium">
+                      <p className="text-[#C4B5FD] text-sm font-medium">
                         {event?.event_date || event?.start_date
                           ? new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
                             day: 'numeric',
@@ -586,9 +587,9 @@ export default function MyTicketsPage() {
                       </div>
                     )}
                     {ticket.expand?.table_id && (
-                      <div className="mb-4 bg-[#7cffd6]/10 border border-[#7cffd6]/20 rounded-xl p-3">
-                        <p className="text-xs text-[#7cffd6] mb-1 font-semibold">🪑 Table Assignment</p>
-                        <p className="text-sm font-semibold text-[#7cffd6]">
+                      <div className="mb-4 bg-[#A855F7]/10 border border-[#A855F7]/20 rounded-xl p-3">
+                        <p className="text-xs text-[#A855F7] mb-1 font-semibold">🪑 Table Assignment</p>
+                        <p className="text-sm font-semibold text-[#A855F7]">
                           Table: {ticket.expand.table_id.name}
                           {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}
                           {ticket.expand.table_id.capacity && ` - Capacity: ${ticket.expand.table_id.capacity}`}
@@ -644,7 +645,8 @@ export default function MyTicketsPage() {
                     {(ticket.status === 'issued' || ticket.status === 'checked_in') && (
                       <Button
                         onClick={() => downloadTicket(ticket)}
-                        className="w-full bg-[#7cffd6] hover:bg-[#52C4A3] text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#7cffd6]/20"
+                        className="w-full text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"
+                        style={{ background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)', boxShadow: '0 14px 45px rgba(0,0,0,0.6), 0 0 18px rgba(168,85,247,0.35)' }}
                       >
                         <span>📥</span>
                         Download Ticket

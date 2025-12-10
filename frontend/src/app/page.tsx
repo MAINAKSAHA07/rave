@@ -44,13 +44,31 @@ function EventCard({ event }: { event: any }) {
   });
   const categoryTag = event.category || 'Event';
 
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = () => {
+      if (heroRef.current) {
+        const y = window.scrollY || 0;
+        heroRef.current.style.transform = `translateY(${-(y * 0.08)}px)`;
+      }
+    };
+    handler();
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
   return (
     <Link
       href={`/events/${event.id}`}
-      className="block rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] group"
-      style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}
+      className="group block rounded-[20px] overflow-hidden hover:scale-[1.02]"
+      style={{ 
+        boxShadow: '0 10px 24px rgba(0,0,0,0.4)',
+        transition: 'transform var(--motion-duration-sm) var(--motion-ease-enter), box-shadow var(--motion-duration-sm) var(--motion-ease-enter), opacity var(--motion-duration-sm) var(--motion-ease-enter)'
+      }}
     >
       <div className="relative bg-[#0f1014]">
+        <div className="pointer-events-none absolute inset-[-8px] rounded-[24px] opacity-0 group-hover:opacity-50 blur-[20px] transition-opacity duration-200" style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.35), rgba(59,130,246,0.25), rgba(196,181,253,0.2))' }} />
         {/* Main Image Section - Larger and More Prominent */}
         <div className="relative h-[200px] w-full overflow-hidden">
           {event.cover_image ? (
@@ -62,10 +80,11 @@ function EventCard({ event }: { event: any }) {
                 style={{ objectPosition: 'center' }}
               />
               {/* Stronger Overlay Gradient */}
-              <div 
-                className="absolute inset-0"
+                <div 
+                  className="absolute inset-0 transition-opacity duration-200 group-hover:opacity-95"
                 style={{
-                  background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%)'
+                    background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.9) 100%)',
+                    opacity: 0.85
                 }}
               />
               {/* Additional gradient for better text readability */}
@@ -85,7 +104,7 @@ function EventCard({ event }: { event: any }) {
           {/* Professional Tag Badge - Top Right */}
           <div className="absolute top-3 right-3 z-10">
             <span 
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[10px] font-bold tracking-wider uppercase backdrop-blur-md"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[10px] font-bold tracking-wider uppercase backdrop-blur-md badge-animate"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.6)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -93,7 +112,7 @@ function EventCard({ event }: { event: any }) {
                 letterSpacing: '0.05em'
               }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7cffd6]" style={{ boxShadow: '0 0 6px rgba(124, 255, 214, 0.6)' }}></span>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#C4B5FD', boxShadow: '0 0 6px rgba(196, 181, 253, 0.7)' }}></span>
               {eventDate.getFullYear()} • {categoryTag.toUpperCase()}
             </span>
           </div>
@@ -103,7 +122,7 @@ function EventCard({ event }: { event: any }) {
         <div className="relative p-4 bg-[#0f1014]">
           {/* Event Title */}
           <h3 
-            className="text-white font-bold mb-2 leading-tight line-clamp-2 group-hover:text-[#7cffd6] transition-colors duration-300" 
+            className="text-white font-bold mb-2 leading-tight line-clamp-2 group-hover:text-[#C4B5FD] transition-colors duration-300" 
             style={{ 
               fontSize: '18px',
               letterSpacing: '-0.01em',
@@ -141,10 +160,10 @@ function EventCard({ event }: { event: any }) {
               </p>
             </div>
             <span 
-              className="text-[#7cffd6] font-bold tracking-tight flex items-baseline gap-0.5" 
+              className="text-[#3B82F6] font-bold tracking-tight flex items-baseline gap-0.5" 
               style={{ 
                 fontSize: '18px',
-                textShadow: '0 0 12px rgba(124, 255, 214, 0.4)',
+                textShadow: '0 0 12px rgba(59, 130, 246, 0.35)',
                 fontFamily: 'system-ui, -apple-system, sans-serif'
               }}
             >
@@ -159,12 +178,12 @@ function EventCard({ event }: { event: any }) {
 }
 
 const CATEGORIES = [
-  { id: 'music', name: 'Music', icon: Music, color: '#CE83FF' },
-  { id: 'sports', name: 'Sport', icon: Trophy, color: '#FB4EFF' },
-  { id: 'food', name: 'Food', icon: Utensils, color: '#7cffd6' },
-  { id: 'concert', name: 'Concert', icon: Mic, color: '#CE83FF' },
-  { id: 'comedy', name: 'Comedy', icon: Laugh, color: '#FB4EFF' },
-  { id: 'nightlife', name: 'Nightlife', icon: Moon, color: '#7cffd6' },
+  { id: 'music', name: 'Music', icon: Music, color: '#A855F7' },
+  { id: 'sports', name: 'Sport', icon: Trophy, color: '#3B82F6' },
+  { id: 'food', name: 'Food', icon: Utensils, color: '#C4B5FD' },
+  { id: 'concert', name: 'Concert', icon: Mic, color: '#A855F7' },
+  { id: 'comedy', name: 'Comedy', icon: Laugh, color: '#3B82F6' },
+  { id: 'nightlife', name: 'Nightlife', icon: Moon, color: '#C4B5FD' },
 ];
 
 export default function HomePage() {
@@ -179,6 +198,19 @@ export default function HomePage() {
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const prevCategoryRef = useRef<string | null>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = () => {
+      if (heroRef.current) {
+        const y = window.scrollY || 0;
+        heroRef.current.style.transform = `translateY(${-(y * 0.08)}px)`;
+      }
+    };
+    handler();
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
 
   // Load selected location from localStorage or default
   useEffect(() => {
@@ -386,12 +418,19 @@ export default function HomePage() {
       </div>
       {/* Main Content */}
       <div className={`transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`} style={{
-        background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)'
+        backgroundColor: '#050509',
+        backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))'
       }}>
         <div className="max-w-[428px] mx-auto">
           {/* Top Header Bar */}
           <div className="sticky top-0 z-50" style={{ overflow: 'visible' }}>
-            <div className="max-w-[428px] mx-auto glass-shimmer px-4 py-2" style={{ borderRadius: '0 0 20px 20px', overflow: 'visible' }}>
+            <div className="max-w-[428px] mx-auto px-4 py-2" style={{
+              borderRadius: '0 0 20px 20px',
+              overflow: 'visible',
+              background: 'linear-gradient(180deg, #101019 0%, #050509 100%)',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 14px 45px rgba(0,0,0,0.7)'
+            }}>
               <div className="flex justify-between items-center h-12 gap-3 relative z-10" style={{ overflow: 'visible' }}>
                 <div className="flex items-center gap-3 flex-1 min-w-0" style={{ overflow: 'visible' }}>
                   <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
@@ -430,7 +469,7 @@ export default function HomePage() {
                                   }
                                 }}
                                 className={`w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 transition-colors ${selectedLocation === location
-                                  ? 'text-[#7cffd6] font-medium bg-white/5'
+                                  ? 'text-[#3B82F6] font-medium bg-white/5'
                                   : 'text-gray-300'
                                   }`}
                               >
@@ -485,13 +524,31 @@ export default function HomePage() {
 
           {/* Welcome Banner */}
           <div
-            className="glass-card-shimmer relative mb-6 mx-4"
+            className="relative mb-6 mx-4 motion-fade-in-up"
             style={{
-              background: 'linear-gradient(135deg, #1E4C55 0%, #4ABBB0 50%, #1E4C55 100%)',
+              marginTop: '16px',
+              background: 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)',
               padding: '28px',
               zIndex: 1,
+              borderRadius: '24px',
+              border: '1px solid rgba(255,255,255,0.16)',
+              boxShadow: '0 14px 45px rgba(0,0,0,0.7), inset 0 0 40px rgba(255,255,255,0.12)',
+              position: 'relative',
+              overflow: 'hidden',
+              backgroundSize: '200% 200%',
+              animation: 'gradient-drift 12s ease-in-out infinite'
             }}
+            ref={heroRef}
           >
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))',
+                mixBlendMode: 'screen',
+                pointerEvents: 'none'
+              }}
+            />
             <div className="flex justify-between items-start relative z-10">
               <div>
                 <p
@@ -529,24 +586,23 @@ export default function HomePage() {
                 </p>
               </div>
               <button
-                className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-all relative z-10"
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-all relative z-10 hover:scale-[1.08] active:scale-95 hover:shadow-[0_0_22px_rgba(168,85,247,0.65)]"
                 style={{
-                  background: 'rgba(255,255,255,0.1)',
+                  background: 'radial-gradient(circle at 30% 30%, rgba(168,85,247,0.35), rgba(59,130,246,0.15), rgba(12,10,24,0))',
                   backdropFilter: 'blur(10px)',
                   WebkitBackdropFilter: 'blur(10px)',
-                  boxShadow: `
-                    inset 0 0 8px rgba(168, 255, 247, 0.25),
-                    0 0 12px #A8FFF7
-                  `,
-                  border: '1px solid rgba(255,255,255,0.3)'
+                  boxShadow: '0 0 18px rgba(168,85,247,0.55)',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                  animation: 'bell-pulse 4s ease-in-out infinite',
+                  transition: 'transform var(--motion-duration-sm) var(--motion-ease-enter), box-shadow var(--motion-duration-sm) var(--motion-ease-enter)'
                 }}
               >
                 <Bell
                   className="w-5 h-5"
                   strokeWidth={1.5}
                   style={{
-                    color: '#DFFCFB',
-                    filter: 'drop-shadow(0 0 4px #A8FFF7)'
+                    color: '#FFFFFF',
+                    filter: 'drop-shadow(0 0 4px rgba(196,181,253,0.75))'
                   }}
                 />
               </button>
@@ -574,52 +630,50 @@ export default function HomePage() {
           {/* Category Section */}
           <div className="px-4 mb-8">
             <h2 className="text-white font-semibold mb-4 leading-tight" style={{ fontSize: '20px' }}>Category</h2>
-            <div className="flex gap-4 overflow-x-auto py-6 scrollbar-hide" style={{ paddingLeft: '4px', paddingRight: '4px' }}>
+            <div className="flex flex-wrap gap-3 py-6" style={{ paddingLeft: '4px', paddingRight: '4px' }}>
               {sortedCategories.map((category) => {
                 const IconComponent = category.icon;
                 const isSelected = selectedCategory === category.id;
                 
-                // Create gradient backgrounds
-                const unselectedGradient = `linear-gradient(135deg, rgba(28, 28, 28, 0.4) 0%, rgba(40, 40, 42, 0.3) 100%)`;
-                const selectedGradient = `linear-gradient(135deg, ${category.color}15 0%, ${category.color}25 50%, ${category.color}15 100%)`;
-                
-                // Neon glow effect for active state
-                const neonGlow = isSelected 
-                  ? `0 0 20px ${category.color}40, 0 0 40px ${category.color}30, 0 0 60px ${category.color}20, 0 4px 12px rgba(0,0,0,0.3)`
-                  : '0 2px 8px rgba(0,0,0,0.15)';
+                const unselectedBg = '#101019';
+                const selectedBg = 'linear-gradient(135deg, #A855F7 0%, #3B82F6 50%, #C4B5FD 100%)';
+                const boxShadow = isSelected
+                  ? 'inset 0 0 0 1px rgba(255,255,255,0.18), 0 2px 12px rgba(168,85,247,0.45)'
+                  : '0 2px 8px rgba(0,0,0,0.25)';
                 
                 return (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(isSelected ? null : category.id)}
-                    className={`flex flex-col items-center justify-center min-w-[100px] px-5 py-4 transition-all duration-300 hover:scale-[1.03] ${isSelected ? 'scale-[1.05]' : ''}`}
+                    className={`group flex flex-col items-center justify-center min-w-[80px] px-3 py-3 transition-all duration-200 hover:scale-[1.03] ${isSelected ? 'scale-[1.04]' : ''} hover:shadow-[0_6px_18px_rgba(0,0,0,0.35)]`}
                     style={{
-                      borderRadius: '24px',
-                      background: isSelected ? selectedGradient : unselectedGradient,
-                      boxShadow: neonGlow,
-                      border: isSelected ? `1.5px solid ${category.color}80` : '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: '999px',
+                      background: isSelected ? selectedBg : unselectedBg,
+                      boxShadow,
+                      border: isSelected ? '1.5px solid rgba(255,255,255,0.18)' : '1px solid rgba(255,255,255,0.12)',
+                      backgroundImage: !isSelected ? 'radial-gradient(circle at 50% 30%, rgba(196,181,253,0.12), rgba(16,16,25,0.92))' : undefined,
                       backdropFilter: 'blur(10px)',
                       WebkitBackdropFilter: 'blur(10px)',
+                      transition: 'transform 200ms cubic-bezier(0.18,0.89,0.32,1.28), box-shadow 200ms cubic-bezier(0.18,0.89,0.32,1.28), background 200ms ease-out, color 200ms ease-out'
                     }}
                   >
                     <IconComponent
-                      className="pointer-events-none mb-2.5"
+                      className="pointer-events-none mb-1.5"
                       style={{
-                        width: '28px',
-                        height: '28px',
-                        color: category.color,
+                        width: '22px',
+                        height: '22px',
+                        color: isSelected ? '#FFFFFF' : '#C4B5FD',
                         strokeWidth: 2,
                         filter: isSelected 
-                          ? `drop-shadow(0 0 8px ${category.color}80) brightness(1.2)` 
-                          : `brightness(1.1)`,
-                        opacity: isSelected ? 1 : 0.9,
+                          ? `drop-shadow(0 0 8px rgba(196,181,253,0.8)) brightness(1.1)` 
+                          : `brightness(1.05)`,
+                        opacity: 1,
                       }}
                     />
                     <span 
-                      className={`text-xs leading-relaxed ${isSelected ? 'text-white font-bold' : 'text-gray-200 font-semibold'}`} 
+                      className={`text-[11px] leading-relaxed ${isSelected ? 'text-white font-bold' : 'text-white/70 font-semibold'}`} 
                       style={{ 
-                        fontSize: '12px',
-                        textShadow: isSelected ? `0 0 8px ${category.color}40` : 'none',
+                        textShadow: isSelected ? `0 0 8px rgba(168,85,247,0.4)` : 'none',
                       }}
                     >
                       {category.name}
@@ -631,14 +685,14 @@ export default function HomePage() {
           </div>
 
           {/* Popular Events Section */}
-          <div className="px-4 mb-6 pb-6">
+          <div className="px-4 mb-6 pb-6" style={{ marginTop: '20px' }}>
             <div className="flex justify-between items-center mb-3">
-              <h2 className="text-white font-semibold leading-tight" style={{ fontSize: '20px' }}>Popular Events</h2>
-              <Link href="/events" className="text-[#7cffd6] text-sm font-medium hover:text-[#52C4A3] transition-colors" style={{ fontSize: '14px' }}>
+              <h2 className="text-white font-semibold leading-tight slide-in-left" style={{ fontSize: '20px' }}>Popular Events</h2>
+              <Link href="/events" className="text-[#3B82F6] text-sm font-medium hover:text-[#C4B5FD] transition-colors" style={{ fontSize: '14px' }}>
                 See all
               </Link>
             </div>
-            <p className="text-gray-400 mb-5 leading-relaxed" style={{ fontSize: '14px' }}>Handpicked events happening near you this week</p>
+            <p className="text-gray-400 mb-5 leading-relaxed slide-in-left" style={{ fontSize: '14px' }}>Handpicked events happening near you this week</p>
             {loading ? (
               <div className="space-y-4">
                 {[1, 2].map((i) => (
@@ -655,8 +709,10 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {popularEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                {popularEvents.map((event, idx) => (
+                  <div key={event.id} style={{ opacity: 0, animation: 'slide-in-left var(--motion-duration-md) var(--motion-ease-enter) forwards', animationDelay: `${80 * idx}ms` }}>
+                    <EventCard event={event} />
+                  </div>
                 ))}
               </div>
             )}

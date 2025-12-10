@@ -85,7 +85,7 @@ export default function EventDetailsPage() {
   const router = useRouter();
   const { notifySuccess, notifyError, notifyInfo, notifyWarning } = useNotificationHelpers();
   const { addToCart } = useCart();
-  const eventId = params.id as string;
+  const eventId = (params?.id as string) || '';
   const [event, setEvent] = useState<Event | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
@@ -756,7 +756,7 @@ export default function EventDetailsPage() {
 
   return (
     <>
-      <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)' }}>
+      <div className="min-h-screen pb-20" style={{ backgroundColor: '#050509', backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(168,85,247,0.18), rgba(59,130,246,0.12), rgba(12,10,24,0)), radial-gradient(circle at 80% 0%, rgba(196,181,253,0.14), rgba(12,10,24,0))' }}>
         <div className="max-w-[428px] mx-auto min-h-screen">
           {/* Event Images Section - Cover + Gallery */}
           {images.length > 0 && (
@@ -767,14 +767,11 @@ export default function EventDetailsPage() {
             />
           )}
 
-          {/* Header Section - Minimal with back and share buttons */}
+          {/* Header Section - overlay (no spacer bar) */}
           <div
-            className="sticky top-0 z-20 px-4 pt-4 pb-2"
-            style={{
-              background: 'linear-gradient(180deg, #02060D 0%, #0A1320 50%, #132233 100%)',
-            }}
+            className="absolute top-4 left-0 right-0 px-4 z-30 pointer-events-none"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pointer-events-auto">
               <button
                 onClick={() => router.back()}
                 className="text-white text-xl hover:text-gray-300 transition-colors"
@@ -801,7 +798,7 @@ export default function EventDetailsPage() {
           {/* Stats Bar */}
           <div className="px-4 mb-6">
             <div
-              className="rounded-[20px] p-5"
+              className="rounded-[20px] px-5 pb-5 pt-3"
               style={{
                 background: 'linear-gradient(135deg, rgba(20, 30, 50, 0.8) 0%, rgba(30, 20, 50, 0.9) 100%)',
                 backdropFilter: 'blur(10px)',
@@ -850,8 +847,8 @@ export default function EventDetailsPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[#9B9B9B] text-xs font-bold uppercase">Quick Look</h2>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full" style={{ background: 'rgba(124, 255, 214, 0.15)' }}>
-                <Shield className="w-3 h-3" style={{ color: '#7cffd6' }} strokeWidth={2} />
-                <span className="text-xs font-medium" style={{ color: '#7cffd6' }}>Lowest Price Guaranteed</span>
+                <Shield className="w-3 h-3" style={{ color: '#3B82F6' }} strokeWidth={2} />
+                <span className="text-xs font-medium" style={{ color: '#3B82F6' }}>Lowest Price Guaranteed</span>
               </div>
             </div>
 
@@ -1022,7 +1019,7 @@ export default function EventDetailsPage() {
                           {tt.description && <p className="text-sm text-[#9B9B9B] mt-1">{tt.description}</p>}
                         </div>
                         <div className="text-right ml-4">
-                          <p className="font-bold text-lg" style={{ color: '#7cffd6' }}>
+                          <p className="font-bold text-lg" style={{ color: '#3B82F6' }}>
                             ₹{((tt.final_price_minor / 1.18) / 100).toFixed(2)}
                           </p>
                           <p className="text-xs text-[#9B9B9B] font-medium">+ GST</p>
@@ -1057,7 +1054,7 @@ export default function EventDetailsPage() {
                             }
                             className="w-10 h-10 rounded-full text-white flex items-center justify-center hover:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             style={{
-                              background: '#7cffd6',
+                              background: '#3B82F6',
                               boxShadow: '0 4px 12px rgba(124, 255, 214, 0.3)'
                             }}
                             disabled={
@@ -1077,7 +1074,7 @@ export default function EventDetailsPage() {
                             <button
                               onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
                               className="text-sm font-medium transition-colors"
-                              style={{ color: '#7cffd6' }}
+                              style={{ color: '#3B82F6' }}
                             >
                               {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
                             </button>
@@ -1091,8 +1088,8 @@ export default function EventDetailsPage() {
                                     }`}
                                   style={(seatViewMode[tt.id] || 'list') === 'list'
                                     ? {
-                                      background: '#7cffd6',
-                                      border: '1px solid #7cffd6'
+                                      background: '#3B82F6',
+                                      border: '1px solid #3B82F6'
                                     }
                                     : {
                                       background: 'rgba(26, 27, 38, 0.6)',
@@ -1110,8 +1107,8 @@ export default function EventDetailsPage() {
                                     }`}
                                   style={seatViewMode[tt.id] === 'map'
                                     ? {
-                                      background: '#7cffd6',
-                                      border: '1px solid #7cffd6'
+                                      background: '#3B82F6',
+                                      border: '1px solid #3B82F6'
                                     }
                                     : {
                                       background: 'rgba(26, 27, 38, 0.6)',
@@ -1174,8 +1171,8 @@ export default function EventDetailsPage() {
                                               }`}
                                             style={isSelected
                                               ? {
-                                                background: '#7cffd6',
-                                                border: '1px solid #7cffd6',
+                                                background: '#3B82F6',
+                                                border: '1px solid #3B82F6',
                                                 boxShadow: '0 4px 12px rgba(124, 255, 214, 0.3)'
                                               }
                                               : isReserved
@@ -1242,7 +1239,7 @@ export default function EventDetailsPage() {
                             <button
                               onClick={() => setShowTableSelection({ ...showTableSelection, [tt.id]: !showTableSelection[tt.id] })}
                               className="text-sm font-medium transition-colors"
-                              style={{ color: '#7cffd6' }}
+                              style={{ color: '#3B82F6' }}
                             >
                               {showTableSelection[tt.id] ? 'Hide Table Selection' : 'Select Table'}
                             </button>
@@ -1277,10 +1274,10 @@ export default function EventDetailsPage() {
                                     border: '1px solid rgba(39, 209, 127, 0.3)'
                                   }}
                                 >
-                                  <p className="text-sm font-medium" style={{ color: '#7cffd6' }}>
+                                  <p className="text-sm font-medium" style={{ color: '#3B82F6' }}>
                                     Select <span className="font-bold text-white">{selectedTickets[tt.id]}</span> table{selectedTickets[tt.id] !== 1 ? 's' : ''} for <span className="font-bold text-white">{selectedTickets[tt.id]}</span> ticket{selectedTickets[tt.id] !== 1 ? 's' : ''}
                                   </p>
-                                  <p className="text-xs mt-1" style={{ color: '#7cffd6' }}>
+                                  <p className="text-xs mt-1" style={{ color: '#3B82F6' }}>
                                     Selected: <span className="font-semibold text-white">{(selectedTables[tt.id] || []).length}</span> of <span className="font-semibold text-white">{selectedTickets[tt.id]}</span>
                                   </p>
                                 </div>
@@ -1322,7 +1319,7 @@ export default function EventDetailsPage() {
                             onClick={() => handleAddToCart(tt.id)}
                             className="w-full text-white py-3 rounded-xl font-bold text-base transition-all hover:scale-[1.01]"
                             style={{
-                              background: '#7cffd6',
+                              background: '#3B82F6',
                               boxShadow: '0 4px 12px rgba(124, 255, 214, 0.3)'
                             }}
                           >
@@ -1366,7 +1363,7 @@ export default function EventDetailsPage() {
                   {event.things_to_carry.split('\n').map((item: string, idx: number) => (
                     item.trim() && (
                       <div key={idx} className="flex items-start gap-2">
-                        <span className="text-[#7cffd6] mt-1">•</span>
+                        <span className="text-[#3B82F6] mt-1">•</span>
                         <span>{item.trim()}</span>
                       </div>
                     )
@@ -1390,7 +1387,7 @@ export default function EventDetailsPage() {
                   {event.inclusions.split('\n').map((item: string, idx: number) => (
                     item.trim() && (
                       <div key={idx} className="flex items-start gap-2">
-                        <span className="text-[#7cffd6] mt-1">✓</span>
+                        <span className="text-[#3B82F6] mt-1">✓</span>
                         <span>{item.trim()}</span>
                       </div>
                     )
@@ -1427,7 +1424,7 @@ export default function EventDetailsPage() {
                 <h2 className="text-white font-bold text-lg mb-3">Venue Details</h2>
                 <div className="text-[#9B9B9B] text-sm space-y-2">
                   <div className="flex items-start gap-2">
-                    <span className="text-[#7cffd6] font-semibold">📍</span>
+                    <span className="text-[#3B82F6] font-semibold">📍</span>
                     <div>
                       <p className="font-semibold text-white">{event.expand.venue_id.name}</p>
                       {event.expand.venue_id.address && (
@@ -1460,7 +1457,7 @@ export default function EventDetailsPage() {
                 <h2 className="text-white font-bold text-lg mb-3">Organizer Information</h2>
                 <div className="text-[#9B9B9B] text-sm space-y-2">
                   <div className="flex items-start gap-2">
-                    <span className="text-[#7cffd6] font-semibold">👤</span>
+                    <span className="text-[#3B82F6] font-semibold">👤</span>
                     <div>
                       <p className="font-semibold text-white">{event.expand.organizer_id.name}</p>
                       {event.expand.organizer_id.email && (
@@ -1504,7 +1501,7 @@ export default function EventDetailsPage() {
                       className="px-3 py-1 rounded-full text-xs font-medium"
                       style={{
                         background: 'rgba(39, 209, 127, 0.15)',
-                        color: '#7cffd6',
+                        color: '#3B82F6',
                         border: '1px solid rgba(39, 209, 127, 0.3)'
                       }}
                     >
