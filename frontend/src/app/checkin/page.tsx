@@ -159,7 +159,7 @@ export default function CheckInPage() {
 
                     {!scanning ? (
                         <Button
-                            className="w-full h-32 text-lg bg-teal-600 hover:bg-teal-700 text-white border-none shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02]"
+                            className="w-full h-32 text-lg bg-[#7cffd6] hover:bg-[#52C4A3] text-white border-none shadow-lg shadow-[#7cffd6]/20 transition-all hover:scale-[1.02]"
                             onClick={() => setScanning(true)}
                             disabled={!selectedEventId}
                         >

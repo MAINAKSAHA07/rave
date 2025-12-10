@@ -47,53 +47,111 @@ function EventCard({ event }: { event: any }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="block rounded-[22px] overflow-hidden transition-all hover:scale-[1.02] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)]"
-      style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+      className="block rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] group"
+      style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}
     >
-      <div className="relative h-full min-h-[180px] p-5 flex flex-col justify-between" style={{
-        background: 'linear-gradient(108deg, #0f1014 0%, #1a1b26 40%, #2E1065 100%)'
-      }}>
-        {/* Background Image Effect */}
-        <div className="absolute top-0 bottom-0 right-0 w-[55%] overflow-hidden pointer-events-none">
+      <div className="relative bg-[#0f1014]">
+        {/* Main Image Section - Larger and More Prominent */}
+        <div className="relative h-[200px] w-full overflow-hidden">
           {event.cover_image ? (
             <>
-              <div className="absolute inset-0 z-0">
-                <img
-                  src={getPocketBase().files.getUrl(event, event.cover_image)}
-                  alt={event.name}
-                  className="w-full h-full object-cover opacity-80"
-                  style={{ maskImage: 'linear-gradient(to right, transparent, black 40%)' }}
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-l from-[#2E1065]/40 to-transparent mix-blend-overlay" />
+              <img
+                src={getPocketBase().files.getUrl(event, event.cover_image)}
+                alt={event.name}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                style={{ objectPosition: 'center' }}
+              />
+              {/* Stronger Overlay Gradient */}
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%)'
+                }}
+              />
+              {/* Additional gradient for better text readability */}
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-32"
+                style={{
+                  background: 'linear-gradient(to top, rgba(15, 16, 20, 0.95) 0%, transparent 100%)'
+                }}
+              />
             </>
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center opacity-20">
-              <div className="w-full h-full bg-gradient-to-br from-teal-500/20 to-purple-500/20" />
-              <Moon className="absolute right-4 w-24 h-24 text-white/10" />
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1b26] to-[#0f1014]">
+              <Moon className="w-20 h-20 text-white/10" />
             </div>
           )}
+          
+          {/* Professional Tag Badge - Top Right */}
+          <div className="absolute top-3 right-3 z-10">
+            <span 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[10px] font-bold tracking-wider uppercase backdrop-blur-md"
+              style={{ 
+                background: 'rgba(0, 0, 0, 0.6)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                letterSpacing: '0.05em'
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7cffd6]" style={{ boxShadow: '0 0 6px rgba(124, 255, 214, 0.6)' }}></span>
+              {eventDate.getFullYear()} • {categoryTag.toUpperCase()}
+            </span>
+          </div>
         </div>
 
-        <div className="relative z-10 w-[65%]">
-          <span className="inline-block px-3 py-1 rounded-[8px] text-[#7cffd6] text-[11px] font-semibold tracking-wider mb-3" style={{ background: 'rgba(124, 255, 214, 0.1)', border: '1px solid rgba(124, 255, 214, 0.2)' }}>
-            {eventDate.getFullYear()} • {categoryTag.toUpperCase()}
-          </span>
-          <h3 className="text-white font-bold mb-1 leading-tight tracking-tight" style={{ fontSize: '22px' }}>{event.name}</h3>
-          <p className="text-gray-400 text-[13px] leading-relaxed mb-4 font-medium">
+        {/* Content Section - Compact and Well-Spaced */}
+        <div className="relative p-4 bg-[#0f1014]">
+          {/* Event Title */}
+          <h3 
+            className="text-white font-bold mb-2 leading-tight line-clamp-2 group-hover:text-[#7cffd6] transition-colors duration-300" 
+            style={{ 
+              fontSize: '18px',
+              letterSpacing: '-0.01em',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+          >
+            {event.name}
+          </h3>
+          
+          {/* Description */}
+          <p 
+            className="text-gray-400 text-[12px] leading-relaxed mb-3 line-clamp-2" 
+            style={{ 
+              lineHeight: '1.5',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+          >
             {event.description ? event.description.split('.')[0] : 'Join us for an amazing experience'}
           </p>
-        </div>
 
-        <div className="relative z-10 flex items-end justify-between w-full mt-2">
-          <div className="flex items-center gap-2">
-            <p className="text-white/90 text-[13px] font-medium">
-              {formattedDate} • {event.city || 'Location'}
-            </p>
+          {/* Bottom Row - Date, Location, Price */}
+          <div className="flex items-center justify-between pt-2 border-t border-white/5">
+            <div className="flex flex-col gap-0.5">
+              <p 
+                className="text-white/80 text-[11px] font-medium leading-tight"
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+              >
+                {formattedDate}
+              </p>
+              <p 
+                className="text-gray-500 text-[10px] font-medium"
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+              >
+                {event.city || 'Location'}
+              </p>
+            </div>
+            <span 
+              className="text-[#7cffd6] font-bold tracking-tight flex items-baseline gap-0.5" 
+              style={{ 
+                fontSize: '18px',
+                textShadow: '0 0 12px rgba(124, 255, 214, 0.4)',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}
+            >
+              <span className="text-[12px] font-semibold opacity-90">₹</span>
+              {minPrice ? minPrice.toFixed(0) : 'TBD'}
+            </span>
           </div>
-          <span className="text-[#7cffd6] font-bold tracking-tight" style={{ fontSize: '20px', textShadow: '0 0 20px rgba(124, 255, 214, 0.3)' }}>
-            ₹{minPrice ? minPrice.toFixed(0) : 'TBD'}
-          </span>
         </div>
       </div>
     </Link>
@@ -516,33 +574,54 @@ export default function HomePage() {
           {/* Category Section */}
           <div className="px-4 mb-8">
             <h2 className="text-white font-semibold mb-4 leading-tight" style={{ fontSize: '20px' }}>Category</h2>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-4 overflow-x-auto py-6 scrollbar-hide" style={{ paddingLeft: '4px', paddingRight: '4px' }}>
               {sortedCategories.map((category) => {
                 const IconComponent = category.icon;
                 const isSelected = selectedCategory === category.id;
+                
+                // Create gradient backgrounds
+                const unselectedGradient = `linear-gradient(135deg, rgba(28, 28, 28, 0.4) 0%, rgba(40, 40, 42, 0.3) 100%)`;
+                const selectedGradient = `linear-gradient(135deg, ${category.color}15 0%, ${category.color}25 50%, ${category.color}15 100%)`;
+                
+                // Neon glow effect for active state
+                const neonGlow = isSelected 
+                  ? `0 0 20px ${category.color}40, 0 0 40px ${category.color}30, 0 0 60px ${category.color}20, 0 4px 12px rgba(0,0,0,0.3)`
+                  : '0 2px 8px rgba(0,0,0,0.15)';
+                
                 return (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(isSelected ? null : category.id)}
-                    className={`flex flex-col items-center justify-center min-w-[90px] px-4 py-3 transition-all hover:scale-[1.03] ${isSelected ? 'scale-105' : ''
-                      }`}
+                    className={`flex flex-col items-center justify-center min-w-[100px] px-5 py-4 transition-all duration-300 hover:scale-[1.03] ${isSelected ? 'scale-[1.05]' : ''}`}
                     style={{
-                      borderRadius: '20px',
-                      background: isSelected ? 'rgba(206, 131, 255, 0.2)' : 'rgba(28, 28, 28, 0.2)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                      border: isSelected ? `1px solid ${category.color}` : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '24px',
+                      background: isSelected ? selectedGradient : unselectedGradient,
+                      boxShadow: neonGlow,
+                      border: isSelected ? `1.5px solid ${category.color}80` : '1px solid rgba(255,255,255,0.15)',
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
                     }}
                   >
                     <IconComponent
-                      className="pointer-events-none mb-2"
+                      className="pointer-events-none mb-2.5"
                       style={{
-                        width: '24px',
-                        height: '24px',
+                        width: '28px',
+                        height: '28px',
                         color: category.color,
-                        strokeWidth: 1.5
+                        strokeWidth: 2,
+                        filter: isSelected 
+                          ? `drop-shadow(0 0 8px ${category.color}80) brightness(1.2)` 
+                          : `brightness(1.1)`,
+                        opacity: isSelected ? 1 : 0.9,
                       }}
                     />
-                    <span className={`text-xs font-medium leading-relaxed ${isSelected ? 'text-white' : 'text-gray-300'}`} style={{ fontSize: '12px' }}>
+                    <span 
+                      className={`text-xs leading-relaxed ${isSelected ? 'text-white font-bold' : 'text-gray-200 font-semibold'}`} 
+                      style={{ 
+                        fontSize: '12px',
+                        textShadow: isSelected ? `0 0 8px ${category.color}40` : 'none',
+                      }}
+                    >
                       {category.name}
                     </span>
                   </button>

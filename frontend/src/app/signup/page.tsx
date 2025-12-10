@@ -276,14 +276,14 @@ function SignupForm() {
                     placeholder="+91 9876543210"
                     required
                     autoFocus
-                    className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                    className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
                   />
                   <p className="text-xs text-gray-400">Required for account verification</p>
                 </div>
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-teal-900/20" 
+                  className="w-full bg-[#7cffd6] hover:bg-[#52C4A3] text-white font-semibold py-3 rounded-xl shadow-lg shadow-[#7cffd6]/20" 
                   disabled={updatingPhone}
                 >
                   {updatingPhone ? 'Updating...' : 'Continue'}
@@ -327,7 +327,7 @@ function SignupForm() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="John Doe"
                 required
-                className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
               />
             </div>
 
@@ -340,7 +340,7 @@ function SignupForm() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="you@example.com"
                 required
-                className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
               />
             </div>
 
@@ -353,7 +353,7 @@ function SignupForm() {
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+91 9876543210"
                 required
-                className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
               />
             </div>
 
@@ -367,7 +367,7 @@ function SignupForm() {
                 placeholder="••••••••"
                 required
                 minLength={8}
-                className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
               />
               <p className="text-xs text-gray-400">Must be at least 8 characters</p>
             </div>
@@ -381,18 +381,18 @@ function SignupForm() {
                 onChange={(e) => setFormData({ ...formData, passwordConfirm: e.target.value })}
                 placeholder="••••••••"
                 required
-                className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
               />
             </div>
 
-            <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-teal-900/20" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#7cffd6] hover:bg-[#52C4A3] text-white font-semibold py-3 rounded-xl shadow-lg shadow-[#7cffd6]/20" disabled={loading}>
               {loading ? 'Creating account...' : 'Sign Up'}
             </Button>
           </form>
 
           <div className="text-center text-sm">
             <span className="text-gray-400">Already have an account? </span>
-            <Link href="/login" className="text-teal-400 hover:text-teal-300 hover:underline font-semibold">
+            <Link href="/login" className="text-[#7cffd6] hover:text-[#52C4A3] hover:underline font-semibold">
               Sign in
             </Link>
           </div>

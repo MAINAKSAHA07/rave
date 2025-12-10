@@ -257,7 +257,7 @@ export default function MyTicketsPage() {
     ticketContent.innerHTML = `
       <div style="
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        border: 3px solid #14b8a6;
+        border: 3px solid #7cffd6;
         border-radius: 20px;
         padding: 30px;
         width: 450px;
@@ -265,7 +265,7 @@ export default function MyTicketsPage() {
         background: white;
         box-sizing: border-box;
       ">
-        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #14b8a6; padding-bottom: 15px;">
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #7cffd6; padding-bottom: 15px;">
           <h1 style="margin: 0; font-size: 28px; color: #0f766e; font-weight: bold;">${event?.name || 'Event Ticket'}</h1>
         </div>
         <div style="margin: 20px 0;">
@@ -457,7 +457,7 @@ export default function MyTicketsPage() {
               You haven't purchased any tickets yet. Browse our events to find your next experience.
             </p>
             <Link href="/events">
-              <Button className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-900/20">
+              <Button className="bg-[#7cffd6] hover:bg-[#52C4A3] text-white shadow-lg shadow-[#7cffd6]/20">
                 Browse Events
               </Button>
             </Link>
@@ -492,7 +492,7 @@ export default function MyTicketsPage() {
                     ) : null}
                     <div className="relative z-10">
                       <h2 className="text-xl font-bold text-white mb-2 shadow-sm">{event?.name || 'Event'}</h2>
-                      <p className="text-teal-50 text-sm font-medium">
+                      <p className="text-[#7cffd6] text-sm font-medium">
                         {event?.event_date || event?.start_date
                           ? new Date(event.event_date || event.start_date).toLocaleDateString('en-IN', {
                             day: 'numeric',
@@ -586,9 +586,9 @@ export default function MyTicketsPage() {
                       </div>
                     )}
                     {ticket.expand?.table_id && (
-                      <div className="mb-4 bg-teal-500/10 border border-teal-400/20 rounded-xl p-3">
-                        <p className="text-xs text-teal-300 mb-1 font-semibold">🪑 Table Assignment</p>
-                        <p className="text-sm font-semibold text-teal-100">
+                      <div className="mb-4 bg-[#7cffd6]/10 border border-[#7cffd6]/20 rounded-xl p-3">
+                        <p className="text-xs text-[#7cffd6] mb-1 font-semibold">🪑 Table Assignment</p>
+                        <p className="text-sm font-semibold text-[#7cffd6]">
                           Table: {ticket.expand.table_id.name}
                           {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}
                           {ticket.expand.table_id.capacity && ` - Capacity: ${ticket.expand.table_id.capacity}`}
@@ -644,7 +644,7 @@ export default function MyTicketsPage() {
                     {(ticket.status === 'issued' || ticket.status === 'checked_in') && (
                       <Button
                         onClick={() => downloadTicket(ticket)}
-                        className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-teal-900/20"
+                        className="w-full bg-[#7cffd6] hover:bg-[#52C4A3] text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#7cffd6]/20"
                       >
                         <span>📥</span>
                         Download Ticket

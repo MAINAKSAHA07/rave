@@ -166,7 +166,7 @@ export default function ProfilePage() {
               {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
             </div>
             <h2 className="text-xl font-bold text-white mb-1">{user?.name || 'User'}</h2>
-            <p className="text-teal-100 text-sm">{user?.email}</p>
+            <p className="text-[#7cffd6] text-sm">{user?.email}</p>
           </div>
 
           {/* Personal Information Card */}
@@ -181,7 +181,7 @@ export default function ProfilePage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
                   placeholder="Enter your full name"
                 />
               </div>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
                   placeholder="Enter your email"
                 />
               </div>
@@ -203,7 +203,7 @@ export default function ProfilePage() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
                   placeholder="Enter your phone number"
                 />
               </div>
@@ -225,7 +225,7 @@ export default function ProfilePage() {
                   value={formData.currentPassword}
                   onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                   placeholder="Enter current password"
-                  className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
                 />
               </div>
               <div className="space-y-2">
@@ -236,7 +236,7 @@ export default function ProfilePage() {
                   value={formData.newPassword}
                   onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                   placeholder="Enter new password"
-                  className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
                 />
               </div>
               <div className="space-y-2">
@@ -247,7 +247,7 @@ export default function ProfilePage() {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   placeholder="Confirm new password"
-                  className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                  className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
                 />
               </div>
             </CardContent>
@@ -258,7 +258,7 @@ export default function ProfilePage() {
             <Button
               onClick={handleSaveProfile}
               disabled={saving}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-900/20"
+              className="w-full bg-[#7cffd6] hover:bg-[#52C4A3] text-white py-3 rounded-xl font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#7cffd6]/20"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>

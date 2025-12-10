@@ -138,8 +138,8 @@ export default function TicketPage() {
           )}
 
           {ticket.expand?.table_id && (
-            <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-4">
-              <p className="text-sm text-teal-300 mb-1 font-semibold">🪑 Table Assignment</p>
+            <div className="bg-[#7cffd6]/10 border border-[#7cffd6]/30 rounded-xl p-4">
+              <p className="text-sm text-[#7cffd6] mb-1 font-semibold">🪑 Table Assignment</p>
               <p className="font-semibold text-white">
                 Table: {ticket.expand.table_id.name}
                 {ticket.expand.table_id.section && ` (${ticket.expand.table_id.section})`}

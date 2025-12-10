@@ -849,17 +849,19 @@ export default function EventDetailsPage() {
           <div className="px-4 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[#9B9B9B] text-xs font-bold uppercase">Quick Look</h2>
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full" style={{ background: 'rgba(39, 209, 127, 0.15)' }}>
-                <Shield className="w-3 h-3" style={{ color: '#27D17F' }} strokeWidth={2} />
-                <span className="text-xs font-medium" style={{ color: '#27D17F' }}>Lowest Price Guaranteed</span>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full" style={{ background: 'rgba(124, 255, 214, 0.15)' }}>
+                <Shield className="w-3 h-3" style={{ color: '#7cffd6' }} strokeWidth={2} />
+                <span className="text-xs font-medium" style={{ color: '#7cffd6' }}>Lowest Price Guaranteed</span>
               </div>
             </div>
 
             <div
               className="rounded-[20px] p-5 space-y-4"
               style={{
-                background: '#141414',
+                background: 'rgba(15, 16, 20, 0.6)',
+                backdropFilter: 'blur(10px)',
                 boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
               {/* Event Timings */}
@@ -953,8 +955,10 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">Description</h2>
@@ -966,8 +970,10 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">About the Event</h2>
@@ -978,8 +984,10 @@ export default function EventDetailsPage() {
             <div
               className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
               style={{
-                background: '#141414',
+                background: 'rgba(15, 16, 20, 0.6)',
+                backdropFilter: 'blur(10px)',
                 boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
               <h2 className="text-white font-bold text-lg mb-4">Tickets</h2>
@@ -987,8 +995,9 @@ export default function EventDetailsPage() {
                 <div
                   className="rounded-xl p-6 text-center"
                   style={{
-                    background: '#1a1a1a',
-                    border: '1px solid rgba(255,255,255,0.05)'
+                    background: 'rgba(26, 27, 38, 0.6)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.1)'
                   }}
                 >
                   <p className="text-[#9B9B9B] mb-2">No tickets available for this event yet.</p>
@@ -1001,8 +1010,9 @@ export default function EventDetailsPage() {
                       key={tt.id}
                       className="rounded-xl p-4 transition-all hover:scale-[1.01]"
                       style={{
-                        background: '#1a1a1a',
-                        border: '1px solid rgba(255,255,255,0.05)',
+                        background: 'rgba(26, 27, 38, 0.6)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.1)',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                       }}
                     >
@@ -1012,7 +1022,7 @@ export default function EventDetailsPage() {
                           {tt.description && <p className="text-sm text-[#9B9B9B] mt-1">{tt.description}</p>}
                         </div>
                         <div className="text-right ml-4">
-                          <p className="font-bold text-lg" style={{ color: '#27D17F' }}>
+                          <p className="font-bold text-lg" style={{ color: '#7cffd6' }}>
                             ₹{((tt.final_price_minor / 1.18) / 100).toFixed(2)}
                           </p>
                           <p className="text-xs text-[#9B9B9B] font-medium">+ GST</p>
@@ -1031,7 +1041,7 @@ export default function EventDetailsPage() {
                             className="w-10 h-10 rounded-full flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:scale-95"
                             style={{
                               border: '1px solid rgba(255,255,255,0.1)',
-                              background: '#1a1a1a'
+                              background: 'rgba(26, 27, 38, 0.6)'
                             }}
                             disabled={(selectedTickets[tt.id] || 0) === 0}
                           >
@@ -1047,8 +1057,8 @@ export default function EventDetailsPage() {
                             }
                             className="w-10 h-10 rounded-full text-white flex items-center justify-center hover:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             style={{
-                              background: '#27D17F',
-                              boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
+                              background: '#7cffd6',
+                              boxShadow: '0 4px 12px rgba(124, 255, 214, 0.3)'
                             }}
                             disabled={
                               (selectedTickets[tt.id] || 0) >= tt.remaining_quantity ||
@@ -1067,7 +1077,7 @@ export default function EventDetailsPage() {
                             <button
                               onClick={() => setShowSeatSelection({ ...showSeatSelection, [tt.id]: !showSeatSelection[tt.id] })}
                               className="text-sm font-medium transition-colors"
-                              style={{ color: '#27D17F' }}
+                              style={{ color: '#7cffd6' }}
                             >
                               {showSeatSelection[tt.id] ? 'Hide Seat Selection' : 'Select Seats'}
                             </button>
@@ -1081,11 +1091,11 @@ export default function EventDetailsPage() {
                                     }`}
                                   style={(seatViewMode[tt.id] || 'list') === 'list'
                                     ? {
-                                      background: '#27D17F',
-                                      border: '1px solid #27D17F'
+                                      background: '#7cffd6',
+                                      border: '1px solid #7cffd6'
                                     }
                                     : {
-                                      background: '#1a1a1a',
+                                      background: 'rgba(26, 27, 38, 0.6)',
                                       border: '1px solid rgba(255,255,255,0.1)'
                                     }
                                   }
@@ -1100,11 +1110,11 @@ export default function EventDetailsPage() {
                                     }`}
                                   style={seatViewMode[tt.id] === 'map'
                                     ? {
-                                      background: '#27D17F',
-                                      border: '1px solid #27D17F'
+                                      background: '#7cffd6',
+                                      border: '1px solid #7cffd6'
                                     }
                                     : {
-                                      background: '#1a1a1a',
+                                      background: 'rgba(26, 27, 38, 0.6)',
                                       border: '1px solid rgba(255,255,255,0.1)'
                                     }
                                   }
@@ -1137,7 +1147,7 @@ export default function EventDetailsPage() {
                                   className="max-h-64 overflow-y-auto rounded-xl p-3"
                                   style={{
                                     border: '1px solid rgba(255,255,255,0.05)',
-                                    background: '#1a1a1a'
+                                    background: 'rgba(26, 27, 38, 0.6)'
                                   }}
                                 >
                                   {availableSeats.length === 0 ? (
@@ -1164,9 +1174,9 @@ export default function EventDetailsPage() {
                                               }`}
                                             style={isSelected
                                               ? {
-                                                background: '#27D17F',
-                                                border: '1px solid #27D17F',
-                                                boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
+                                                background: '#7cffd6',
+                                                border: '1px solid #7cffd6',
+                                                boxShadow: '0 4px 12px rgba(124, 255, 214, 0.3)'
                                               }
                                               : isReserved
                                                 ? {
@@ -1176,11 +1186,11 @@ export default function EventDetailsPage() {
                                                 }
                                                 : seat.available && !seat.sold
                                                   ? {
-                                                    background: '#1a1a1a',
+                                                    background: 'rgba(26, 27, 38, 0.6)',
                                                     border: '1px solid rgba(255,255,255,0.1)'
                                                   }
                                                   : {
-                                                    background: '#1a1a1a',
+                                                    background: 'rgba(26, 27, 38, 0.6)',
                                                     color: '#9B9B9B',
                                                     border: '1px solid rgba(255,255,255,0.05)'
                                                   }
@@ -1232,7 +1242,7 @@ export default function EventDetailsPage() {
                             <button
                               onClick={() => setShowTableSelection({ ...showTableSelection, [tt.id]: !showTableSelection[tt.id] })}
                               className="text-sm font-medium transition-colors"
-                              style={{ color: '#27D17F' }}
+                              style={{ color: '#7cffd6' }}
                             >
                               {showTableSelection[tt.id] ? 'Hide Table Selection' : 'Select Table'}
                             </button>
@@ -1267,10 +1277,10 @@ export default function EventDetailsPage() {
                                     border: '1px solid rgba(39, 209, 127, 0.3)'
                                   }}
                                 >
-                                  <p className="text-sm font-medium" style={{ color: '#27D17F' }}>
+                                  <p className="text-sm font-medium" style={{ color: '#7cffd6' }}>
                                     Select <span className="font-bold text-white">{selectedTickets[tt.id]}</span> table{selectedTickets[tt.id] !== 1 ? 's' : ''} for <span className="font-bold text-white">{selectedTickets[tt.id]}</span> ticket{selectedTickets[tt.id] !== 1 ? 's' : ''}
                                   </p>
-                                  <p className="text-xs mt-1" style={{ color: '#27D17F' }}>
+                                  <p className="text-xs mt-1" style={{ color: '#7cffd6' }}>
                                     Selected: <span className="font-semibold text-white">{(selectedTables[tt.id] || []).length}</span> of <span className="font-semibold text-white">{selectedTickets[tt.id]}</span>
                                   </p>
                                 </div>
@@ -1312,8 +1322,8 @@ export default function EventDetailsPage() {
                             onClick={() => handleAddToCart(tt.id)}
                             className="w-full text-white py-3 rounded-xl font-bold text-base transition-all hover:scale-[1.01]"
                             style={{
-                              background: '#27D17F',
-                              boxShadow: '0 4px 12px rgba(39, 209, 127, 0.3)'
+                              background: '#7cffd6',
+                              boxShadow: '0 4px 12px rgba(124, 255, 214, 0.3)'
                             }}
                           >
                             Add to Cart
@@ -1330,8 +1340,10 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">Overview</h2>
@@ -1343,8 +1355,10 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">Things to Carry</h2>
@@ -1352,7 +1366,7 @@ export default function EventDetailsPage() {
                   {event.things_to_carry.split('\n').map((item: string, idx: number) => (
                     item.trim() && (
                       <div key={idx} className="flex items-start gap-2">
-                        <span className="text-[#27D17F] mt-1">•</span>
+                        <span className="text-[#7cffd6] mt-1">•</span>
                         <span>{item.trim()}</span>
                       </div>
                     )
@@ -1365,8 +1379,10 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">Inclusions</h2>
@@ -1374,7 +1390,7 @@ export default function EventDetailsPage() {
                   {event.inclusions.split('\n').map((item: string, idx: number) => (
                     item.trim() && (
                       <div key={idx} className="flex items-start gap-2">
-                        <span className="text-[#27D17F] mt-1">✓</span>
+                        <span className="text-[#7cffd6] mt-1">✓</span>
                         <span>{item.trim()}</span>
                       </div>
                     )
@@ -1387,8 +1403,10 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">Terms & Conditions</h2>
@@ -1400,14 +1418,16 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">Venue Details</h2>
                 <div className="text-[#9B9B9B] text-sm space-y-2">
                   <div className="flex items-start gap-2">
-                    <span className="text-[#27D17F] font-semibold">📍</span>
+                    <span className="text-[#7cffd6] font-semibold">📍</span>
                     <div>
                       <p className="font-semibold text-white">{event.expand.venue_id.name}</p>
                       {event.expand.venue_id.address && (
@@ -1431,14 +1451,16 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">Organizer Information</h2>
                 <div className="text-[#9B9B9B] text-sm space-y-2">
                   <div className="flex items-start gap-2">
-                    <span className="text-[#27D17F] font-semibold">👤</span>
+                    <span className="text-[#7cffd6] font-semibold">👤</span>
                     <div>
                       <p className="font-semibold text-white">{event.expand.organizer_id.name}</p>
                       {event.expand.organizer_id.email && (
@@ -1462,8 +1484,10 @@ export default function EventDetailsPage() {
               <div
                 className="rounded-[20px] p-5 transition-all hover:scale-[1.01]"
                 style={{
-                  background: '#141414',
+                  background: 'rgba(15, 16, 20, 0.6)',
+                  backdropFilter: 'blur(10px)',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
                 <h2 className="text-white font-bold text-lg mb-3">Tags</h2>
@@ -1480,7 +1504,7 @@ export default function EventDetailsPage() {
                       className="px-3 py-1 rounded-full text-xs font-medium"
                       style={{
                         background: 'rgba(39, 209, 127, 0.15)',
-                        color: '#27D17F',
+                        color: '#7cffd6',
                         border: '1px solid rgba(39, 209, 127, 0.3)'
                       }}
                     >

@@ -236,14 +236,14 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-white font-semibold">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-teal-400 hover:text-teal-300 hover:underline font-medium">
+                <Link href="/forgot-password" className="text-sm text-[#7cffd6] hover:text-[#52C4A3] hover:underline font-medium">
                   Forgot password?
                 </Link>
               </div>
@@ -254,18 +254,18 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="bg-white/5 border-2 border-white/10 focus:border-teal-500 rounded-xl text-white placeholder:text-gray-500"
+                className="bg-white/5 border-2 border-white/10 focus:border-[#7cffd6] rounded-xl text-white placeholder:text-gray-500"
               />
             </div>
 
-            <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-teal-900/20" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#7cffd6] hover:bg-[#52C4A3] text-white font-semibold py-3 rounded-xl shadow-lg shadow-[#7cffd6]/20" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
           <div className="text-center text-sm">
             <span className="text-gray-400">Don't have an account? </span>
-            <Link href="/signup" className="text-teal-400 hover:text-teal-300 hover:underline font-semibold">
+            <Link href="/signup" className="text-[#7cffd6] hover:text-[#52C4A3] hover:underline font-semibold">
               Sign up
             </Link>
           </div>

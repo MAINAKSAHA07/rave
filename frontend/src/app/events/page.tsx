@@ -373,7 +373,7 @@ export default function EventsPage() {
                   className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                     isSelected
                       ? 'text-white font-bold'
-                      : 'bg-[#1a1a1a] text-white border border-[#9B9B9B]/30'
+                      : 'text-white border border-[#9B9B9B]/30'
                   }`}
                   style={
                     isSelected
@@ -382,7 +382,10 @@ export default function EventsPage() {
                           border: '1px solid #CE83FF',
                           boxShadow: '0 0 12px rgba(206, 131, 255, 0.6)',
                         }
-                      : {}
+                      : {
+                          background: 'rgba(26, 27, 38, 0.6)',
+                          backdropFilter: 'blur(10px)',
+                        }
                   }
                 >
                   {filter}
@@ -401,7 +404,7 @@ export default function EventsPage() {
           {loading ? (
             <div className="flex gap-4 overflow-x-auto scrollbar-hide">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="w-64 h-80 rounded-[18px] bg-[#1a1a1a] animate-pulse flex-shrink-0" />
+                <div key={i} className="w-64 h-80 rounded-[18px] bg-[rgba(26,27,38,0.6)] animate-pulse flex-shrink-0" />
               ))}
             </div>
           ) : featuredEvents.length === 0 ? (
@@ -414,42 +417,79 @@ export default function EventsPage() {
                 <Link
                   key={event.id}
                   href={`/events/${event.id}`}
-                  className="block flex-shrink-0 w-64"
+                  className="block flex-shrink-0 w-64 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] group"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}
                 >
-                  <div className="relative rounded-[18px] overflow-hidden mb-2" style={{ aspectRatio: '4/5' }}>
-                    {event.cover_image ? (
-                      <img
-                        src={getPocketBase().files.getUrl(event, event.cover_image)}
-                        alt={event.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] flex items-center justify-center">
-                        <span className="text-4xl">🎵</span>
-                      </div>
-                    )}
-                    {/* Price overlay */}
-                    {event.minPrice && (
-                      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-sm">
-                        <span className="text-white font-bold text-sm">₹{event.minPrice.toFixed(0)}</span>
-                      </div>
-                    )}
-                    {/* People count overlay */}
-                    {event.interestedCount > 0 && (
-                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-sm flex items-center gap-1">
-                        <Eye className="w-3 h-3 text-white" />
-                        <span className="text-white text-xs">
-                          {event.interestedCount >= 1000 
-                            ? `${(event.interestedCount / 1000).toFixed(1)}k`
-                            : event.interestedCount}
-                        </span>
-                      </div>
-                    )}
+                  <div className="relative bg-[#0f1014]">
+                    {/* Image Section */}
+                    <div className="relative h-[240px] w-full overflow-hidden">
+                      {event.cover_image ? (
+                        <>
+                          <img
+                            src={getPocketBase().files.getUrl(event, event.cover_image)}
+                            alt={event.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            style={{ objectPosition: 'center' }}
+                          />
+                          {/* Gradient Overlay */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%)'
+                            }}
+                          />
+                          <div 
+                            className="absolute bottom-0 left-0 right-0 h-32"
+                            style={{
+                              background: 'linear-gradient(to top, rgba(15, 16, 20, 0.95) 0%, transparent 100%)'
+                            }}
+                          />
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1b26] to-[#0f1014]">
+                          <span className="text-4xl">🎵</span>
+                        </div>
+                      )}
+                      {/* Price overlay */}
+                      {event.minPrice && (
+                        <div 
+                          className="absolute top-3 left-3 px-2.5 py-1 rounded-lg backdrop-blur-md"
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                          }}
+                        >
+                          <span className="text-white font-bold text-sm">₹{event.minPrice.toFixed(0)}</span>
+                        </div>
+                      )}
+                      {/* People count overlay */}
+                      {event.interestedCount > 0 && (
+                        <div 
+                          className="absolute top-3 right-3 px-2.5 py-1 rounded-lg backdrop-blur-md flex items-center gap-1"
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                          }}
+                        >
+                          <Eye className="w-3 h-3 text-white" />
+                          <span className="text-white text-xs">
+                            {event.interestedCount >= 1000 
+                              ? `${(event.interestedCount / 1000).toFixed(1)}k`
+                              : event.interestedCount}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Content Section */}
+                    <div className="p-3 bg-[#0f1014]">
+                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 group-hover:text-[#7cffd6] transition-colors duration-300">{event.name}</h3>
+                      <p className="text-[#9B9B9B] text-xs line-clamp-1">
+                        {event.expand?.venue_id?.name || event.city || 'Venue TBA'}
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-white font-bold text-base mb-1 line-clamp-2">{event.name}</h3>
-                  <p className="text-[#9B9B9B] text-xs line-clamp-1">
-                    {event.expand?.venue_id?.name || event.city || 'Venue TBA'}
-                  </p>
                 </Link>
               ))}
             </div>
@@ -466,42 +506,79 @@ export default function EventsPage() {
                 <Link
                   key={event.id}
                   href={`/events/${event.id}`}
-                  className="block flex-shrink-0 w-64"
+                  className="block flex-shrink-0 w-64 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] group"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}
                 >
-                  <div className="relative rounded-[18px] overflow-hidden mb-2" style={{ aspectRatio: '4/5' }}>
-                    {event.cover_image ? (
-                      <img
-                        src={getPocketBase().files.getUrl(event, event.cover_image)}
-                        alt={event.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] flex items-center justify-center">
-                        <span className="text-4xl">🎵</span>
-                      </div>
-                    )}
-                    {/* Price overlay */}
-                    {event.minPrice && (
-                      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-sm">
-                        <span className="text-white font-bold text-sm">₹{event.minPrice.toFixed(0)}</span>
-                      </div>
-                    )}
-                    {/* People count overlay */}
-                    {event.interestedCount > 0 && (
-                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-sm flex items-center gap-1">
-                        <Eye className="w-3 h-3 text-white" />
-                        <span className="text-white text-xs">
-                          {event.interestedCount >= 1000 
-                            ? `${(event.interestedCount / 1000).toFixed(1)}k`
-                            : event.interestedCount}
-                        </span>
-                      </div>
-                    )}
+                  <div className="relative bg-[#0f1014]">
+                    {/* Image Section */}
+                    <div className="relative h-[240px] w-full overflow-hidden">
+                      {event.cover_image ? (
+                        <>
+                          <img
+                            src={getPocketBase().files.getUrl(event, event.cover_image)}
+                            alt={event.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            style={{ objectPosition: 'center' }}
+                          />
+                          {/* Gradient Overlay */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%)'
+                            }}
+                          />
+                          <div 
+                            className="absolute bottom-0 left-0 right-0 h-32"
+                            style={{
+                              background: 'linear-gradient(to top, rgba(15, 16, 20, 0.95) 0%, transparent 100%)'
+                            }}
+                          />
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1b26] to-[#0f1014]">
+                          <span className="text-4xl">🎵</span>
+                        </div>
+                      )}
+                      {/* Price overlay */}
+                      {event.minPrice && (
+                        <div 
+                          className="absolute top-3 left-3 px-2.5 py-1 rounded-lg backdrop-blur-md"
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                          }}
+                        >
+                          <span className="text-white font-bold text-sm">₹{event.minPrice.toFixed(0)}</span>
+                        </div>
+                      )}
+                      {/* People count overlay */}
+                      {event.interestedCount > 0 && (
+                        <div 
+                          className="absolute top-3 right-3 px-2.5 py-1 rounded-lg backdrop-blur-md flex items-center gap-1"
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                          }}
+                        >
+                          <Eye className="w-3 h-3 text-white" />
+                          <span className="text-white text-xs">
+                            {event.interestedCount >= 1000 
+                              ? `${(event.interestedCount / 1000).toFixed(1)}k`
+                              : event.interestedCount}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Content Section */}
+                    <div className="p-3 bg-[#0f1014]">
+                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 group-hover:text-[#7cffd6] transition-colors duration-300">{event.name}</h3>
+                      <p className="text-[#9B9B9B] text-xs line-clamp-1">
+                        {event.expand?.venue_id?.name || event.city || 'Venue TBA'}
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-white font-bold text-base mb-1 line-clamp-2">{event.name}</h3>
-                  <p className="text-[#9B9B9B] text-xs line-clamp-1">
-                    {event.expand?.venue_id?.name || event.city || 'Venue TBA'}
-                  </p>
                 </Link>
               ))}
             </div>
@@ -515,7 +592,7 @@ export default function EventsPage() {
           {loading ? (
             <div className="grid grid-cols-2 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="aspect-[3/4] rounded-[18px] bg-[#1a1a1a] animate-pulse" />
+                <div key={i} className="aspect-[3/4] rounded-[18px] bg-[rgba(26,27,38,0.6)] animate-pulse" />
               ))}
             </div>
           ) : allEvents.length === 0 ? (
@@ -538,47 +615,82 @@ export default function EventsPage() {
                 <Link
                   key={event.id}
                   href={`/events/${event.id}`}
-                  className="block"
+                  className="block rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] group"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}
                 >
-                  <div className="relative rounded-[18px] overflow-hidden mb-2" style={{ aspectRatio: '3/4' }}>
-                    {event.cover_image ? (
-                      <img
-                        src={getPocketBase().files.getUrl(event, event.cover_image)}
-                        alt={event.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] flex items-center justify-center">
-                        <span className="text-3xl">🎵</span>
-                      </div>
-                    )}
-                    {/* Price overlay */}
-                    {event.minPrice && (
-                      <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm">
-                        <span className="text-white font-bold text-xs">₹{event.minPrice.toFixed(0)}</span>
-                      </div>
-                    )}
-                    {/* People count overlay */}
-                    {event.interestedCount > 0 && (
-                      <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm flex items-center gap-1">
-                        <Eye className="w-3 h-3 text-white" />
-                        <span className="text-white text-[10px]">
-                          {event.interestedCount >= 1000 
-                            ? `${(event.interestedCount / 1000).toFixed(1)}k`
-                            : event.interestedCount}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="px-1">
-                    <p className="text-[#CE83FF] text-xs font-medium mb-1">
-                      {formatDate(event.event_date || event.start_date)}
-                    </p>
-                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 leading-tight">{event.name}</h3>
-                    <p className="text-[#9B9B9B] text-xs line-clamp-1 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {event.expand?.venue_id?.name || event.city || 'Venue TBA'}
-                    </p>
+                  <div className="relative bg-[#0f1014]">
+                    {/* Image Section */}
+                    <div className="relative h-[200px] w-full overflow-hidden">
+                      {event.cover_image ? (
+                        <>
+                          <img
+                            src={getPocketBase().files.getUrl(event, event.cover_image)}
+                            alt={event.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            style={{ objectPosition: 'center' }}
+                          />
+                          {/* Gradient Overlay */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%)'
+                            }}
+                          />
+                          <div 
+                            className="absolute bottom-0 left-0 right-0 h-32"
+                            style={{
+                              background: 'linear-gradient(to top, rgba(15, 16, 20, 0.95) 0%, transparent 100%)'
+                            }}
+                          />
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1b26] to-[#0f1014]">
+                          <span className="text-3xl">🎵</span>
+                        </div>
+                      )}
+                      {/* Price overlay */}
+                      {event.minPrice && (
+                        <div 
+                          className="absolute top-2 left-2 px-2 py-1 rounded-lg backdrop-blur-md"
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                          }}
+                        >
+                          <span className="text-white font-bold text-xs">₹{event.minPrice.toFixed(0)}</span>
+                        </div>
+                      )}
+                      {/* People count overlay */}
+                      {event.interestedCount > 0 && (
+                        <div 
+                          className="absolute top-2 right-2 px-2 py-1 rounded-lg backdrop-blur-md flex items-center gap-1"
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                          }}
+                        >
+                          <Eye className="w-3 h-3 text-white" />
+                          <span className="text-white text-[10px]">
+                            {event.interestedCount >= 1000 
+                              ? `${(event.interestedCount / 1000).toFixed(1)}k`
+                              : event.interestedCount}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Content Section */}
+                    <div className="p-3 bg-[#0f1014]">
+                      <p className="text-[#CE83FF] text-xs font-medium mb-1">
+                        {formatDate(event.event_date || event.start_date)}
+                      </p>
+                      <h3 className="text-white font-bold text-sm mb-1 line-clamp-2 leading-tight group-hover:text-[#7cffd6] transition-colors duration-300">{event.name}</h3>
+                      <p className="text-[#9B9B9B] text-xs line-clamp-1 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {event.expand?.venue_id?.name || event.city || 'Venue TBA'}
+                      </p>
+                    </div>
                   </div>
                 </Link>
               ))}
